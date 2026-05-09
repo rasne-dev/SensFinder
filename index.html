@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SensFinder — CS2 & Valorant</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Barlow:wght@400;600;700;800;900&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --a:#e8ff47;--a2:#47ffb8;--ag:rgba(232,255,71,.15);
+  --bg:#070708;--p:rgba(9,9,11,.97);--b:rgba(255,255,255,.08);--b2:rgba(255,255,255,.14);
+  --t:#8888a0;--td:#3a3a52;--tb:#eeeef8;
+  --mono:'DM Mono',monospace;--sans:'Barlow',sans-serif;
+}
+body.val{--a:#c084fc;--a2:#818cf8;--ag:rgba(192,132,252,.15);}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-family:var(--sans);color:var(--t);}
+body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E");opacity:.35;}
+#rc{position:fixed;inset:0;z-index:0;}
+#rc canvas{display:block;width:100%!important;height:100%!important;}
+#xh{position:fixed;top:50%;left:50%;width:0;height:0;pointer-events:none;z-index:5;transform:translate(-50%,-50%);}
+#xh::before,#xh::after{content:'';position:absolute;background:rgba(255,255,255,.9);}
+#xh::before{width:14px;height:1px;top:-.5px;left:-7px;}
+#xh::after{width:1px;height:14px;left:-.5px;top:-7px;}
+.xd{position:fixed;top:50%;left:50%;width:2px;height:2px;background:#fff;border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:5;}
+#pw{position:fixed;bottom:0;left:0;right:0;z-index:8;height:2px;background:rgba(255,255,255,.04);}
+#pb{height:100%;background:var(--a);width:0;box-shadow:0 0 8px var(--ag);transition:background .3s;}
+#hud{position:fixed;top:18px;left:18px;z-index:8;background:rgba(7,7,8,.9);border:1px solid var(--b);padding:12px 16px;min-width:178px;display:none;backdrop-filter:blur(12px);}
+.hr{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px;}
+.hl{font-family:var(--mono);font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--td);}
+.hv{font-family:var(--mono);font-size:13px;color:var(--a);font-weight:500;transition:color .3s;}
+.hv.big{font-size:18px;}
+#hpill{display:inline-block;font-family:var(--mono);font-size:8px;letter-spacing:.15em;text-transform:uppercase;padding:2px 7px;border:1px solid var(--a);color:var(--a);margin-bottom:8px;transition:all .3s;}
+#pi{position:fixed;top:18px;right:18px;z-index:8;background:rgba(7,7,8,.9);border:1px solid var(--b);padding:12px 16px;text-align:right;display:none;backdrop-filter:blur(12px);}
+.idots{display:flex;gap:4px;justify-content:flex-end;margin-top:6px;}
+.idot{width:5px;height:5px;background:var(--b);transition:all .3s;}
+.idot.done{background:rgba(255,255,255,.2);}
+.idot.active{background:var(--a);box-shadow:0 0 5px var(--ag);}
+#bbar{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:8;display:none;font-family:var(--mono);font-size:9px;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase;text-align:center;}
+#fb{position:fixed;top:44%;left:50%;transform:translateX(-50%);z-index:9;font-family:var(--mono);font-size:18px;font-weight:500;pointer-events:none;opacity:0;transition:opacity .12s;text-shadow:0 0 10px currentColor;}
+.menu{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:20;background:var(--p);border:1px solid var(--b);padding:24px 26px;width:480px;max-width:96vw;max-height:94vh;overflow-y:auto;backdrop-filter:blur(16px);scrollbar-width:thin;scrollbar-color:var(--b) transparent;}
+.menu::-webkit-scrollbar{width:3px;}.menu::-webkit-scrollbar-thumb{background:var(--b);}
+.mt{font-size:26px;font-weight:900;letter-spacing:-.03em;color:var(--tb);line-height:1;}
+.mt em{color:var(--a);font-style:normal;transition:color .3s;}
+.ms{font-family:var(--mono);font-size:8px;letter-spacing:.2em;color:var(--td);text-transform:uppercase;margin-top:5px;margin-bottom:20px;}
+.mrow{display:flex;justify-content:space-between;align-items:flex-start;}
+.lbtns{display:flex;gap:4px;}
+.lbtn{padding:3px 9px;border:1px solid var(--b);background:none;color:var(--td);font-size:8px;font-family:var(--mono);letter-spacing:.1em;cursor:pointer;transition:all .2s;}
+.lbtn.on{border-color:var(--a);color:var(--a);}
+.slbl{display:block;font-family:var(--mono);font-size:8px;letter-spacing:.18em;color:var(--td);text-transform:uppercase;margin-bottom:7px;}
+.t2{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:16px;}
+.tab{padding:11px 8px;border:1px solid var(--b);background:none;color:var(--td);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:all .2s;font-family:var(--sans);text-align:center;}
+.tab.on{border-color:var(--a);color:var(--tb);background:rgba(232,255,71,.04);}
+.tab:hover:not(.on){border-color:var(--b2);color:var(--t);}
+.flbl{display:block;font-family:var(--mono);font-size:8px;letter-spacing:.18em;color:var(--a);text-transform:uppercase;margin-bottom:5px;transition:color .3s;}
+.fi{width:100%;padding:9px 11px;background:#0c0c0e;border:1px solid var(--b);color:var(--tb);font-family:var(--mono);font-size:15px;outline:none;transition:border-color .2s;-moz-appearance:textfield;}
+.fi::-webkit-inner-spin-button{-webkit-appearance:none;}
+.fi:focus{border-color:var(--a);}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:13px;}
+.fg{display:flex;flex-direction:column;}
+.sg{border:1px solid var(--b);padding:12px;margin-bottom:13px;}
+.sprev{display:flex;gap:5px;margin-top:9px;}
+.spv{flex:1;background:#0c0c0e;border:1px solid var(--b);padding:7px;text-align:center;}
+.spvl{font-family:var(--mono);font-size:7px;letter-spacing:.12em;color:var(--td);text-transform:uppercase;display:block;margin-bottom:2px;}
+.spvv{font-family:var(--mono);font-size:13px;color:var(--a);font-weight:500;transition:color .3s;}
+.cbtn{width:100%;padding:9px 12px;border:1px solid var(--b);background:none;color:var(--td);font-family:var(--mono);font-size:8px;letter-spacing:.15em;cursor:pointer;text-transform:uppercase;transition:all .2s;text-align:left;margin-bottom:13px;}
+.cbtn:hover{border-color:var(--b2);color:var(--t);}
+.cbtn em{color:var(--a);font-style:normal;margin-right:7px;}
+.sep{border:none;border-top:1px solid var(--b);margin:14px 0;}
+#sb{display:none;background:rgba(232,255,71,.04);border:1px solid rgba(232,255,71,.18);padding:10px 13px;margin-bottom:13px;}
+.sb-r{display:flex;justify-content:space-between;align-items:flex-start;}
+.sb-l{font-family:var(--mono);font-size:7px;letter-spacing:.12em;color:var(--td);text-transform:uppercase;}
+.sb-v{font-family:var(--mono);font-size:16px;color:var(--a);font-weight:500;}
+.sb-s{font-family:var(--mono);font-size:7px;color:var(--td);margin-top:2px;}
+.sb-btns{display:flex;gap:5px;margin-top:8px;}
+.sb-btn{flex:1;padding:6px;border:1px solid var(--b);background:none;color:var(--td);font-family:var(--mono);font-size:7px;letter-spacing:.12em;cursor:pointer;text-transform:uppercase;transition:all .2s;}
+.sb-btn:hover,.sb-btn.p{border-color:var(--a);color:var(--a);}
+.sbtn{width:100%;padding:14px;margin-top:6px;border:1px solid var(--a);background:rgba(232,255,71,.07);color:var(--a);font-family:var(--sans);font-size:14px;font-weight:800;letter-spacing:.12em;cursor:pointer;text-transform:uppercase;transition:all .2s;}
+.sbtn:hover{background:rgba(232,255,71,.14);box-shadow:0 0 24px var(--ag);}
+.sbtn.g{border-color:var(--b);background:none;color:var(--t);font-size:11px;margin-top:5px;}
+.sbtn.g:hover{border-color:var(--b2);color:var(--tb);box-shadow:none;}
+/* round result */
+.rr-eye{font-family:var(--mono);font-size:8px;letter-spacing:.25em;color:var(--a);text-transform:uppercase;display:block;margin-bottom:8px;transition:color .3s;}
+.rr-main{font-size:56px;font-weight:900;color:var(--tb);line-height:1;letter-spacing:-.03em;margin-bottom:3px;}
+.rr-unit{font-family:var(--mono);font-size:9px;letter-spacing:.15em;color:var(--td);text-transform:uppercase;margin-bottom:16px;}
+.rr-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:14px;}
+.rs{background:#0c0c0e;border:1px solid var(--b);padding:9px;text-align:center;}
+.rs-l{font-family:var(--mono);font-size:7px;letter-spacing:.12em;color:var(--td);text-transform:uppercase;display:block;margin-bottom:3px;}
+.rs-v{font-family:var(--mono);font-size:15px;color:var(--a);font-weight:500;transition:color .3s;}
+.rr-cv{background:#0c0c0e;border:1px solid var(--a);padding:11px 14px;text-align:center;margin-bottom:13px;box-shadow:0 0 16px var(--ag);transition:all .3s;}
+.rc-l{font-family:var(--mono);font-size:7px;letter-spacing:.18em;color:var(--td);text-transform:uppercase;display:block;margin-bottom:3px;}
+.rc-v{font-family:var(--mono);font-size:20px;color:var(--a);font-weight:500;transition:color .3s;}
+.confrow{margin-bottom:13px;}
+.conf-lbl{font-family:var(--mono);font-size:8px;letter-spacing:.12em;color:var(--td);text-transform:uppercase;margin-bottom:5px;display:flex;justify-content:space-between;}
+.conf-tr{height:5px;background:#0c0c0e;border:1px solid var(--b);}
+.conf-fi{height:100%;background:var(--a);transition:width .6s ease;}
+.conf-pct{font-family:var(--mono);font-size:10px;color:var(--a);}
+.rh-row{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+.rh-n{font-family:var(--mono);font-size:8px;color:var(--td);min-width:18px;}
+.rh-bar{flex:1;height:10px;background:#0c0c0e;border:1px solid var(--b);position:relative;overflow:hidden;}
+.rh-fill{position:absolute;top:0;left:0;bottom:0;background:rgba(232,255,71,.22);}
+.rh-mk{position:absolute;top:1px;bottom:1px;width:2px;background:var(--a);}
+.rh-val{font-family:var(--mono);font-size:9px;color:var(--a);min-width:42px;text-align:right;}
+.ft-box{border:1px solid var(--b);padding:12px;margin-bottom:13px;}
+.ft-ti{font-family:var(--mono);font-size:8px;letter-spacing:.18em;color:var(--a);text-transform:uppercase;display:block;margin-bottom:8px;transition:color .3s;}
+.ft-it{display:flex;gap:7px;margin-bottom:5px;font-size:11px;line-height:1.6;color:var(--t);}
+.ft-it:last-child{margin-bottom:0;}
+.ft-b{color:var(--a);flex-shrink:0;}
+/* pause */
+.pm-ti{font-size:22px;font-weight:900;letter-spacing:-.02em;color:var(--tb);margin-bottom:3px;}
+.pm-su{font-family:var(--mono);font-size:8px;letter-spacing:.15em;color:var(--td);text-transform:uppercase;margin-bottom:18px;}
+.pm-st{display:flex;justify-content:space-between;margin-bottom:7px;}
+.pm-sl{font-family:var(--mono);font-size:9px;color:var(--td);text-transform:uppercase;letter-spacing:.1em;}
+.pm-sv{font-family:var(--mono);font-size:14px;color:var(--a);}
+/* overlays */
+#cov{display:none;position:fixed;inset:0;z-index:30;background:rgba(7,7,8,.97);align-items:center;justify-content:center;text-align:center;}
+#cov.on{display:flex;}
+.cal-box{border:1px solid var(--a);padding:30px 42px;max-width:370px;}
+.cal-ti{font-size:13px;font-weight:800;color:var(--a);letter-spacing:.15em;text-transform:uppercase;margin-bottom:10px;font-family:var(--sans);}
+.cal-de{font-family:var(--mono);font-size:10px;color:var(--t);line-height:2;letter-spacing:.04em;}
+#sov{display:none;position:fixed;inset:0;z-index:15;background:rgba(7,7,8,.92);align-items:center;justify-content:center;text-align:center;backdrop-filter:blur(8px);}
+#sov.on{display:flex;}
+.sw-ey{font-family:var(--mono);font-size:8px;letter-spacing:.22em;color:var(--td);text-transform:uppercase;margin-bottom:8px;}
+.sw-sn{font-size:50px;font-weight:900;color:var(--a);line-height:1;letter-spacing:-.03em;font-family:var(--sans);transition:color .3s;}
+.sw-tg{font-family:var(--mono);font-size:9px;color:var(--td);letter-spacing:.1em;margin-top:5px;}
+.sw-cd{font-family:var(--mono);font-size:32px;color:rgba(255,255,255,.12);margin-top:18px;}
+</style>
+</head>
+<body>
+<div id="rc"></div>
+<div id="xh"></div><div class="xd"></div>
+<div id="pw"><div id="pb"></div></div>
+<div id="fb"></div>
+
+<div id="hud">
+  <div id="hpill">FLICK</div>
+  <div class="hr"><span class="hl" id="hl-r">Round</span><span class="hv" id="hv-r">1</span></div>
+  <div class="hr"><span class="hl" id="hl-ph">Phase</span><span class="hv" id="hv-ph">1/6</span></div>
+  <div class="hr"><span class="hl">Sens</span><span class="hv big" id="hv-s">2.500</span></div>
+  <div class="hr"><span class="hl">cm/360°</span><span class="hv" id="hv-cm">34.9</span></div>
+  <div class="hr"><span class="hl" id="hl-sc">Score</span><span class="hv" id="hv-sc">0</span></div>
+</div>
+
+<div id="pi">
+  <div class="hl" id="pi-l">Progress</div>
+  <div class="hv" id="pi-v" style="text-align:right;margin-top:3px;">—</div>
+  <div class="idots" id="idots"></div>
+</div>
+
+<div id="bbar"></div>
+
+<div id="sov"><div>
+  <div class="sw-ey" id="sw-ey">Now testing</div>
+  <div class="sw-sn" id="sw-sn">—</div>
+  <div class="sw-tg" id="sw-tg">sensitivity</div>
+  <div class="sw-cd" id="sw-cd">3</div>
+</div></div>
+
+<div id="cov"><div class="cal-box">
+  <div class="cal-ti" id="cal-ti">Calibration</div>
+  <div style="font-size:24px;margin:12px 0;">🖱️ ↔️</div>
+  <div class="cal-de" id="cal-de">Place mouse at one edge of your mousepad.<br>Drag to the opposite edge.<br>Press <strong>ESC</strong> to finish.</div>
+</div></div>
+
+<!-- MAIN MENU -->
+<div class="menu" id="mm">
+  <div class="mrow" style="margin-bottom:2px;">
+    <div><div class="mt">SENS<em>FINDER</em></div><div class="ms" id="ms">Sensitivity Finder · CS2 & Valorant</div></div>
+    <div class="lbtns"><button class="lbtn on" onclick="setLang('tr')">TR</button><button class="lbtn" onclick="setLang('en')">EN</button></div>
+  </div>
+  <span class="slbl" id="lg">Game</span>
+  <div class="t2"><button class="tab on" id="gCS2" onclick="setGame('cs2')">CS2</button><button class="tab" id="gVAL" onclick="setGame('val')">VALORANT</button></div>
+  <div class="g2">
+    <div class="fg"><label class="flbl" id="ld">Mouse DPI</label><input class="fi" type="number" id="id" value="800" min="100" max="32000" step="50" oninput="updPv()"></div>
+    <div class="fg"><label class="flbl" id="lf">FOV</label><input class="fi" type="number" id="if" value="90" min="60" max="120"></div>
+  </div>
+  <div class="sg">
+    <label class="flbl" id="ls">Current Sensitivity</label>
+    <input class="fi" type="number" id="is" value="2.5" min="0.01" max="20" step="0.01" oninput="updPv()">
+    <div class="sprev">
+      <div class="spv"><span class="spvl">eDPI</span><span class="spvv" id="pv-e">2000</span></div>
+      <div class="spv"><span class="spvl">cm/360°</span><span class="spvv" id="pv-c">34.9</span></div>
+      <div class="spv"><span class="spvl" id="pv-cl">VAL eq.</span><span class="spvv" id="pv-cv">0.786</span></div>
+    </div>
+  </div>
+  <button class="cbtn" onclick="startCalib()"><em>📐</em><span id="lca">Calibrate via 360° mousepad movement</span></button>
+  <hr class="sep">
+  <div id="sb" style="display:none;">
+    <div class="sb-r">
+      <div><div class="sb-l" id="sbl">Last Session</div><div class="sb-v" id="sbv">—</div><div class="sb-s" id="sbs">—</div></div>
+    </div>
+    <div class="sb-btns">
+      <button class="sb-btn p" onclick="resumeSession()" id="sbr">Resume</button>
+      <button class="sb-btn" onclick="clearSession()" id="sbc">Clear</button>
+    </div>
+  </div>
+  <button class="sbtn" onclick="startFresh()">▶ &nbsp;<span id="lst">START TEST</span></button>
+</div>
+
+<!-- PAUSE MENU -->
+<div class="menu" id="pm" style="display:none;">
+  <div class="pm-ti" id="pm-ti">Paused</div>
+  <div class="pm-su" id="pm-su">Test suspended</div>
+  <div class="pm-st"><span class="pm-sl" id="pml-r">Round</span><span class="pm-sv" id="pmv-r">—</span></div>
+  <div class="pm-st"><span class="pm-sl" id="pml-b">Best so far</span><span class="pm-sv" id="pmv-b">—</span></div>
+  <div class="pm-st"><span class="pm-sl">cm/360°</span><span class="pm-sv" id="pmv-cm">—</span></div>
+  <hr class="sep">
+  <button class="sbtn" onclick="resumeGame()"><span id="lr">▶ Resume</span></button>
+  <button class="sbtn g" onclick="endEarly()"><span id="le">✓ End &amp; Show Results</span></button>
+  <button class="sbtn g" onclick="location.reload()"><span id="lq">✕ Quit</span></button>
+</div>
+
+<!-- ROUND RESULT -->
+<div class="menu" id="rr" style="display:none;">
+  <span class="rr-eye" id="rr-ey">Round 1 Result</span>
+  <div class="rr-main" id="rr-m">2.750</div>
+  <div class="rr-unit" id="rr-u">CS2 SENSITIVITY</div>
+  <div class="rr-stats">
+    <div class="rs"><span class="rs-l">eDPI</span><span class="rs-v" id="rr-e">—</span></div>
+    <div class="rs"><span class="rs-l">cm/360°</span><span class="rs-v" id="rr-cm">—</span></div>
+    <div class="rs"><span class="rs-l" id="rr-al">Accuracy</span><span class="rs-v" id="rr-a">—</span></div>
+  </div>
+  <div class="rr-cv"><span class="rc-l" id="rr-cl">Equivalent</span><div class="rc-v" id="rr-cv">—</div></div>
+  <div class="confrow">
+    <div class="conf-lbl"><span id="conf-l">Confidence</span><span class="conf-pct" id="conf-p">—</span></div>
+    <div class="conf-tr"><div class="conf-fi" id="conf-f"></div></div>
+  </div>
+  <div style="margin-bottom:13px;"><div class="slbl" id="rh-l">History</div><div id="rh-rows"></div></div>
+  <div class="ft-box">
+    <span class="ft-ti" id="ft-ti">In-Game Fine Tuning</span>
+    <div class="ft-it"><span class="ft-b">↑</span><span id="ft-ov"></span></div>
+    <div class="ft-it"><span class="ft-b">↓</span><span id="ft-un"></span></div>
+  </div>
+  <button class="sbtn" onclick="startNextRound()"><span id="ln">▶ Next Round (More Precise)</span></button>
+  <button class="sbtn g" onclick="location.reload()"><span id="ld2">✓ Done</span></button>
+</div>
+
+<script>
+'use strict';
+// ─── i18n ───
+const L={
+  tr:{sub:'Hassasiyet Bulucusu · CS2 & Valorant',game:'Oyun',dpi:'Mouse DPI',fov:'FOV',sens:'Mevcut Hassasiyet',
+    calib:'360° mousepad hareketi ile kalibre et',start:'TESTİ BAŞLAT',
+    rLbl:'Tur',phLbl:'Aşama',scLbl:'Puan',piLbl:'İlerleme',
+    calTi:'KALİBRASYON',calDe:'Fareyi mousepad\'ın bir kenarına koy.<br>Karşı kenara sürükle.<br><strong>ESC</strong> ile bitir.',
+    eyLow:'Test: DÜŞÜK',eyHigh:'Test: YÜKSEK',
+    tagF:'Flick',tagG:'Gridshot',tagT:'Takip',
+    rrEy:(r)=>`Tur ${r} Sonucu`,rrU:(g)=>`${g} HASSASİYETİ`,rrCl:(g)=>`${g} Eşdeğeri`,
+    rrAl:'İsabet',confL:'Güven',rhL:'Geçmiş',
+    ftTi:'Oyun İçi İnce Ayar',ftOv:'Hedefi aşıyorsan (overshooting) — 0.05–0.1 azalt',ftUn:'Hedefe yetişemiyorsan — 0.05–0.1 artır',
+    nextR:'▶ Sonraki Tur (Daha Hassas)',done:'✓ Tamamlandı',
+    pmTi:'Durakladı',pmSu:'Test askıya alındı',pmR:'Tur',pmB:'En iyi şu ana kadar',
+    resume:'▶ Devam Et',early:'✓ Bitir & Sonuçları Göster',quit:'✕ Çık',
+    sbL:'Son Oturum',sbR:'Devam',sbC:'Sil',
+    pvC:'VAL eşd.',pvCA:'CS2 eşd.',},
+  en:{sub:'Sensitivity Finder · CS2 & Valorant',game:'Game',dpi:'Mouse DPI',fov:'FOV',sens:'Current Sensitivity',
+    calib:'Calibrate via 360° mousepad movement',start:'START TEST',
+    rLbl:'Round',phLbl:'Phase',scLbl:'Score',piLbl:'Progress',
+    calTi:'CALIBRATION',calDe:'Place mouse at one edge of your mousepad.<br>Drag to the opposite edge.<br>Press <strong>ESC</strong> to finish.',
+    eyLow:'Testing: LOW',eyHigh:'Testing: HIGH',
+    tagF:'Flick',tagG:'Gridshot',tagT:'Tracking',
+    rrEy:(r)=>`Round ${r} Result`,rrU:(g)=>`${g} SENSITIVITY`,rrCl:(g)=>`${g} Equivalent`,
+    rrAl:'Accuracy',confL:'Confidence',rhL:'History',
+    ftTi:'In-Game Fine Tuning',ftOv:'Overshooting — lower by 0.05–0.1',ftUn:'Undershooting — raise by 0.05–0.1',
+    nextR:'▶ Next Round (More Precise)',done:'✓ Done',
+    pmTi:'Paused',pmSu:'Test suspended',pmR:'Round',pmB:'Best so far',
+    resume:'▶ Resume',early:'✓ End & Show Results',quit:'✕ Quit',
+    sbL:'Last Session',sbR:'Resume',sbC:'Clear',
+    pvC:'VAL eq.',pvCA:'CS2 eq.',}
+};
+let lang=navigator.language.startsWith('tr')?'tr':'en';
+const $=id=>document.getElementById(id);
+function T(k,...a){const v=L[lang][k];return typeof v==='function'?v(...a):(v??k);}
+function setLang(l){lang=l;document.querySelectorAll('.lbtn').forEach(b=>b.classList.toggle('on',b.textContent===l.toUpperCase()));applyI18n();}
+function applyI18n(){
+  $('ms').textContent=T('sub');$('lg').textContent=T('game');
+  $('ld').textContent=T('dpi');$('lf').textContent=T('fov');$('ls').textContent=T('sens');
+  $('lca').textContent=T('calib');$('lst').textContent=T('start');
+  $('hl-r').textContent=T('rLbl');$('hl-ph').textContent=T('phLbl');
+  $('hl-sc').textContent=T('scLbl');$('pi-l').textContent=T('piLbl');
+  $('cal-ti').textContent=T('calTi');$('cal-de').innerHTML=T('calDe');
+  $('rr-al').textContent=T('rrAl');$('conf-l').textContent=T('confL');
+  $('rh-l').textContent=T('rhL');$('ft-ti').textContent=T('ftTi');
+  $('ft-ov').textContent=T('ftOv');$('ft-un').textContent=T('ftUn');
+  $('ln').textContent=T('nextR');$('ld2').textContent=T('done');
+  $('pm-ti').textContent=T('pmTi');$('pm-su').textContent=T('pmSu');
+  $('pml-r').textContent=T('pmR');$('pml-b').textContent=T('pmB');
+  $('lr').textContent=T('resume');$('le').textContent=T('early');$('lq').textContent=T('quit');
+  $('sbl').textContent=T('sbL');$('sbr').textContent=T('sbR');$('sbc').textContent=T('sbC');
+  updPv();
+}
+
+// ─── GAME CFG ───
+const GC={
+  cs2:{name:'CS2',opp:'Valorant',yaw:.022,sensMin:.1,sensMax:10,sensD:2.5,fovD:90,convF:.022/.07,
+       a:'#e8ff47',a2:'#47ffb8',ag:'rgba(232,255,71,.15)',tc:0xff2233,te:0x550008,ti:.6,lc:0xff1122,gc:0x111111},
+  val:{name:'Valorant',opp:'CS2',yaw:.07,sensMin:.1,sensMax:2,sensD:.4,fovD:103,convF:.07/.022,
+       a:'#c084fc',a2:'#818cf8',ag:'rgba(192,132,252,.15)',tc:0xff2233,te:0x550008,ti:.6,lc:0xff1122,gc:0x111122}
+};
+let game='cs2';
+function setGame(g){
+  game=g;const c=GC[g];
+  $('gCS2').classList.toggle('on',g==='cs2');$('gVAL').classList.toggle('on',g==='val');
+  document.body.className=g==='val'?'val':'';
+  const r=document.documentElement.style;
+  r.setProperty('--a',c.a);r.setProperty('--a2',c.a2);r.setProperty('--ag',c.ag);
+  $('if').value=c.fovD;
+  const si=$('is');si.max=c.sensMax;si.step=g==='val'?.01:.05;
+  if(parseFloat(si.value)>c.sensMax)si.value=c.sensD;
+  applyI18n();updPv();if(tM)updTC();
+}
+function gS(){return Math.max(.01,parseFloat($('is').value)||GC[game].sensD);}
+function gD(){return Math.max(100,parseInt($('id').value)||800);}
+function cm360(s,dpi){return(360/(GC[game].yaw*s))/dpi*2.54;}
+function updPv(){
+  const c=GC[game];const s=gS(),d=gD();
+  $('pv-e').textContent=Math.round(s*d);
+  $('pv-c').textContent=cm360(s,d).toFixed(1);
+  $('pv-cv').textContent=(s*c.convF).toFixed(3);
+  $('pv-cl').textContent=game==='cs2'?T('pvC'):T('pvCA');
+}
+
+// ─── STORAGE ───
+const SK='sf_v3';
+function save(d){try{localStorage.setItem(SK,JSON.stringify(d));}catch(e){}}
+function load(){try{const d=localStorage.getItem(SK);return d?JSON.parse(d):null;}catch(e){return null;}}
+function clearSession(){localStorage.removeItem(SK);$('sb').style.display='none';}
+function checkSaved(){
+  const s=load();if(!s||!s.sens)return;
+  $('sb').style.display='block';
+  $('sbv').textContent=s.sens.toFixed(3);
+  const g=s.game||'cs2';
+  $('sbs').textContent=`${GC[g].name} · Round ${s.round||1} · ${((360/(GC[g].yaw*s.sens))/(s.dpi||800)*2.54).toFixed(1)} cm/360°`;
+}
+function resumeSession(){
+  const s=load();if(!s)return;
+  setGame(s.game||'cs2');$('id').value=s.dpi||800;$('is').value=s.sens.toFixed(3);updPv();
+  $('sb').style.display='none';
+  hist=s.hist||[];curRound=s.round||1;lo=s.lo||s.sens*.45;hi=s.hi||s.sens*2.1;
+  startRound();
+}
+
+// ─── THREE.JS ───
+let scene,camera,renderer,tM,tL;
+let tMs=[];
+let tVX=0,tVY=0,tX=0,tY=0,tZ=-8;
+let yaw=0,pitch=0,animF=null,active=false;
+
+function initThree(){
+  if(renderer)return; // prevent double init
+  const c=GC[game];const W=window.innerWidth,H=window.innerHeight;
+  const fov=parseInt($('if').value)||c.fovD;
+  scene=new THREE.Scene();scene.background=new THREE.Color(0x070708);
+  scene.fog=new THREE.FogExp2(0x070708,.018);
+  camera=new THREE.PerspectiveCamera(fov,W/H,.1,200);
+  renderer=new THREE.WebGLRenderer({antialias:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  renderer.setSize(W,H);$('rc').appendChild(renderer.domElement);
+  scene.add(new THREE.AmbientLight(0x222222,.8));
+  const dl=new THREE.DirectionalLight(0xfff0ee,.6);dl.position.set(3,8,4);scene.add(dl);
+  const g=new THREE.GridHelper(120,60,c.gc,c.gc);g.position.y=-2.5;scene.add(g);
+  const wm=new THREE.MeshBasicMaterial({color:0x070708,side:THREE.BackSide});
+  const rm=new THREE.Mesh(new THREE.BoxGeometry(80,40,80),wm);rm.position.set(0,18,0);scene.add(rm);
+  // Red fill lights so targets are vivid from all angles
+  tL=new THREE.PointLight(0xff1122,4,16);scene.add(tL);
+  const fl=new THREE.PointLight(0xff3344,2,18);fl.position.set(-4,2,-6);scene.add(fl);
+  yaw=0;pitch=0;
+  camera.quaternion.setFromEuler(new THREE.Euler(0,0,0,'YXZ'));
+  doRender();
+  window.addEventListener('resize',()=>{if(!renderer)return;renderer.setSize(window.innerWidth,window.innerHeight);camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();});
+}
+
+function mkSph(r=.3){
+  // MeshBasicMaterial ignores scene lighting entirely - guaranteed red no matter what
+  return new THREE.Mesh(new THREE.SphereGeometry(r,20,20),new THREE.MeshBasicMaterial({color:0xff2020}));
+}
+function updTC(){
+  [...(tM?[tM]:[]),...tMs].forEach(m=>{m.material.color.setHex(0xff2020);});
+  if(tL)tL.color.setHex(0xff1122);
+}
+function clrT(){if(tM){scene.remove(tM);tM=null;}tMs.forEach(m=>scene.remove(m));tMs=[];}
+
+const GP=[[-2.1,.65,-8],[0,.65,-8],[2.1,.65,-8],[-2.1,-.3,-8],[0,-.3,-8],[2.1,-.3,-8]];
+
+function setupT(mode){
+  clrT();
+  if(mode==='grid'){
+    GP.forEach(p=>{const m=mkSph(.26);m.position.set(...p);scene.add(m);tMs.push(m);});tM=tMs[0];
+  } else spawnS(false);
+}
+function spawnS(jump){
+  if(tM)scene.remove(tM);tM=mkSph();
+  if(jump){tX=(Math.random()-.5)*6;tY=(Math.random()-.5)*.7+.15;tZ=-8+Math.random()*1.5;}
+  else{tX=(Math.random()-.5)*2.5;tY=(Math.random()-.5)*.5;tZ=-8;}
+  const sp=.01+Math.random()*.007,ang=Math.random()*Math.PI*2;
+  tVX=Math.cos(ang)*sp;tVY=Math.sin(ang)*sp*.5;
+  tM.position.set(tX,tY,tZ);scene.add(tM);
+}
+let _jt=null;
+function schedJ(mode){
+  clearTimeout(_jt);if(mode==='track')return;
+  const d=mode==='flick'?(1500+Math.random()*1100):(800+Math.random()*500);
+  _jt=setTimeout(()=>{if(!active)return;if(mode!=='grid')spawnS(true);schedJ(mode);},d);
+}
+let _tt=0;const rc2=new THREE.Raycaster();let curScore=0,onT=false;
+let cMode='flick';
+
+function doRender(){
+  animF=requestAnimationFrame(doRender);_tt+=.001;
+  if(active&&cMode==='track'&&tM){
+    tX+=tVX;tY+=tVY;
+    const dist=Math.sqrt(tX*tX+tY*tY);
+    if(dist>2.3){tVX*=-.92;tVY*=-.92;tX+=tVX;tY+=tVY;}
+    if(Math.random()<.01){tVX+=(Math.random()-.5)*.004;tVY+=(Math.random()-.5)*.003;}
+    const sp=Math.hypot(tVX,tVY);
+    if(sp>.02){tVX=tVX/sp*.02;tVY=tVY/sp*.02;}if(sp<.007){tVX=tVX/sp*.007;tVY=tVY/sp*.007;}
+    tM.position.set(tX,tY,tZ);
+  }
+  const prim=tM||(tMs[0]??null);if(tL&&prim)tL.position.copy(prim.position);
+  if(active&&cMode==='track'&&document.pointerLockElement===renderer.domElement&&tM){
+    rc2.setFromCamera({x:0,y:0},camera);
+    onT=rc2.intersectObject(tM).length>0;
+    if(onT){curScore+=1.5;$('hv-sc').textContent=Math.floor(curScore);}
+  }
+  renderer.render(scene,camera);
+}
+
+// ─── INPUT ───
+let isCalib=false,calMov=0,curTS=2.5,hits=0,miss=0,isPaused=false;
+
+document.addEventListener('mousemove',e=>{
+  if(isCalib){calMov+=Math.abs(e.movementX);return;}
+  // strict guard: only process when truly locked and game is running
+  if(!renderer||document.pointerLockElement!==renderer.domElement)return;
+  if(!active)return;
+  // clamp movement delta to avoid huge jumps from pointer lock glitches
+  const dx=Math.max(-200,Math.min(200,e.movementX));
+  const dy=Math.max(-200,Math.min(200,e.movementY));
+  const c=GC[game];const scale=c.yaw*curTS*(Math.PI/180);
+  yaw-=dx*scale;
+  pitch-=dy*scale;
+  pitch=Math.max(-Math.PI/2.1,Math.min(Math.PI/2.1,pitch));
+  camera.quaternion.setFromEuler(new THREE.Euler(pitch,yaw,0,'YXZ'));
+});
+document.addEventListener('mousedown',e=>{
+  if(e.button!==0||isCalib)return;
+  if(!active||document.pointerLockElement!==renderer.domElement)return;
+  rc2.setFromCamera({x:0,y:0},camera);
+  const cands=cMode==='grid'?tMs:[tM].filter(Boolean);
+  let h=false;
+  for(const m of cands){
+    if(rc2.intersectObject(m).length>0){
+      curScore+=500;hits++;h=true;
+      if(cMode==='grid'){
+        scene.remove(m);const idx=tMs.indexOf(m);const nm=mkSph(.26);
+        const b=GP[idx%GP.length];nm.position.set(b[0]+(Math.random()-.5)*.25,b[1]+(Math.random()-.5)*.15,b[2]);
+        scene.add(nm);tMs[idx]=nm;
+      } else {spawnS(true);schedJ(cMode);}
+      showFB('+500',true);break;
+    }
+  }
+  if(!h){curScore=Math.max(0,curScore-50);miss++;showFB('✕',false);}
+  $('hv-sc').textContent=Math.floor(curScore);
+});
+
+document.addEventListener('pointerlockchange',()=>{
+  if(isCalib&&document.pointerLockElement===null){finCalib();return;}
+  // Only pause if we lost lock during an active test AND not during an overlay countdown
+  if(!isCalib&&active&&document.pointerLockElement===null&&!isPaused){
+    // Small delay: losing lock during switch-overlay countdown is expected, ignore it
+    setTimeout(()=>{
+      if(!active||isPaused||document.pointerLockElement===renderer.domElement)return;
+      if($('sov').classList.contains('on')||$('cov').classList.contains('on'))return;
+      pauseG();
+    },80);
+  }
+});
+window.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){
+    if(isCalib){document.exitPointerLock();return;}
+    if(active&&!isPaused)pauseG();
+    else if(isPaused)resumeGame();
+  }
+});
+let _fbT;
+function showFB(t,g){const el=$('fb');el.textContent=t;el.style.color=g?'var(--a)':'#ff4455';el.style.opacity='1';clearTimeout(_fbT);_fbT=setTimeout(()=>el.style.opacity='0',280);}
+
+// ─── PAUSE ───
+let _pauseRes=null,_endEarly=false;
+
+function pauseG(){
+  isPaused=true;active=false;clearTimeout(_jt);
+  const best=(lo+hi)/2;
+  $('pmv-r').textContent=curRound;$('pmv-b').textContent=best.toFixed(3);$('pmv-cm').textContent=cm360(best,gD()).toFixed(1);
+  showMenu('pm');
+  save({game,dpi:gD(),sens:best,round:curRound,lo,hi,hist});
+}
+function resumeGame(){
+  if(!isPaused)return;isPaused=false;hideAll();
+  // Wait for pointer lock before re-enabling game
+  function onLock(){
+    if(document.pointerLockElement===renderer.domElement){
+      document.removeEventListener('pointerlockchange',onLock);
+      active=true;schedJ(cMode);
+      if(_pauseRes){_pauseRes();_pauseRes=null;}
+    }
+  }
+  document.addEventListener('pointerlockchange',onLock);
+  renderer.domElement.requestPointerLock();
+  // Fallback: if lock takes too long (e.g. browser blocked), activate anyway after 1s
+  setTimeout(()=>{
+    if(!active){
+      document.removeEventListener('pointerlockchange',onLock);
+      active=true;schedJ(cMode);if(_pauseRes){_pauseRes();_pauseRes=null;}
+    }
+  },1000);
+}
+function endEarly(){
+  isPaused=false;_endEarly=true;
+  // force current test to resolve
+  if(_resT){_resT(Math.floor(curScore));_resT=null;}
+}
+function waitResume(){return new Promise(r=>{_pauseRes=r;});}
+
+// ─── CALIBRATION ───
+function startCalib(){
+  isCalib=true;calMov=0;hideAll();$('cov').classList.add('on');
+  if(!renderer)initThree();setTimeout(()=>renderer.domElement.requestPointerLock(),200);
+}
+function finCalib(){
+  isCalib=false;$('cov').classList.remove('on');showMenu('mm');
+  if(calMov>100){const e=360/(calMov*GC[game].yaw);$('is').value=Math.min(e,GC[game].sensMax).toFixed(4);updPv();}
+  calMov=0;
+}
+
+// ─── TEST ENGINE ───
+const MODES=['flick','grid','track'];
+const HALF_DUR=12;
+let curRound=1,lo=0,hi=0,hist=[],_resT=null;
+
+function startFresh(){clearSession();hist=[];curRound=1;lo=gS()*.45;hi=gS()*2.1;startRound();}
+function startNextRound(){curRound++;hideAll();startRound();}
+
+function startRound(){
+  hideAll();_endEarly=false;
+  if(!renderer)initThree();
+  buildDots(6);
+  $('hud').style.display='block';$('pi').style.display='block';$('bbar').style.display='block';
+  $('pb').style.width='0%';$('hv-r').textContent=curRound;$('pi-v').textContent=`Rd ${curRound}`;
+  yaw=0;pitch=0;camera.quaternion.setFromEuler(new THREE.Euler(0,0,0,'YXZ'));
+  renderer.domElement.requestPointerLock();active=true;
+
+  (async()=>{
+    let totalH=0,totalM=0,totalSc=0;let phIdx=0;
+
+    for(const mode of MODES){
+      if(_endEarly)break;
+      const mid=(lo+hi)/2,sLo=(lo+mid)/2,sHi=(mid+hi)/2;
+      phIdx++;updDots(phIdx);cMode=mode;
+      const scLo=await runH(sLo,'LOW',mode,phIdx);
+      if(_endEarly)break;
+      phIdx++;updDots(phIdx);
+      const scHi=await runH(sHi,'HIGH',mode,phIdx);
+      if(scHi>scLo)lo=mid;else hi=mid;
+      totalSc+=scLo+scHi;totalH+=hits;totalM+=miss;
+    }
+
+    const finalS=(lo+hi)/2;
+    const range=hi-lo,maxR=gS()*1.65;
+    const conf=Math.min(100,Math.round((1-range/maxR)*100));
+    hist.push({round:curRound,sens:finalS,totalSc,totalH,totalM,conf,lo,hi});
+    save({game,dpi:gD(),sens:finalS,round:curRound+1,lo,hi,hist});
+
+    active=false;clearTimeout(_jt);document.exitPointerLock();
+    $('hud').style.display='none';$('pi').style.display='none';$('bbar').style.display='none';
+    showRR(finalS,totalH,totalM,conf);
+  })();
+}
+
+function runH(sens,label,mode,phIdx){
+  return new Promise(resolve=>{
+    _resT=resolve;
+    showSOv(sens,label,mode,()=>{
+      curTS=sens;curScore=0;hits=0;miss=0;onT=false;
+      setupT(mode);schedJ(mode);cMode=mode;
+      const isL=label==='LOW';
+      $('hpill').textContent=T('tag'+['F','G','T'][['flick','grid','track'].indexOf(mode)]);
+      $('hv-ph').textContent=`${phIdx}/6`;
+      $('hv-s').textContent=sens.toFixed(3);$('hv-cm').textContent=cm360(sens,gD()).toFixed(1);$('hv-sc').textContent='0';
+      $('bbar').textContent=`${isL?T('eyLow'):T('eyHigh')} · ESC pause`;
+      if(document.pointerLockElement!==renderer.domElement)renderer.domElement.requestPointerLock();
+
+      const start=Date.now(),dur=HALF_DUR*1000;
+      const tick=setInterval(()=>{
+        if(_endEarly){clearInterval(tick);_resT=null;resolve(Math.floor(curScore));return;}
+        if(isPaused){
+          clearInterval(tick);const pa=Date.now();
+          waitResume().then(()=>{
+            if(_endEarly){_resT=null;resolve(Math.floor(curScore));return;}
+            const rem=Math.max(0,dur-(pa-start));
+            if(rem<=0){_resT=null;resolve(Math.floor(curScore));return;}
+            const rt=setInterval(()=>{
+              if(_endEarly){clearInterval(rt);_resT=null;resolve(Math.floor(curScore));return;}
+              const el=Date.now()-pa;
+              $('pb').style.width=(((pa-start)+el)/dur*100)+'%';
+              if(el>=rem){clearInterval(rt);_resT=null;resolve(Math.floor(curScore));}
+            },50);
+          });return;
+        }
+        const el=Date.now()-start;$('pb').style.width=(el/dur*100)+'%';
+        if(el>=dur){clearInterval(tick);_resT=null;resolve(Math.floor(curScore));}
+      },50);
+    });
+  });
+}
+
+function showSOv(sens,label,mode,cb){
+  const isL=label==='LOW';
+  $('sw-ey').textContent=isL?T('eyLow'):T('eyHigh');
+  $('sw-sn').textContent=sens.toFixed(3);
+  $('sw-tg').textContent=T('tag'+['F','G','T'][['flick','grid','track'].indexOf(mode)]);
+  $('sov').classList.add('on');
+  // release pointer lock during countdown so browser doesn't time out the lock
+  if(document.pointerLockElement)document.exitPointerLock();
+  active=false;clearTimeout(_jt);
+  let n=3;$('sw-cd').textContent=n;
+  const cd=setInterval(()=>{
+    n--;
+    if(n>0){$('sw-cd').textContent=n;}
+    else{
+      clearInterval(cd);
+      $('sov').classList.remove('on');
+      active=true;
+      // re-acquire lock after overlay closes
+      if(renderer&&document.pointerLockElement!==renderer.domElement){
+        renderer.domElement.requestPointerLock();
+      }
+      cb();
+    }
+  },1000);
+}
+
+function buildDots(n){const el=$('idots');el.innerHTML='';for(let i=0;i<n;i++){const d=document.createElement('div');d.className='idot';d.id='dot'+i;el.appendChild(d);}}
+function updDots(act){for(let i=0;i<6;i++){const d=$('dot'+i);if(!d)continue;if(i<act-1)d.className='idot done';else if(i===act-1)d.className='idot active';else d.className='idot';}}
+
+// ─── ROUND RESULT ───
+function showRR(sens,h,m,conf){
+  const c=GC[game];const dpi=gD();
+  $('rr-ey').textContent=T('rrEy',curRound);
+  $('rr-m').textContent=sens.toFixed(3);
+  $('rr-u').textContent=T('rrU',c.name);
+  $('rr-e').textContent=Math.round(sens*dpi);
+  $('rr-cm').textContent=cm360(sens,dpi).toFixed(2);
+  $('rr-a').textContent=h+m>0?Math.round(h/(h+m)*100)+'%':'—';
+  $('rr-al').textContent=T('rrAl');
+  $('rr-cl').textContent=T('rrCl',c.opp);$('rr-cv').textContent=(sens*c.convF).toFixed(3);
+  $('conf-f').style.width=conf+'%';$('conf-p').textContent=conf+'%';
+  $('ft-ov').textContent=T('ftOv');$('ft-un').textContent=T('ftUn');
+
+  const maxSc=Math.max(...hist.map(r=>r.totalSc),1);
+  let html='';
+  hist.forEach(r=>{
+    const w=(r.totalSc/maxSc*100).toFixed(1);
+    const mk=Math.min((r.sens/GC[game].sensMax)*100,97).toFixed(1);
+    html+=`<div class="rh-row"><span class="rh-n">${r.round}</span><div class="rh-bar"><div class="rh-fill" style="width:${w}%"></div><div class="rh-mk" style="left:${mk}%"></div></div><span class="rh-val">${r.sens.toFixed(3)}</span></div>`;
+  });
+  $('rh-rows').innerHTML=html;
+  showMenu('rr');
+}
+
+// ─── MENU HELPERS ───
+const MENUS=['mm','pm','rr'];
+function hideAll(){MENUS.forEach(id=>$(id).style.display='none');}
+function showMenu(id){hideAll();$(id).style.display='block';}
+
+// ─── INIT ───
+applyI18n();setGame('cs2');updPv();checkSaved();
+</script>
+</body>
+</html>

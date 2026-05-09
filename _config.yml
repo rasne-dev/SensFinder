@@ -1,0 +1,17 @@
+title: SensFinder
+description: CS2 & Valorant Mouse Sensitivity Calculator — eDPI, cm/360, cross-game conversion, aim test
+url: "https://rasne-dev.github.io"
+baseurl: "/SensFinder"
+
+# GitHub Pages settings
+theme: null
+plugins: []
+
+# SEO
+author: rasne-dev
+lang: en
+
+# Exclude from build
+exclude:
+  - "*.sh"
+  - "node_modules"
