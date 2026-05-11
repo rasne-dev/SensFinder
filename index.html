@@ -458,16 +458,23 @@ function doRender(){
 // ─── INPUT ───
 let isCalib=false,calMov=0,curTS=2.5,hits=0,miss=0,isPaused=false;
 
+let _skipFrames=0;
+document.addEventListener('pointerlockchange',()=>{
+  if(document.pointerLockElement) _skipFrames=3; // lock alındıktan sonra 3 frame atla
+});
 document.addEventListener('mousemove',e=>{
   if(isCalib){calMov+=Math.abs(e.movementX);return;}
-  // strict guard: only process when truly locked and game is running
   if(!renderer||document.pointerLockElement!==renderer.domElement)return;
   if(!active)return;
-  // clamp movement delta to avoid huge jumps from pointer lock glitches
-  const dx=Math.max(-200,Math.min(200,e.movementX));
-  const dy=Math.max(-200,Math.min(200,e.movementY));
+  // pointer lock yeni alındığında browser büyük sahte delta fırlatır — atla
+  if(_skipFrames>0){_skipFrames--;return;}
+  // hızlı harekette bile makul sınır (100px/frame yeterli)
+  const dx=Math.max(-100,Math.min(100,e.movementX));
+  const dy=Math.max(-100,Math.min(100,e.movementY));
   const c=GC[game];const scale=c.yaw*curTS*(Math.PI/180);
   yaw-=dx*scale;
+  // yaw'ı [-π, π] içinde tut — float birikimi önler
+  yaw=((yaw+Math.PI)%(2*Math.PI)+2*Math.PI)%(2*Math.PI)-Math.PI;
   pitch-=dy*scale;
   pitch=Math.max(-Math.PI/2.1,Math.min(Math.PI/2.1,pitch));
   camera.quaternion.setFromEuler(new THREE.Euler(pitch,yaw,0,'YXZ'));
@@ -495,9 +502,7 @@ document.addEventListener('mousedown',e=>{
 
 document.addEventListener('pointerlockchange',()=>{
   if(isCalib&&document.pointerLockElement===null){finCalib();return;}
-  // Only pause if we lost lock during an active test AND not during an overlay countdown
   if(!isCalib&&active&&document.pointerLockElement===null&&!isPaused){
-    // Small delay: losing lock during switch-overlay countdown is expected, ignore it
     setTimeout(()=>{
       if(!active||isPaused||document.pointerLockElement===renderer.domElement)return;
       if($('sov').classList.contains('on')||$('cov').classList.contains('on'))return;
