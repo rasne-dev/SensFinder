@@ -411,11 +411,30 @@ function updTC(){
 function clrT(){if(tM){scene.remove(tM);tM=null;}tMs.forEach(m=>scene.remove(m));tMs=[];}
 
 const GP=[[-2.1,.65,-8],[0,.65,-8],[2.1,.65,-8],[-2.1,-.3,-8],[0,-.3,-8],[2.1,-.3,-8]];
+let gridActiveIdx=-1,gridLastHitTime=0;
+
+const MAT_IDLE=()=>new THREE.MeshBasicMaterial({color:0x882222});
+const MAT_ACTIVE=()=>new THREE.MeshBasicMaterial({color:0xff2020});
+
+function setGridActive(idx){
+  tMs.forEach((m,i)=>{
+    m.material.color.setHex(i===idx?0xff2020:0x551111);
+  });
+  if(tL)tL.position.copy(tMs[idx].position);
+  gridActiveIdx=idx;
+  gridLastHitTime=Date.now();
+}
 
 function setupT(mode){
-  clrT();
+  clrT();gridActiveIdx=-1;
   if(mode==='grid'){
-    GP.forEach(p=>{const m=mkSph(.26);m.position.set(...p);scene.add(m);tMs.push(m);});tM=tMs[0];
+    GP.forEach(p=>{
+      const m=new THREE.Mesh(new THREE.SphereGeometry(.28,20,20),new THREE.MeshBasicMaterial({color:0x551111}));
+      m.position.set(...p);scene.add(m);tMs.push(m);
+    });
+    // Rastgele başlangıç hedefi
+    const first=Math.floor(Math.random()*6);
+    setGridActive(first);
   } else spawnS(false);
 }
 function spawnS(jump){
@@ -456,7 +475,7 @@ function doRender(){
     if(sp<.018){tVX=tVX/sp*.018;tVY=tVY/sp*.018;}
     tM.position.set(tX,tY,tZ);
   }
-  const prim=tM||(tMs[0]??null);if(tL&&prim)tL.position.copy(prim.position);
+  const prim=tM||(tMs[gridActiveIdx]??tMs[0]??null);if(tL&&prim)tL.position.copy(prim.position);
   if(active&&cMode==='track'&&document.pointerLockElement===renderer.domElement&&tM){
     rc2.setFromCamera({x:0,y:0},camera);
     onT=rc2.intersectObject(tM).length>0;
@@ -511,19 +530,35 @@ document.addEventListener('mousemove',e=>{
 document.addEventListener('mousedown',e=>{
   if(e.button!==0||isCalib)return;
   if(!active||document.pointerLockElement!==renderer.domElement)return;
-  // Tracking modunda tıklama yok — sadece cursor takibi
   if(cMode==='track')return;
   rc2.setFromCamera({x:0,y:0},camera);
-  const cands=cMode==='grid'?tMs:[tM].filter(Boolean);
+
+  if(cMode==='grid'){
+    if(gridActiveIdx<0)return;
+    const activeM=tMs[gridActiveIdx];
+    if(!activeM)return;
+    if(rc2.intersectObject(activeM).length>0){
+      // Hız bonusu: ne kadar hızlı vurursan o kadar puan
+      const elapsed=Date.now()-gridLastHitTime;
+      const speedBonus=Math.max(50,500-Math.floor(elapsed/4)); // 500ms→375, 1000ms→250, 2000ms→50
+      curScore+=speedBonus;hits++;
+      showFB('+'+speedBonus,true);
+      // Bir sonraki hedefi seç (aynı olmasın)
+      let next;do{next=Math.floor(Math.random()*6);}while(next===gridActiveIdx&&tMs.length>1);
+      setGridActive(next);
+    } else {
+      curScore=Math.max(0,curScore-150);miss++;showFB('✕',false);
+    }
+    $('hv-sc').textContent=Math.floor(curScore);
+    return;
+  }
+
+  const cands=[tM].filter(Boolean);
   let h=false;
   for(const m of cands){
     if(rc2.intersectObject(m).length>0){
       curScore+=500;hits++;h=true;
-      if(cMode==='grid'){
-        scene.remove(m);const idx=tMs.indexOf(m);const nm=mkSph(.26);
-        const b=GP[idx%GP.length];nm.position.set(b[0]+(Math.random()-.5)*.25,b[1]+(Math.random()-.5)*.15,b[2]);
-        scene.add(nm);tMs[idx]=nm;
-      } else {spawnS(true);schedJ(cMode);}
+      spawnS(true);schedJ(cMode);
       showFB('+500',true);break;
     }
   }
@@ -603,7 +638,7 @@ const MODES=['flick','grid','track'];
 const HALF_DUR=12;
 let curRound=1,lo=0,hi=0,hist=[],_resT=null;
 
-function startFresh(){clearSession();hist=[];curRound=1;lo=gS()*.45;hi=gS()*2.1;startRound();}
+function startFresh(){clearSession();hist=[];curRound=1;lo=gS()*0.5;hi=gS()*1.5;startRound();}
 function startNextRound(){curRound++;hideAll();startRound();}
 
 function startRound(){
@@ -654,7 +689,7 @@ function startRound(){
 
     const finalS=(lo+hi)/2;
     const range=hi-lo;
-    const startRange=gS()*1.65; // startFresh'teki orijinal aralık
+    const startRange=gS()*1.0; // lo=gS()*0.5, hi=gS()*1.5 → aralık = gS()*1.0
     const conf=Math.max(0,Math.min(100,Math.round((1-range/startRange)*100)));
     hist.push({round:curRound,sens:finalS,totalSc,totalH,totalM,conf,lo,hi});
     save({game,dpi:gD(),sens:finalS,round:curRound+1,lo,hi,hist});
