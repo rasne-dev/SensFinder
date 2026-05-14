@@ -19,8 +19,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
   background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E");opacity:.35;}
 #rc{position:fixed;inset:0;z-index:0;}
-#rc canvas{display:block;width:100%!important;height:100%!important;cursor:none!important;}
-body.ingame{cursor:none!important;}
+#rc canvas{display:block;width:100%!important;height:100%!important;}
 #xh{position:fixed!important;top:50%!important;left:50%!important;transform:translate(-50%,-50%)!important;pointer-events:none!important;z-index:99999!important;width:0!important;height:0!important;}
 .xh-h{position:absolute!important;width:26px!important;height:2px!important;background:#ffffff!important;top:-1px!important;left:-13px!important;outline:1px solid #000!important;box-shadow:0 0 3px #000!important;}
 .xh-v{position:absolute!important;width:2px!important;height:26px!important;background:#ffffff!important;left:-1px!important;top:-13px!important;outline:1px solid #000!important;box-shadow:0 0 3px #000!important;}
@@ -150,7 +149,7 @@ body.ingame{cursor:none!important;}
 </head>
 <body>
 <div id="rc"></div>
-<!-- crosshair JS ile body sonuna ekleniyor -->
+<div id="xh"><div class="xh-h"></div><div class="xh-v"></div><div class="xh-dot"></div></div>
 <div id="pw"><div id="pb"></div></div>
 <div id="fb"></div>
 
@@ -387,11 +386,6 @@ function initThree(){
   renderer=new THREE.WebGLRenderer({antialias:true});
   renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
   renderer.setSize(W,H);$('rc').appendChild(renderer.domElement);
-  // Crosshair'ı canvas'tan SONRA body'e ekle — her zaman üstte
-  const xhEl=document.createElement('div');xhEl.id='xh';
-  xhEl.innerHTML='<div class="xh-h"></div><div class="xh-v"></div><div class="xh-dot"></div>';
-  xhEl.style.display='none';
-  document.body.appendChild(xhEl);
   scene.add(new THREE.AmbientLight(0x222222,.8));
   const dl=new THREE.DirectionalLight(0xfff0ee,.6);dl.position.set(3,8,4);scene.add(dl);
   const g=new THREE.GridHelper(120,60,c.gc,c.gc);g.position.y=-2.5;scene.add(g);
@@ -468,16 +462,17 @@ function doRender(){
   if(active&&cMode==='track'&&tM){
     tX+=tVX;tY+=tVY;
     const dist=Math.sqrt(tX*tX+tY*tY);
+    // Sınır: yön tersine çevir
     if(dist>2.5){
       const nx=tX/dist,ny=tY/dist;
       tVX-=nx*.06;tVY-=ny*.06;
     }
+    // Rastgele yön değişimi (daha sık)
     if(Math.random()<.025){tVX+=(Math.random()-.5)*.018;tVY+=(Math.random()-.5)*.012;}
+    // Hız sınırı: min 0.018, max 0.052 (öncekinin ~2.5x hızı)
     const sp=Math.hypot(tVX,tVY);
     if(sp>.052){tVX=tVX/sp*.052;tVY=tVY/sp*.052;}
     if(sp<.018){tVX=tVX/sp*.018;tVY=tVY/sp*.018;}
-    // Güvenlik: top çok uzaklaşırsa merkeze respawn
-    if(dist>4||isNaN(tX)||isNaN(tY)){tX=0;tY=0;tVX=(Math.random()-.5)*.04;tVY=(Math.random()-.5)*.03;}
     tM.position.set(tX,tY,tZ);
   }
   const prim=tM||(tMs[gridActiveIdx]??tMs[0]??null);if(tL&&prim)tL.position.copy(prim.position);
@@ -526,8 +521,6 @@ document.addEventListener('mousemove',e=>{
   const dy=Math.max(-100,Math.min(100,e.movementY));
   const c=GC[game];const scale=c.yaw*curTS*(Math.PI/180);
   yaw-=dx*scale;
-  // yaw'ı [-π, π] içinde tut — float birikimi önler
-  yaw=((yaw+Math.PI)%(2*Math.PI)+2*Math.PI)%(2*Math.PI)-Math.PI;
   pitch-=dy*scale;
   pitch=Math.max(-Math.PI/2.1,Math.min(Math.PI/2.1,pitch));
   camera.quaternion.setFromEuler(new THREE.Euler(pitch,yaw,0,'YXZ'));
@@ -586,7 +579,6 @@ let _pauseRes=null,_endEarly=false;
 
 function pauseG(){
   isPaused=true;active=false;clearTimeout(_jt);
-  showXH(false);
   const best=(lo+hi)/2;
   $('pmv-r').textContent=curRound;$('pmv-b').textContent=best.toFixed(3);$('pmv-cm').textContent=cm360(best,gD()).toFixed(1);
   showMenu('pm');
@@ -598,7 +590,7 @@ function resumeGame(){
   function onLock(){
     if(document.pointerLockElement===renderer.domElement){
       document.removeEventListener('pointerlockchange',onLock);
-      active=true;schedJ(cMode);showXH(true);
+      active=true;schedJ(cMode);
       if(_pauseRes){_pauseRes();_pauseRes=null;}
     }
   }
@@ -608,7 +600,7 @@ function resumeGame(){
   setTimeout(()=>{
     if(!active){
       document.removeEventListener('pointerlockchange',onLock);
-      active=true;schedJ(cMode);showXH(true);if(_pauseRes){_pauseRes();_pauseRes=null;}
+      active=true;schedJ(cMode);if(_pauseRes){_pauseRes();_pauseRes=null;}
     }
   },1000);
 }
@@ -654,7 +646,7 @@ function startRound(){
   $('hud').style.display='block';$('pi').style.display='block';$('bbar').style.display='block';
   $('pb').style.width='0%';$('hv-r').textContent=curRound;$('pi-v').textContent=`Rd ${curRound}`;
   yaw=0;pitch=0;camera.quaternion.setFromEuler(new THREE.Euler(0,0,0,'YXZ'));
-  renderer.domElement.requestPointerLock();active=true;showXH(true);
+  renderer.domElement.requestPointerLock();active=true;
 
   (async()=>{
     let totalH=0,totalM=0,totalSc=0;let phIdx=0;
@@ -778,7 +770,6 @@ function updDots(act){for(let i=0;i<6;i++){const d=$('dot'+i);if(!d)continue;if(
 
 // ─── ROUND RESULT ───
 function showRR(sens,h,m,conf){
-  showXH(false);
   const c=GC[game];const dpi=gD();
   $('rr-ey').textContent=T('rrEy',curRound);
   $('rr-m').textContent=sens.toFixed(3);
@@ -806,8 +797,7 @@ function showRR(sens,h,m,conf){
 // ─── MENU HELPERS ───
 const MENUS=['mm','pm','rr'];
 function hideAll(){MENUS.forEach(id=>$(id).style.display='none');}
-function showXH(v){const e=$('xh');if(e)e.style.display=v?'block':'none';if(v)document.body.classList.add('ingame');else document.body.classList.remove('ingame');}
-hideAll();$(id).style.display='block';}
+function showMenu(id){hideAll();$(id).style.display='block';}
 
 // ─── INIT ───
 applyI18n();setGame('cs2');updPv();checkSaved();
