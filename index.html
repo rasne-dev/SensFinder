@@ -20,11 +20,13 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
   background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E");opacity:.35;}
 #rc{position:fixed;inset:0;z-index:0;}
 #rc canvas{display:block;width:100%!important;height:100%!important;}
-#xh{position:fixed;top:50%;left:50%;width:0;height:0;pointer-events:none;z-index:999;transform:translate(-50%,-50%);mix-blend-mode:exclusion;}
-#xh::before,#xh::after{content:'';position:absolute;background:#ffffff;}
-#xh::before{width:18px;height:2px;top:-1px;left:-9px;}
-#xh::after{width:2px;height:18px;left:-1px;top:-9px;}
-.xd{position:fixed;top:50%;left:50%;width:3px;height:3px;background:#ffffff;border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:999;mix-blend-mode:exclusion;}
+#xh{position:fixed;top:50%;left:50%;width:0;height:0;pointer-events:none;z-index:999;transform:translate(-50%,-50%);}
+#xh::before,#xh::after{content:'';position:absolute;background:#ffffff;box-shadow:0 0 0 1px rgba(0,0,0,.9),0 0 6px rgba(0,0,0,.6);}
+#xh::before{width:20px;height:2px;top:-1px;left:-10px;}
+#xh::after{width:2px;height:20px;left:-1px;top:-10px;}
+.xd{position:fixed;top:50%;left:50%;width:4px;height:4px;background:#ffffff;border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:999;box-shadow:0 0 0 1px rgba(0,0,0,.9),0 0 6px rgba(0,0,0,.6);}
+#xh.on-target::before,#xh.on-target::after{background:#00ff88;box-shadow:0 0 0 1px rgba(0,0,0,.8),0 0 8px rgba(0,255,136,.6);}
+.xd.on-target{background:#00ff88;box-shadow:0 0 0 1px rgba(0,0,0,.8),0 0 8px rgba(0,255,136,.6);}
 #pw{position:fixed;bottom:0;left:0;right:0;z-index:8;height:2px;background:rgba(255,255,255,.04);}
 #pb{height:100%;background:var(--a);width:0;box-shadow:0 0 8px var(--ag);transition:background .3s;}
 #hud{position:fixed;top:18px;left:18px;z-index:8;background:rgba(7,7,8,.9);border:1px solid var(--b);padding:12px 16px;min-width:178px;display:none;backdrop-filter:blur(12px);}
@@ -422,8 +424,11 @@ function spawnS(jump){
   if(tM)scene.remove(tM);tM=mkSph();
   if(jump){tX=(Math.random()-.5)*6;tY=(Math.random()-.5)*.7+.15;tZ=-8+Math.random()*1.5;}
   else{tX=(Math.random()-.5)*2.5;tY=(Math.random()-.5)*.5;tZ=-8;}
-  const sp=.01+Math.random()*.007,ang=Math.random()*Math.PI*2;
-  tVX=Math.cos(ang)*sp;tVY=Math.sin(ang)*sp*.5;
+  const isTrack=cMode==='track';
+  // Tracking hızı flick/grid'den ~2.5x fazla
+  const spBase=isTrack?(.025+Math.random()*.02):(.01+Math.random()*.007);
+  const ang=Math.random()*Math.PI*2;
+  tVX=Math.cos(ang)*spBase;tVY=Math.sin(ang)*spBase*.7;
   tM.position.set(tX,tY,tZ);scene.add(tM);
 }
 let _jt=null;
@@ -440,17 +445,35 @@ function doRender(){
   if(active&&cMode==='track'&&tM){
     tX+=tVX;tY+=tVY;
     const dist=Math.sqrt(tX*tX+tY*tY);
-    if(dist>2.3){tVX*=-.92;tVY*=-.92;tX+=tVX;tY+=tVY;}
-    if(Math.random()<.01){tVX+=(Math.random()-.5)*.004;tVY+=(Math.random()-.5)*.003;}
+    // Sınır: yön tersine çevir
+    if(dist>2.5){
+      const nx=tX/dist,ny=tY/dist;
+      tVX-=nx*.06;tVY-=ny*.06;
+    }
+    // Rastgele yön değişimi (daha sık)
+    if(Math.random()<.025){tVX+=(Math.random()-.5)*.018;tVY+=(Math.random()-.5)*.012;}
+    // Hız sınırı: min 0.018, max 0.052 (öncekinin ~2.5x hızı)
     const sp=Math.hypot(tVX,tVY);
-    if(sp>.02){tVX=tVX/sp*.02;tVY=tVY/sp*.02;}if(sp<.007){tVX=tVX/sp*.007;tVY=tVY/sp*.007;}
+    if(sp>.052){tVX=tVX/sp*.052;tVY=tVY/sp*.052;}
+    if(sp<.018){tVX=tVX/sp*.018;tVY=tVY/sp*.018;}
     tM.position.set(tX,tY,tZ);
   }
   const prim=tM||(tMs[0]??null);if(tL&&prim)tL.position.copy(prim.position);
   if(active&&cMode==='track'&&document.pointerLockElement===renderer.domElement&&tM){
     rc2.setFromCamera({x:0,y:0},camera);
     onT=rc2.intersectObject(tM).length>0;
-    if(onT){curScore+=1.5;$('hv-sc').textContent=Math.floor(curScore);}
+    // Crosshair rengi: hedef üzerindeyken yeşil
+    const xhEl=$('xh');const xdEl=document.querySelector('.xd');
+    if(onT){
+      curScore+=2;$('hv-sc').textContent=Math.floor(curScore);
+      xhEl.classList.add('on-target');xdEl.classList.add('on-target');
+    } else {
+      xhEl.classList.remove('on-target');xdEl.classList.remove('on-target');
+    }
+  } else if(cMode!=='track'){
+    // Tracking değilse on-target sınıfını temizle
+    const xhEl=$('xh');const xdEl=document.querySelector('.xd');
+    if(xhEl)xhEl.classList.remove('on-target');if(xdEl)xdEl.classList.remove('on-target');
   }
   renderer.render(scene,camera);
 }
@@ -482,6 +505,8 @@ document.addEventListener('mousemove',e=>{
 document.addEventListener('mousedown',e=>{
   if(e.button!==0||isCalib)return;
   if(!active||document.pointerLockElement!==renderer.domElement)return;
+  // Tracking modunda tıklama yok — sadece cursor takibi
+  if(cMode==='track')return;
   rc2.setFromCamera({x:0,y:0},camera);
   const cands=cMode==='grid'?tMs:[tM].filter(Boolean);
   let h=false;
@@ -605,7 +630,26 @@ function startRound(){
       if(_endEarly)break;
       phIdx++;updDots(phIdx);
       const scHi=await runH(sHi,'HIGH',mode,phIdx);
-      if(scHi>scLo)lo=mid;else hi=mid;
+
+      // Ağırlıklı binary search:
+      // Fark büyükse (ör. 800 vs 200) güçlü kaydır.
+      // Fark küçükse (ör. 510 vs 490) küçük adım at.
+      const total=scLo+scHi;
+      if(total>0){
+        const hiRatio=scHi/total; // 0..1, 0.5=eşit
+        const margin=Math.abs(hiRatio-0.5)*2; // 0=eşit, 1=tek taraflı
+        // Adım büyüklüğü: min %20, max %90 (range'in yarısının)
+        const step=(hi-lo)*0.5*(0.2+margin*0.7);
+        if(hiRatio>0.5){lo=Math.min(lo+step,hi-(hi-lo)*0.04);}
+        else{hi=Math.max(hi-step,lo+(hi-lo)*0.04);}
+      } else {
+        // İkisi de 0 — ortaya sabitle
+        if(scHi>=scLo)lo=mid;else hi=mid;
+      }
+      // Sınır dışına çıkmasın
+      lo=Math.max(lo,GC[game].sensMin);
+      hi=Math.min(hi,GC[game].sensMax);
+
       totalSc+=scLo+scHi;totalH+=hits;totalM+=miss;
     }
 
@@ -628,7 +672,11 @@ function runH(sens,label,mode,phIdx){
       curTS=sens;curScore=0;hits=0;miss=0;onT=false;
       setupT(mode);schedJ(mode);cMode=mode;
       const isL=label==='LOW';
-      $('hpill').textContent=T('tag'+['F','G','T'][['flick','grid','track'].indexOf(mode)]);
+      const modeIdx=['flick','grid','track'].indexOf(mode);
+      $('hpill').textContent=T('tag'+['F','G','T'][modeIdx]);
+      // Tracking modunda HUD'da farklı açıklama
+      if(mode==='track'){$('hl-sc').textContent=lang==='tr'?'Takip Puanı':'Track Score';}
+      else{$('hl-sc').textContent=T('scLbl');}
       $('hv-ph').textContent=`${phIdx}/6`;
       $('hv-s').textContent=sens.toFixed(3);$('hv-cm').textContent=cm360(sens,gD()).toFixed(1);$('hv-sc').textContent='0';
       $('bbar').textContent=`${isL?T('eyLow'):T('eyHigh')} · ESC pause`;
