@@ -20,13 +20,11 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
   background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E");opacity:.35;}
 #rc{position:fixed;inset:0;z-index:0;}
 #rc canvas{display:block;width:100%!important;height:100%!important;}
-#xh{position:fixed;top:50%;left:50%;width:0;height:0;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);}
-#xh::before,#xh::after{content:'';position:absolute;background:#fff;filter:drop-shadow(0 0 2px #000) drop-shadow(0 0 1px #000);}
-#xh::before{width:22px;height:2px;top:-1px;left:-11px;}
-#xh::after{width:2px;height:22px;left:-1px;top:-11px;}
-.xd{position:fixed;top:50%;left:50%;width:4px;height:4px;background:#fff;border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:9999;filter:drop-shadow(0 0 2px #000);}
-#xh.on-target::before,#xh.on-target::after{background:#00ff88;filter:drop-shadow(0 0 3px #00ff88);}
-.xd.on-target{background:#00ff88;filter:drop-shadow(0 0 3px #00ff88);}
+#xh{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:9999;width:0;height:0;}
+.xh-h{position:absolute;width:24px;height:2px;background:#fff;top:-1px;left:-12px;box-shadow:0 0 0 1px #000,0 0 4px #000;}
+.xh-v{position:absolute;width:2px;height:24px;background:#fff;left:-1px;top:-12px;box-shadow:0 0 0 1px #000,0 0 4px #000;}
+.xh-dot{position:absolute;width:4px;height:4px;background:#fff;border-radius:50%;top:-2px;left:-2px;box-shadow:0 0 0 1px #000;}
+#xh.on-target .xh-h,#xh.on-target .xh-v,#xh.on-target .xh-dot{background:#00ff88;box-shadow:0 0 6px #00ff88;}
 #pw{position:fixed;bottom:0;left:0;right:0;z-index:8;height:2px;background:rgba(255,255,255,.04);}
 #pb{height:100%;background:var(--a);width:0;box-shadow:0 0 8px var(--ag);transition:background .3s;}
 #hud{position:fixed;top:18px;left:18px;z-index:8;background:rgba(7,7,8,.9);border:1px solid var(--b);padding:12px 16px;min-width:178px;display:none;backdrop-filter:blur(12px);}
@@ -151,7 +149,7 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
 </head>
 <body>
 <div id="rc"></div>
-<div id="xh"></div><div class="xd"></div>
+<div id="xh"><div class="xh-h"></div><div class="xh-v"></div><div class="xh-dot"></div></div>
 <div id="pw"><div id="pb"></div></div>
 <div id="fb"></div>
 
@@ -202,7 +200,7 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
   <div class="t2"><button class="tab on" id="gCS2" onclick="setGame('cs2')">CS2</button><button class="tab" id="gVAL" onclick="setGame('val')">VALORANT</button></div>
   <div class="g2">
     <div class="fg"><label class="flbl" id="ld">Mouse DPI</label><input class="fi" type="number" id="id" value="800" min="100" max="32000" step="50" oninput="updPv()"></div>
-    <div class="fg"><label class="flbl" id="lf">FOV</label><input class="fi" type="number" id="if" value="90" min="60" max="120"></div>
+    <div class="fg"><label class="flbl" id="lf">FOV</label><input class="fi" type="number" id="if" value="90" min="60" max="120" oninput="if(camera){camera.fov=Math.max(60,Math.min(120,parseInt(this.value)||90));camera.updateProjectionMatrix();}"></div>
   </div>
   <div class="sg">
     <label class="flbl" id="ls">Current Sensitivity</label>
@@ -441,7 +439,7 @@ let _tt=0;const rc2=new THREE.Raycaster();let curScore=0,onT=false;
 let cMode='flick';
 
 function doRender(){
-  animF=requestAnimationFrame(doRender);_tt+=.001;
+  animF=requestAnimationFrame(doRender);
   if(active&&cMode==='track'&&tM){
     tX+=tVX;tY+=tVY;
     const dist=Math.sqrt(tX*tX+tY*tY);
@@ -463,17 +461,16 @@ function doRender(){
     rc2.setFromCamera({x:0,y:0},camera);
     onT=rc2.intersectObject(tM).length>0;
     // Crosshair rengi: hedef üzerindeyken yeşil
-    const xhEl=$('xh');const xdEl=document.querySelector('.xd');
+    const xhEl=$('xh');
     if(onT){
       curScore+=2;$('hv-sc').textContent=Math.floor(curScore);
-      xhEl.classList.add('on-target');xdEl.classList.add('on-target');
+      xhEl.classList.add('on-target');
     } else {
-      xhEl.classList.remove('on-target');xdEl.classList.remove('on-target');
+      xhEl.classList.remove('on-target');
     }
   } else if(cMode!=='track'){
-    // Tracking değilse on-target sınıfını temizle
-    const xhEl=$('xh');const xdEl=document.querySelector('.xd');
-    if(xhEl)xhEl.classList.remove('on-target');if(xdEl)xdEl.classList.remove('on-target');
+    const xhEl=$('xh');
+    if(xhEl)xhEl.classList.remove('on-target');
   }
   renderer.render(scene,camera);
 }
@@ -483,7 +480,16 @@ let isCalib=false,calMov=0,curTS=2.5,hits=0,miss=0,isPaused=false;
 
 let _skipFrames=0;
 document.addEventListener('pointerlockchange',()=>{
-  if(document.pointerLockElement) _skipFrames=3; // lock alındıktan sonra 3 frame atla
+  if(document.pointerLockElement){_skipFrames=3;return;}
+  // Lock kayboldu
+  if(isCalib){finCalib();return;}
+  if(!isCalib&&active&&!isPaused){
+    setTimeout(()=>{
+      if(!active||isPaused||document.pointerLockElement===renderer.domElement)return;
+      if($('sov').classList.contains('on')||$('cov').classList.contains('on'))return;
+      pauseG();
+    },80);
+  }
 });
 document.addEventListener('mousemove',e=>{
   if(isCalib){calMov+=Math.abs(e.movementX);return;}
@@ -525,16 +531,6 @@ document.addEventListener('mousedown',e=>{
   $('hv-sc').textContent=Math.floor(curScore);
 });
 
-document.addEventListener('pointerlockchange',()=>{
-  if(isCalib&&document.pointerLockElement===null){finCalib();return;}
-  if(!isCalib&&active&&document.pointerLockElement===null&&!isPaused){
-    setTimeout(()=>{
-      if(!active||isPaused||document.pointerLockElement===renderer.domElement)return;
-      if($('sov').classList.contains('on')||$('cov').classList.contains('on'))return;
-      pauseG();
-    },80);
-  }
-});
 window.addEventListener('keydown',e=>{
   if(e.key==='Escape'){
     if(isCalib){document.exitPointerLock();return;}
@@ -627,9 +623,12 @@ function startRound(){
       const mid=(lo+hi)/2,sLo=(lo+mid)/2,sHi=(mid+hi)/2;
       phIdx++;updDots(phIdx);cMode=mode;
       const scLo=await runH(sLo,'LOW',mode,phIdx);
+      const loH=hits,loM=miss;
       if(_endEarly)break;
       phIdx++;updDots(phIdx);
       const scHi=await runH(sHi,'HIGH',mode,phIdx);
+      // Hits/miss: tracking tıklamasız olduğu için sadece flick/grid say
+      if(mode!=='track'){totalH+=loH+hits;totalM+=loM+miss;}
 
       // Ağırlıklı binary search:
       // Fark büyükse (ör. 800 vs 200) güçlü kaydır.
@@ -650,12 +649,13 @@ function startRound(){
       lo=Math.max(lo,GC[game].sensMin);
       hi=Math.min(hi,GC[game].sensMax);
 
-      totalSc+=scLo+scHi;totalH+=hits;totalM+=miss;
+      totalSc+=scLo+scHi;
     }
 
     const finalS=(lo+hi)/2;
-    const range=hi-lo,maxR=gS()*1.65;
-    const conf=Math.min(100,Math.round((1-range/maxR)*100));
+    const range=hi-lo;
+    const startRange=gS()*1.65; // startFresh'teki orijinal aralık
+    const conf=Math.max(0,Math.min(100,Math.round((1-range/startRange)*100)));
     hist.push({round:curRound,sens:finalS,totalSc,totalH,totalM,conf,lo,hi});
     save({game,dpi:gD(),sens:finalS,round:curRound+1,lo,hi,hist});
 
@@ -670,7 +670,7 @@ function runH(sens,label,mode,phIdx){
     _resT=resolve;
     showSOv(sens,label,mode,()=>{
       curTS=sens;curScore=0;hits=0;miss=0;onT=false;
-      setupT(mode);schedJ(mode);cMode=mode;
+      cMode=mode;setupT(mode);schedJ(mode);
       const isL=label==='LOW';
       const modeIdx=['flick','grid','track'].indexOf(mode);
       $('hpill').textContent=T('tag'+['F','G','T'][modeIdx]);
@@ -743,6 +743,7 @@ function showRR(sens,h,m,conf){
   $('rr-u').textContent=T('rrU',c.name);
   $('rr-e').textContent=Math.round(sens*dpi);
   $('rr-cm').textContent=cm360(sens,dpi).toFixed(2);
+  // Accuracy: flick+grid için isabet%, tracking için — göster
   $('rr-a').textContent=h+m>0?Math.round(h/(h+m)*100)+'%':'—';
   $('rr-al').textContent=T('rrAl');
   $('rr-cl').textContent=T('rrCl',c.opp);$('rr-cv').textContent=(sens*c.convF).toFixed(3);
