@@ -116,6 +116,13 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
 .rh-fill{position:absolute;top:0;left:0;bottom:0;background:rgba(232,255,71,.15);}
 .rh-mk{position:absolute;top:1px;bottom:1px;width:2px;background:var(--a);}
 .rh-val{font-family:var(--mono);font-size:9px;color:var(--a);min-width:42px;text-align:right;}
+/* per-mode breakdown */
+.mb-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
+.mb-tag{font-family:var(--mono);font-size:7px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.3);min-width:44px;}
+.mb-bar{flex:1;height:6px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.06);position:relative;overflow:hidden;}
+.mb-fill{position:absolute;top:0;left:0;bottom:0;background:var(--a);opacity:.55;transition:width .7s cubic-bezier(.16,1,.3,1);}
+.mb-val{font-family:var(--mono);font-size:9px;color:var(--a);min-width:38px;text-align:right;}
+.mb-conf{font-family:var(--mono);font-size:7px;color:rgba(255,255,255,.22);min-width:28px;text-align:right;}
 .ft-box{border:1px solid rgba(255,255,255,.07);padding:13px;margin-bottom:13px;background:rgba(255,255,255,.02);}
 .ft-ti{font-family:var(--mono);font-size:7px;letter-spacing:.18em;color:var(--a);text-transform:uppercase;display:block;margin-bottom:9px;transition:color .3s;}
 .ft-it{display:flex;gap:8px;margin-bottom:5px;font-size:11px;line-height:1.6;color:rgba(255,255,255,.4);}
@@ -253,6 +260,11 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
     <div class="conf-lbl"><span id="conf-l">Confidence</span><span class="conf-pct" id="conf-p">—</span></div>
     <div class="conf-tr"><div class="conf-fi" id="conf-f"></div></div>
   </div>
+  <!-- Per-mode breakdown (Oblivity style) -->
+  <div id="mod-breakdown" style="margin-bottom:13px;">
+    <div class="slbl" id="mb-l">Per Mode</div>
+    <div id="mb-rows"></div>
+  </div>
   <div style="margin-bottom:13px;"><div class="slbl" id="rh-l">History</div><div id="rh-rows"></div></div>
   <div class="ft-box">
     <span class="ft-ti" id="ft-ti">In-Game Fine Tuning</span>
@@ -274,7 +286,7 @@ const L={
     eyLow:'Test: DÜŞÜK',eyHigh:'Test: YÜKSEK',
     tagF:'Flick',tagG:'Gridshot',tagT:'Takip',
     rrEy:(r)=>`Tur ${r} Sonucu`,rrU:(g)=>`${g} HASSASİYETİ`,rrCl:(g)=>`${g} Eşdeğeri`,
-    rrAl:'İsabet',confL:'Güven',rhL:'Geçmiş',
+    rrAl:'İsabet',confL:'Güven',rhL:'Geçmiş',perMode:'Mod Bazlı',
     ftTi:'Oyun İçi İnce Ayar',ftOv:'Hedefi aşıyorsan (overshooting) — 0.05–0.1 azalt',ftUn:'Hedefe yetişemiyorsan — 0.05–0.1 artır',
     nextR:'▶ Sonraki Tur (Daha Hassas)',done:'✓ Tamamlandı',
     pmTi:'Durakladı',pmSu:'Test askıya alındı',pmR:'Tur',pmB:'En iyi şu ana kadar',
@@ -288,7 +300,7 @@ const L={
     eyLow:'Testing: LOW',eyHigh:'Testing: HIGH',
     tagF:'Flick',tagG:'Gridshot',tagT:'Tracking',
     rrEy:(r)=>`Round ${r} Result`,rrU:(g)=>`${g} SENSITIVITY`,rrCl:(g)=>`${g} Equivalent`,
-    rrAl:'Accuracy',confL:'Confidence',rhL:'History',
+    rrAl:'Accuracy',confL:'Confidence',rhL:'History',perMode:'Per Mode',
     ftTi:'In-Game Fine Tuning',ftOv:'Overshooting — lower by 0.05–0.1',ftUn:'Undershooting — raise by 0.05–0.1',
     nextR:'▶ Next Round (More Precise)',done:'✓ Done',
     pmTi:'Paused',pmSu:'Test suspended',pmR:'Round',pmB:'Best so far',
@@ -310,7 +322,7 @@ function applyI18n(){
   $('hl-sc').textContent=T('scLbl');$('pi-l').textContent=T('piLbl');
   $('cal-ti').textContent=T('calTi');$('cal-de').innerHTML=T('calDe');
   $('rr-al').textContent=T('rrAl');$('conf-l').textContent=T('confL');
-  $('rh-l').textContent=T('rhL');$('ft-ti').textContent=T('ftTi');
+  $('rh-l').textContent=T('rhL');$('mb-l').textContent=T('perMode');$('ft-ti').textContent=T('ftTi');
   $('ft-ov').textContent=T('ftOv');$('ft-un').textContent=T('ftUn');
   $('ln').textContent=T('nextR');$('ld2').textContent=T('done');
   $('pm-ti').textContent=T('pmTi');$('pm-su').textContent=T('pmSu');
@@ -366,7 +378,17 @@ function resumeSession(){
   const s=load();if(!s)return;
   setGame(s.game||'cs2');$('id').value=s.dpi||800;$('is').value=s.sens.toFixed(3);updPv();
   $('sb').style.display='none';
-  hist=s.hist||[];curRound=s.round||1;lo=s.lo||s.sens*.45;hi=s.hi||s.sens*2.1;
+  hist=s.hist||[];curRound=s.round||1;
+  // Per-mod state restore (yeni format) ya da eski format'tan reconstruct
+  if(s.modLo&&s.modHi){
+    modLo=s.modLo;modHi=s.modHi;
+    MODES.forEach(m=>{modInitRange[m]=modHi[m]-modLo[m];});
+    lo=MODES.reduce((a,m)=>a+modLo[m],0)/MODES.length;
+    hi=MODES.reduce((a,m)=>a+modHi[m],0)/MODES.length;
+  } else {
+    lo=s.lo||s.sens*.45;hi=s.hi||s.sens*2.1;
+    _initModRanges((lo+hi)/2);
+  }
   startRound();
 }
 
@@ -545,7 +567,7 @@ document.addEventListener('mousedown',e=>{
       let next;do{next=Math.floor(Math.random()*6);}while(next===gridActiveIdx&&tMs.length>1);
       setGridActive(next);
     } else {
-      curScore=Math.max(0,curScore-150);miss++;showFB('✕',false);
+      curScore=Math.max(0,curScore-200);miss++;showFB('✕',false);
     }
     $('hv-sc').textContent=Math.floor(curScore);
     return;
@@ -560,7 +582,7 @@ document.addEventListener('mousedown',e=>{
       showFB('+500',true);break;
     }
   }
-  if(!h){curScore=Math.max(0,curScore-50);miss++;showFB('✕',false);}
+  if(!h){curScore=Math.max(0,curScore-125);miss++;showFB('✕',false);}
   $('hv-sc').textContent=Math.floor(curScore);
 });
 
@@ -579,10 +601,17 @@ let _pauseRes=null,_endEarly=false;
 
 function pauseG(){
   isPaused=true;active=false;clearTimeout(_jt);
-  const best=(lo+hi)/2;
+  // Ağırlıklı ensemble tahmini (mevcut state)
+  let wSum=0,best=0;
+  MODES.forEach(m=>{
+    if(!modLo[m]||!modHi[m])return;
+    best+=(modLo[m]+modHi[m])/2*MODE_W[m];wSum+=MODE_W[m];
+  });
+  if(wSum<0.01)best=(lo+hi)/2;else best=best/wSum;
+  best=Math.max(GC[game].sensMin,Math.min(GC[game].sensMax,best));
   $('pmv-r').textContent=curRound;$('pmv-b').textContent=best.toFixed(3);$('pmv-cm').textContent=cm360(best,gD()).toFixed(1);
   showMenu('pm');
-  save({game,dpi:gD(),sens:best,round:curRound,lo,hi,hist});
+  save({game,dpi:gD(),sens:best,round:curRound,lo,hi,hist,modLo,modHi});
 }
 function resumeGame(){
   if(!isPaused)return;isPaused=false;hideAll();
@@ -632,11 +661,44 @@ function finCalib(){
 }
 
 // ─── TEST ENGINE ───
+// Her mod bağımsız binary search tutar; sonuçlar ağırlıklı ortalama ile birleşir.
+// Flick ağırlık: 0.35 | Grid: 0.35 | Track: 0.30
+// Normalize skor: her modun ham skoru 0–1 aralığına çekilir (kendi teorik max'ına göre),
+// bu sayede 3 farklı scoring sistemi birbirini ezmez.
 const MODES=['flick','grid','track'];
+const MODE_W={flick:.35,grid:.35,track:.30};   // ağırlıklar toplamı = 1.00
 const HALF_DUR=12;
-let curRound=1,lo=0,hi=0,hist=[],_resT=null;
 
-function startFresh(){clearSession();hist=[];curRound=1;lo=gS()*0.5;hi=gS()*1.5;startRound();}
+// Per-mod binary search state — her round başında startFresh/resumeSession tarafından set edilir
+let modLo={},modHi={},modInitRange={};
+let curRound=1,hist=[],_resT=null;
+// Eski lo/hi — geriye dönük compat (pause/save)
+let lo=0,hi=0;
+
+function _initModRanges(centerSens){
+  const c=GC[game];
+  // Flick & grid: geniş arama aralığı (±50%)
+  // Track: biraz daha dar — tracking çok yüksek sens'e toleranslı
+  modLo.flick=Math.max(c.sensMin,centerSens*.50);
+  modHi.flick=Math.min(c.sensMax,centerSens*1.50);
+  modLo.grid =Math.max(c.sensMin,centerSens*.50);
+  modHi.grid =Math.min(c.sensMax,centerSens*1.50);
+  modLo.track=Math.max(c.sensMin,centerSens*.55);
+  modHi.track=Math.min(c.sensMax,centerSens*1.45);
+  MODES.forEach(m=>{modInitRange[m]=modHi[m]-modLo[m];});
+  // Eski compat
+  lo=Math.max(c.sensMin,centerSens*.50);
+  hi=Math.min(c.sensMax,centerSens*1.50);
+}
+
+// Normalize skor: ham skoru 0–1'e çevir. Teorik max'lar:
+// Flick: 60fps * 12s = 720 click fırsatı; gerçekçi max ~20 hit → 10000 puan; cap 12000
+// Grid : benzer → cap 15000
+// Track: 60fps * 12s * 2 = 1440 teorik max → cap 1440
+const SCORE_CAP={flick:12000,grid:15000,track:1440};
+function normScore(raw,mode){return Math.min(1,Math.max(0,raw/SCORE_CAP[mode]));}
+
+function startFresh(){clearSession();hist=[];curRound=1;_initModRanges(gS());startRound();}
 function startNextRound(){curRound++;hideAll();startRound();}
 
 function startRound(){
@@ -645,7 +707,7 @@ function startRound(){
   buildDots(6);
   $('hud').style.display='block';$('pi').style.display='block';$('bbar').style.display='block';
   $('pb').style.width='0%';$('hv-r').textContent=curRound;$('pi-v').textContent=`Rd ${curRound}`;
-  // yaw/pitch sıfırlanmıyor — kamera neredeyse orada kalır, ani zıplama olmaz
+  // yaw/pitch sıfırlanmıyor — kamera nerede kalırsa orada, ani zıplama yok
   camera.quaternion.setFromEuler(new THREE.Euler(pitch,yaw,0,'YXZ'));
   renderer.domElement.requestPointerLock();active=true;
 
@@ -654,44 +716,74 @@ function startRound(){
 
     for(const mode of MODES){
       if(_endEarly)break;
-      const mid=(lo+hi)/2,sLo=(lo+mid)/2,sHi=(mid+hi)/2;
+
+      // Bu mod için kendi arama aralığı
+      const mlo=modLo[mode],mhi=modHi[mode];
+      const mid=(mlo+mhi)/2;
+      const sLo=(mlo+mid)/2;   // alt çeyrek noktası
+      const sHi=(mid+mhi)/2;   // üst çeyrek noktası
+
       phIdx++;updDots(phIdx);cMode=mode;
-      const scLo=await runH(sLo,'LOW',mode,phIdx);
+      const rawLo=await runH(sLo,'LOW',mode,phIdx);
       const loH=hits,loM=miss;
       if(_endEarly)break;
       phIdx++;updDots(phIdx);
-      const scHi=await runH(sHi,'HIGH',mode,phIdx);
-      // Hits/miss: tracking tıklamasız olduğu için sadece flick/grid say
+      const rawHi=await runH(sHi,'HIGH',mode,phIdx);
       if(mode!=='track'){totalH+=loH+hits;totalM+=loM+miss;}
 
-      // Ağırlıklı binary search:
-      // Fark büyükse (ör. 800 vs 200) güçlü kaydır.
-      // Fark küçükse (ör. 510 vs 490) küçük adım at.
-      const total=scLo+scHi;
-      if(total>0){
-        const hiRatio=scHi/total; // 0..1, 0.5=eşit
-        const margin=Math.abs(hiRatio-0.5)*2; // 0=eşit, 1=tek taraflı
-        // Adım büyüklüğü: min %20, max %90 (range'in yarısının)
-        const step=(hi-lo)*0.5*(0.2+margin*0.7);
-        if(hiRatio>0.5){lo=Math.min(lo+step,hi-(hi-lo)*0.04);}
-        else{hi=Math.max(hi-step,lo+(hi-lo)*0.04);}
-      } else {
-        // İkisi de 0 — ortaya sabitle
-        if(scHi>=scLo)lo=mid;else hi=mid;
-      }
-      // Sınır dışına çıkmasın
-      lo=Math.max(lo,GC[game].sensMin);
-      hi=Math.min(hi,GC[game].sensMax);
+      // Normalize — her modun kendi cap'ine göre 0–1 skor
+      const nLo=normScore(rawLo,mode);
+      const nHi=normScore(rawHi,mode);
+      const total=nLo+nHi;
 
-      totalSc+=scLo+scHi;
+      if(total>0){
+        const hiRatio=nHi/total;          // 0..1; 0.5 = eşit performans
+        const margin=Math.abs(hiRatio-0.5)*2; // 0=eşit, 1=tek taraflı
+        // Adım: düşük farkta küçük güncelleme, yüksek farkta büyük güncelleme
+        const span=modHi[mode]-modLo[mode];
+        const step=span*0.5*(0.15+margin*0.75);
+        if(hiRatio>0.5){
+          modLo[mode]=Math.min(modLo[mode]+step, modHi[mode]-span*0.03);
+        } else {
+          modHi[mode]=Math.max(modHi[mode]-step, modLo[mode]+span*0.03);
+        }
+      } else {
+        // İkisi de 0 — ortaya sabitle (kullanıcı hiç isabet ettirmediyse sens muhtemelen yanlış)
+        if(nHi>=nLo) modLo[mode]=mid; else modHi[mode]=mid;
+      }
+      // Oyun sınırları dışına çıkmasın
+      modLo[mode]=Math.max(modLo[mode],GC[game].sensMin);
+      modHi[mode]=Math.min(modHi[mode],GC[game].sensMax);
+
+      totalSc+=rawLo+rawHi;
     }
 
-    const finalS=(lo+hi)/2;
-    const range=hi-lo;
-    const startRange=gS()*1.0; // lo=gS()*0.5, hi=gS()*1.5 → aralık = gS()*1.0
-    const conf=Math.max(0,Math.min(100,Math.round((1-range/startRange)*100)));
-    hist.push({round:curRound,sens:finalS,totalSc,totalH,totalM,conf,lo,hi});
-    save({game,dpi:gD(),sens:finalS,round:curRound+1,lo,hi,hist});
+    // Ağırlıklı ensemble: her modun optimal tahmini (merkez nokta) kendi ağırlığıyla toplanır
+    let wSum=0,finalS=0;
+    MODES.forEach(m=>{
+      if(_endEarly)return; // endEarly durumunda mevcut state'i kullan
+      const modMid=(modLo[m]+modHi[m])/2;
+      finalS+=modMid*MODE_W[m];
+      wSum+=MODE_W[m];
+    });
+    if(wSum<0.99){
+      // Bazı modlar atlandıysa (endEarly) global lo/hi orta noktasını kullan
+      finalS=finalS/wSum||((lo+hi)/2);
+    }
+    finalS=Math.max(GC[game].sensMin,Math.min(GC[game].sensMax,finalS));
+
+    // Confidence: her modun daralmış aralığının başlangıç aralığına oranı
+    // conf = 1 - (avgCurrentRange / avgInitRange)
+    const avgCur=MODES.reduce((s,m)=>(s+(modHi[m]-modLo[m])),0)/MODES.length;
+    const avgInit=MODES.reduce((s,m)=>(s+modInitRange[m]),0)/MODES.length;
+    const conf=Math.max(0,Math.min(100,Math.round((1-avgCur/Math.max(avgInit,0.001))*100)));
+
+    // Eski compat lo/hi güncelle (pause save için)
+    lo=MODES.reduce((s,m)=>s+modLo[m],0)/MODES.length;
+    hi=MODES.reduce((s,m)=>s+modHi[m],0)/MODES.length;
+
+    hist.push({round:curRound,sens:finalS,totalSc,totalH,totalM,conf,lo:finalS*.97,hi:finalS*1.03});
+    save({game,dpi:gD(),sens:finalS,round:curRound+1,lo,hi,hist,modLo,modHi});
 
     active=false;clearTimeout(_jt);document.exitPointerLock();
     $('hud').style.display='none';$('pi').style.display='none';$('bbar').style.display='none';
@@ -782,13 +874,33 @@ function showRR(sens,h,m,conf){
   $('rr-al').textContent=T('rrAl');
   $('rr-cl').textContent=T('rrCl',c.opp);$('rr-cv').textContent=(sens*c.convF).toFixed(3);
   $('conf-f').style.width=conf+'%';$('conf-p').textContent=conf+'%';
+
+  // Per-mode breakdown
+  const modeNames={flick:{tr:'Flick',en:'Flick'},grid:{tr:'Gridshot',en:'Gridshot'},track:{tr:'Takip',en:'Track'}};
+  let mbHtml='';
+  const maxSpan=Math.max(...MODES.map(m=>(modInitRange[m]||0.001)));
+  MODES.forEach(m=>{
+    const mid=((modLo[m]||0)+(modHi[m]||0))/2;
+    const span=modHi[m]-modLo[m];
+    const initSpan=modInitRange[m]||0.001;
+    const mConf=Math.max(0,Math.min(100,Math.round((1-span/initSpan)*100)));
+    // Bar width: conf oranında dolu
+    const barW=mConf;
+    const mName=modeNames[m]?.[lang]||m;
+    mbHtml+=`<div class="mb-row"><span class="mb-tag">${mName}</span><div class="mb-bar"><div class="mb-fill" style="width:${barW}%"></div></div><span class="mb-val">${mid.toFixed(3)}</span><span class="mb-conf">${mConf}%</span></div>`;
+  });
+  $('mb-rows').innerHTML=mbHtml;
+
   $('ft-ov').textContent=T('ftOv');$('ft-un').textContent=T('ftUn');
 
   const maxSc=Math.max(...hist.map(r=>r.totalSc),1);
   let html='';
   hist.forEach(r=>{
     const w=(r.totalSc/maxSc*100).toFixed(1);
-    const mk=Math.min((r.sens/GC[game].sensMax)*100,97).toFixed(1);
+    // Marker: sens'i kendi lo/hi aralığında konumlandır (daha anlamlı görsel)
+    const rLo=r.lo??r.sens*.97, rHi=r.hi??r.sens*1.03;
+    const span=Math.max(rHi-rLo,0.001);
+    const mk=Math.min(Math.max(((r.sens-rLo)/span)*100,2),97).toFixed(1);
     html+=`<div class="rh-row"><span class="rh-n">${r.round}</span><div class="rh-bar"><div class="rh-fill" style="width:${w}%"></div><div class="rh-mk" style="left:${mk}%"></div></div><span class="rh-val">${r.sens.toFixed(3)}</span></div>`;
   });
   $('rh-rows').innerHTML=html;
