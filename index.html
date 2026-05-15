@@ -499,7 +499,7 @@ let isCalib=false,calMov=0,curTS=2.5,hits=0,miss=0,isPaused=false;
 
 let _skipFrames=0;
 document.addEventListener('pointerlockchange',()=>{
-  if(document.pointerLockElement){_skipFrames=3;return;}
+  if(document.pointerLockElement){_skipFrames=8;return;}
   // Lock kayboldu
   if(isCalib){finCalib();return;}
   if(!isCalib&&active&&!isPaused){
@@ -645,7 +645,8 @@ function startRound(){
   buildDots(6);
   $('hud').style.display='block';$('pi').style.display='block';$('bbar').style.display='block';
   $('pb').style.width='0%';$('hv-r').textContent=curRound;$('pi-v').textContent=`Rd ${curRound}`;
-  yaw=0;pitch=0;camera.quaternion.setFromEuler(new THREE.Euler(0,0,0,'YXZ'));
+  // yaw/pitch sıfırlanmıyor — kamera neredeyse orada kalır, ani zıplama olmaz
+  camera.quaternion.setFromEuler(new THREE.Euler(pitch,yaw,0,'YXZ'));
   renderer.domElement.requestPointerLock();active=true;
 
   (async()=>{
@@ -713,7 +714,7 @@ function runH(sens,label,mode,phIdx){
       $('hv-ph').textContent=`${phIdx}/6`;
       $('hv-s').textContent=sens.toFixed(3);$('hv-cm').textContent=cm360(sens,gD()).toFixed(1);$('hv-sc').textContent='0';
       $('bbar').textContent=`${isL?T('eyLow'):T('eyHigh')} · ESC pause`;
-      if(document.pointerLockElement!==renderer.domElement)renderer.domElement.requestPointerLock();
+      if(document.pointerLockElement!==renderer.domElement){_skipFrames=8;renderer.domElement.requestPointerLock();}
 
       const start=Date.now(),dur=HALF_DUR*1000;
       const tick=setInterval(()=>{
@@ -758,7 +759,7 @@ function showSOv(sens,label,mode,cb){
       active=true;
       // re-acquire lock after overlay closes
       if(renderer&&document.pointerLockElement!==renderer.domElement){
-        renderer.domElement.requestPointerLock();
+        _skipFrames=8;renderer.domElement.requestPointerLock();
       }
       cb();
     }
