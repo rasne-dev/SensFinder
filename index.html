@@ -408,7 +408,7 @@ function initThree(){
   scene.fog=new THREE.FogExp2(0x070708,.018);
   camera=new THREE.PerspectiveCamera(fov,W/H,.1,200);
   renderer=new THREE.WebGLRenderer({antialias:true});
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  renderer.setPixelRatio(window.devicePixelRatio||1);
   renderer.setSize(W,H);$('rc').appendChild(renderer.domElement);
   scene.add(new THREE.AmbientLight(0x222222,.8));
   const dl=new THREE.DirectionalLight(0xfff0ee,.6);dl.position.set(3,8,4);scene.add(dl);
@@ -520,6 +520,33 @@ function doRender(){
   renderer.render(scene,camera);
 }
 
+// ─── DEBUG OVERLAY ───
+// Canlı movementX/Y, DPR, zoom ve spike tespiti
+// 'D' tuşuna bas/kaldır
+let _dbg=false;
+(()=>{
+  const el=document.createElement('div');
+  el.id='dbg';
+  el.style.cssText='display:none;position:fixed;bottom:30px;right:14px;z-index:9999;font:10px/1.6 monospace;color:#e8ff47;background:rgba(0,0,0,.85);padding:8px 12px;border:1px solid rgba(232,255,71,.3);pointer-events:none;';
+  document.body.appendChild(el);
+  window.addEventListener('keydown',e=>{if(e.code==='KeyD'&&!e.ctrlKey){_dbg=!_dbg;el.style.display=_dbg?'block':'none';}});
+})();
+let _dbgLastX=0,_dbgLastY=0,_dbgSpike=0;
+function _dbgUpdate(dx,dy,raw){
+  if(!_dbg)return;
+  const spike=Math.abs(raw.x)>50||Math.abs(raw.y)>50;
+  if(spike)_dbgSpike=Date.now();
+  const sinceSpike=Date.now()-_dbgSpike;
+  document.getElementById('dbg').innerHTML=
+    `DPR: ${(window.devicePixelRatio||1).toFixed(2)}<br>`+
+    `Zoom: ${Math.round(window.devicePixelRatio/(screen.width/window.innerWidth)*100)||'?'}%<br>`+
+    `raw dX: ${raw.x.toFixed(1)}  dY: ${raw.y.toFixed(1)}<br>`+
+    `clamped: ${dx.toFixed(1)}  ${dy.toFixed(1)}<br>`+
+    `lock: ${!!document.pointerLockElement}<br>`+
+    `settle: ${Math.round(performance.now()-_lockAcquiredAt)}ms<br>`+
+    `spike: ${sinceSpike<2000?'⚠️ '+Math.round(sinceSpike/1000)+'s ago':'ok'}`;
+}
+
 // ─── INPUT ───
 let isCalib=false,calMov=0,curTS=2.5,hits=0,miss=0,isPaused=false;
 
@@ -550,6 +577,7 @@ document.addEventListener('mousemove',e=>{
   if(performance.now()-_lockAcquiredAt<LOCK_SETTLE_MS)return;
   const dx=Math.max(-MAX_DELTA,Math.min(MAX_DELTA,e.movementX));
   const dy=Math.max(-MAX_DELTA,Math.min(MAX_DELTA,e.movementY));
+  _dbgUpdate(dx,dy,{x:e.movementX,y:e.movementY});
   const c=GC[game];const scale=c.yaw*curTS*(Math.PI/180);
   yaw-=dx*scale;
   pitch-=dy*scale;
@@ -597,9 +625,10 @@ document.addEventListener('mousedown',e=>{
 
 window.addEventListener('keydown',e=>{
   if(e.key==='Escape'){
-    if(isCalib){document.exitPointerLock();return;}
-    if(active&&!isPaused)pauseG();
-    else if(isPaused)resumeGame();
+    if(isCalib){return;} // browser lock'u zaten bırakır → pointerlockchange → finCalib
+    // Browser ESC'de lock'u otomatik bırakır; pauseG bunu pointerlockchange'den yakalar.
+    // isPaused ise resume yap (lock yoktur, requestPointerLock gerekir).
+    if(isPaused)resumeGame();
   }
 });
 let _fbT;
@@ -610,7 +639,6 @@ let _pauseRes=null,_endEarly=false;
 
 function pauseG(){
   isPaused=true;active=false;clearTimeout(_jt);
-  // Ağırlıklı ensemble tahmini (mevcut state)
   let wSum=0,best=0;
   MODES.forEach(m=>{
     if(!modLo[m]||!modHi[m])return;
@@ -621,31 +649,34 @@ function pauseG(){
   $('pmv-r').textContent=curRound;$('pmv-b').textContent=best.toFixed(3);$('pmv-cm').textContent=cm360(best,gD()).toFixed(1);
   showMenu('pm');
   save({game,dpi:gD(),sens:best,round:curRound,lo,hi,hist,modLo,modHi});
+  // Lock'u BIRAKMIYORUZ — resume'da drift olmaz
 }
 function resumeGame(){
   if(!isPaused)return;isPaused=false;hideAll();
-  function onLock(){
-    if(document.pointerLockElement===renderer.domElement){
-      document.removeEventListener('pointerlockchange',onLock);
-      active=true;schedJ(cMode);
-      // Track: hedef donmuşsa yeni hız ver
-      if(cMode==='track'&&tM){
-        const sp=Math.hypot(tVX,tVY);
-        if(sp<0.01){const ang=Math.random()*Math.PI*2;tVX=Math.cos(ang)*.032;tVY=Math.sin(ang)*.022;}
+  if(cMode==='track'&&tM){const sp=Math.hypot(tVX,tVY);if(sp<0.01){const ang=Math.random()*Math.PI*2;tVX=Math.cos(ang)*.032;tVY=Math.sin(ang)*.022;}}
+  if(document.pointerLockElement===renderer.domElement){
+    // Lock zaten var — sadece settle guard sıfırla ve aktive et
+    _lockAcquiredAt=performance.now();
+    active=true;schedJ(cMode);
+    if(_pauseRes){_pauseRes();_pauseRes=null;}
+  } else {
+    // Lock düşmüşse (örn. kullanıcı tab değiştirmişti) yeniden al
+    function onLock(){
+      if(document.pointerLockElement===renderer.domElement){
+        document.removeEventListener('pointerlockchange',onLock);
+        active=true;schedJ(cMode);
+        if(_pauseRes){_pauseRes();_pauseRes=null;}
       }
-      if(_pauseRes){_pauseRes();_pauseRes=null;}
     }
+    document.addEventListener('pointerlockchange',onLock);
+    renderer.domElement.requestPointerLock();
+    setTimeout(()=>{
+      if(!active){
+        document.removeEventListener('pointerlockchange',onLock);
+        active=true;schedJ(cMode);if(_pauseRes){_pauseRes();_pauseRes=null;}
+      }
+    },800);
   }
-  document.addEventListener('pointerlockchange',onLock);
-  renderer.domElement.requestPointerLock();
-  setTimeout(()=>{
-    if(!active){
-      document.removeEventListener('pointerlockchange',onLock);
-      active=true;schedJ(cMode);
-      if(cMode==='track'&&tM){const sp=Math.hypot(tVX,tVY);if(sp<0.01){const ang=Math.random()*Math.PI*2;tVX=Math.cos(ang)*.032;tVY=Math.sin(ang)*.022;}}
-      if(_pauseRes){_pauseRes();_pauseRes=null;}
-    }
-  },800);
 }
 function endEarly(){
   isPaused=false;_endEarly=true;active=false;clearTimeout(_jt);
@@ -721,18 +752,21 @@ function startRound(){
   $('hud').style.display='block';$('pi').style.display='block';$('bbar').style.display='block';
   $('pb').style.width='0%';$('hv-r').textContent=curRound;$('pi-v').textContent=`Rd ${curRound}`;
   camera.quaternion.setFromEuler(new THREE.Euler(pitch,yaw,0,'YXZ'));
-  // active=true yalnızca lock alındıktan sonra — erken hareket drift yaratır
   active=false;
-  function _onRoundLock(){
-    if(document.pointerLockElement===renderer.domElement){
-      document.removeEventListener('pointerlockchange',_onRoundLock);
-      active=true;
+  if(document.pointerLockElement===renderer.domElement){
+    // Lock zaten var — hemen aktive et, settle guard sıfırla
+    _lockAcquiredAt=performance.now();active=true;
+  } else {
+    function _onRoundLock(){
+      if(document.pointerLockElement===renderer.domElement){
+        document.removeEventListener('pointerlockchange',_onRoundLock);
+        active=true;
+      }
     }
+    document.addEventListener('pointerlockchange',_onRoundLock);
+    renderer.domElement.requestPointerLock();
+    setTimeout(()=>{if(!active){document.removeEventListener('pointerlockchange',_onRoundLock);active=true;}},800);
   }
-  document.addEventListener('pointerlockchange',_onRoundLock);
-  renderer.domElement.requestPointerLock();
-  // Fallback: 800ms sonra lock gelmezse yine de aktif et
-  setTimeout(()=>{if(!active){document.removeEventListener('pointerlockchange',_onRoundLock);active=true;}},800);
 
   (async()=>{
     let totalH=0,totalM=0,totalSc=0;let phIdx=0;
@@ -861,7 +895,8 @@ function showSOv(sens,label,mode,cb){
   $('sw-sn').textContent=sens.toFixed(3);
   $('sw-tg').textContent=T('tag'+['F','G','T'][['flick','grid','track'].indexOf(mode)]);
   $('sov').classList.add('on');
-  if(document.pointerLockElement)document.exitPointerLock();
+  // Lock'u BIRAKMIYORUZ — exit+reacquire döngüsü drift'in asıl kaynağı.
+  // active=false ile input handler'ı susturuyoruz, bu yeterli.
   active=false;clearTimeout(_jt);
   let n=3;$('sw-cd').textContent=n;
   const _flashCd=()=>{const el=$('sw-cd');el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash');};
@@ -872,20 +907,9 @@ function showSOv(sens,label,mode,cb){
     else{
       clearInterval(cd);
       $('sov').classList.remove('on');
-      if(renderer&&document.pointerLockElement!==renderer.domElement){
-        // active=true ve cb() yalnızca lock alındıktan sonra — erken delta engeli
-        function _onSovLock(){
-          if(document.pointerLockElement===renderer.domElement){
-            document.removeEventListener('pointerlockchange',_onSovLock);
-            active=true;cb();
-          }
-        }
-        document.addEventListener('pointerlockchange',_onSovLock);
-        renderer.domElement.requestPointerLock();
-        setTimeout(()=>{if(!active){document.removeEventListener('pointerlockchange',_onSovLock);active=true;cb();}},800);
-      } else {
-        active=true;cb();
-      }
+      // Lock zaten elimizde — sadece settle guard'ı sıfırla ve aktive et
+      _lockAcquiredAt=performance.now();
+      active=true;cb();
     }
   },1000);
 }
