@@ -433,15 +433,14 @@ function updTC(){
   if(tL)tL.color.setHex(0xff1122);
 }
 function clrT(){
-  // Mevcut hedefleri fade-out ile kaldır
   const toRemove=[...(tM?[tM]:[]),...tMs];
+  tM=null;tMs=[];  // referansları hemen temizle — setupT bu olmadan bozulur
   toRemove.forEach(m=>{
-    const mat=m.material;
     let op=1;
+    const mat=m.material;
     const fade=()=>{op-=0.18;if(op>0){mat.opacity=op;mat.transparent=true;requestAnimationFrame(fade);}else{scene.remove(m);}};
     fade();
   });
-  tM=null;tMs=[];
 }
 
 const GP=[[-2.1,.65,-8],[0,.65,-8],[2.1,.65,-8],[-2.1,-.3,-8],[0,-.3,-8],[2.1,-.3,-8]];
@@ -778,23 +777,14 @@ function startRound(){
   $('pb').style.width='0%';$('hv-r').textContent=curRound;$('pi-v').textContent=`Rd ${curRound}`;
   camera.quaternion.setFromEuler(new THREE.Euler(pitch,yaw,0,'YXZ'));
   active=false;
-  if(document.pointerLockElement===renderer.domElement){
-    _lockAcquiredAt=performance.now();active=true;
-  } else {
-    function _onRoundLock(){
-      if(document.pointerLockElement===renderer.domElement){
-        document.removeEventListener('pointerlockchange',_onRoundLock);
-        _lockAcquiredAt=performance.now();  // ← burst guard bu olmadan çalışmıyor
-        active=true;
-      }
-    }
-    document.addEventListener('pointerlockchange',_onRoundLock);
-    renderer.domElement.requestPointerLock();
-    setTimeout(()=>{if(!active){document.removeEventListener('pointerlockchange',_onRoundLock);_lockAcquiredAt=performance.now();active=true;}},800);
-  }
 
-  (async()=>{
-    let totalH=0,totalM=0,totalSc=0;let phIdx=0;
+  // Test döngüsünü lock alındıktan sonra başlat — önce başlatmak showSOv/runH'yı kırıyor
+  const _startLoop=()=>{
+    _lockAcquiredAt=performance.now();
+    active=true;
+
+    (async()=>{
+      let totalH=0,totalM=0,totalSc=0;let phIdx=0;
 
     for(const mode of MODES){
       if(_endEarly)break;
@@ -871,6 +861,28 @@ function startRound(){
     $('hud').style.display='none';$('pi').style.display='none';$('bbar').style.display='none';
     showRR(finalS,totalH,totalM,conf);
   })();
+  }; // end _startLoop
+
+  // Lock alındıktan sonra döngüyü başlat
+  if(document.pointerLockElement===renderer.domElement){
+    _startLoop();
+  } else {
+    const _rl=()=>{
+      if(document.pointerLockElement===renderer.domElement){
+        document.removeEventListener('pointerlockchange',_rl);
+        _startLoop();
+      }
+    };
+    document.addEventListener('pointerlockchange',_rl);
+    renderer.domElement.requestPointerLock();
+    // Fallback: lock gelmediyse 1s sonra yüksek olasılıkla browser reddetti — yine de başlat
+    setTimeout(()=>{
+      if(!active){
+        document.removeEventListener('pointerlockchange',_rl);
+        _startLoop();
+      }
+    },1000);
+  }
 }
 
 function runH(sens,label,mode,phIdx){
