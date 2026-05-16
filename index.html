@@ -421,7 +421,7 @@ function initThree(){
   yaw=0;pitch=0;
   camera.quaternion.setFromEuler(new THREE.Euler(0,0,0,'YXZ'));
   doRender();
-  window.addEventListener('resize',()=>{if(!renderer)return;renderer.setSize(window.innerWidth,window.innerHeight);camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();});
+  window.addEventListener('resize',()=>{if(!renderer)return;const W=window.innerWidth,H=window.innerHeight;renderer.setPixelRatio(window.devicePixelRatio||1);renderer.setSize(W,H);camera.aspect=W/H;camera.updateProjectionMatrix();});
 }
 
 function mkSph(r=.3){
@@ -432,7 +432,17 @@ function updTC(){
   [...(tM?[tM]:[]),...tMs].forEach(m=>{m.material.color.setHex(0xff2020);});
   if(tL)tL.color.setHex(0xff1122);
 }
-function clrT(){if(tM){scene.remove(tM);tM=null;}tMs.forEach(m=>scene.remove(m));tMs=[];}
+function clrT(){
+  // Mevcut hedefleri fade-out ile kaldır
+  const toRemove=[...(tM?[tM]:[]),...tMs];
+  toRemove.forEach(m=>{
+    const mat=m.material;
+    let op=1;
+    const fade=()=>{op-=0.18;if(op>0){mat.opacity=op;mat.transparent=true;requestAnimationFrame(fade);}else{scene.remove(m);}};
+    fade();
+  });
+  tM=null;tMs=[];
+}
 
 const GP=[[-2.1,.65,-8],[0,.65,-8],[2.1,.65,-8],[-2.1,-.3,-8],[0,-.3,-8],[2.1,-.3,-8]];
 let gridActiveIdx=-1,gridLastHitTime=0;
@@ -442,7 +452,7 @@ const MAT_ACTIVE=()=>new THREE.MeshBasicMaterial({color:0xff2020});
 
 function setGridActive(idx){
   tMs.forEach((m,i)=>{
-    m.material.color.setHex(i===idx?0xff2020:0x551111);
+    m.material.color.setHex(i===idx?0xff2020:0x993333);  // aktif dışı 0x551111→0x993333
   });
   if(tL)tL.position.copy(tMs[idx].position);
   gridActiveIdx=idx;
@@ -453,7 +463,7 @@ function setupT(mode){
   clrT();gridActiveIdx=-1;
   if(mode==='grid'){
     GP.forEach(p=>{
-      const m=new THREE.Mesh(new THREE.SphereGeometry(.28,20,20),new THREE.MeshBasicMaterial({color:0x551111}));
+      const m=new THREE.Mesh(new THREE.SphereGeometry(.28,20,20),new THREE.MeshBasicMaterial({color:0x993333}));
       m.position.set(...p);scene.add(m);tMs.push(m);
     });
     // Rastgele başlangıç hedefi
@@ -531,21 +541,24 @@ let _dbg=false;
   document.body.appendChild(el);
   window.addEventListener('keydown',e=>{if(e.code==='KeyD'&&!e.ctrlKey){_dbg=!_dbg;el.style.display=_dbg?'block':'none';}});
 })();
-let _dbgLastX=0,_dbgLastY=0,_dbgSpike=0;
+let _dbgLastX=0,_dbgLastY=0,_dbgSpike=0,_dbgFiltered=0;
 function _dbgUpdate(dx,dy,raw){
   if(!_dbg)return;
   const spike=Math.abs(raw.x)>50||Math.abs(raw.y)>50;
   if(spike)_dbgSpike=Date.now();
   const sinceSpike=Date.now()-_dbgSpike;
+  const msSinceLock=performance.now()-_lockAcquiredAt;
+  const inBurst=msSinceLock<BURST_WINDOW_MS;
   document.getElementById('dbg').innerHTML=
     `DPR: ${(window.devicePixelRatio||1).toFixed(2)}<br>`+
-    `Zoom: ${Math.round(window.devicePixelRatio/(screen.width/window.innerWidth)*100)||'?'}%<br>`+
-    `raw dX: ${raw.x.toFixed(1)}  dY: ${raw.y.toFixed(1)}<br>`+
-    `clamped: ${dx.toFixed(1)}  ${dy.toFixed(1)}<br>`+
+    `raw dX: <b>${raw.x.toFixed(0)}</b>  dY: ${raw.y.toFixed(0)}<br>`+
+    `clamped: ${dx.toFixed(0)}  ${dy.toFixed(0)}<br>`+
     `lock: ${!!document.pointerLockElement}<br>`+
-    `settle: ${Math.round(performance.now()-_lockAcquiredAt)}ms<br>`+
-    `spike: ${sinceSpike<2000?'⚠️ '+Math.round(sinceSpike/1000)+'s ago':'ok'}`;
+    `settle: ${Math.round(msSinceLock)}ms ${inBurst?'<span style="color:#f66">BURST WINDOW</span>':'✓'}<br>`+
+    `filtered: ${_dbgFiltered}<br>`+
+    `spike: ${sinceSpike<2000?'⚠️ '+Math.round(sinceSpike)+'ms ago':'ok'}`;
 }
+function _dbgFiltered_inc(){if(_dbg)_dbgFiltered++;}
 
 // ─── INPUT ───
 let isCalib=false,calMov=0,curTS=2.5,hits=0,miss=0,isPaused=false;
@@ -555,7 +568,13 @@ let isCalib=false,calMov=0,curTS=2.5,hits=0,miss=0,isPaused=false;
 // DPR clamp: 80px/event — normal hızlı flick ~30-50px, gerçek outlier >80px.
 let _lockAcquiredAt=0;
 const LOCK_SETTLE_MS=120;
-const MAX_DELTA=80;
+// Burst filtresi: lock alınınca gelen ilk event'in büyüklüğünü kontrol et.
+// Normal hızlı hareket: <80px/event. 3000px = birikmiş delta → at.
+// Ama 120ms geçtikten sonra gelen event ne kadar büyük olursa olsun geç —
+// kullanıcı gerçekten hızlı oynuyor olabilir. Sadece ilk "burst" window'unda filtrele.
+const BURST_WINDOW_MS = 300;   // lock alındıktan sonraki ilk 300ms
+const BURST_THRESHOLD = 200;   // bu pencerede tek event'te >200px → birikmiş delta, at
+const MAX_DELTA = 150;         // burst window dışında normal clamp
 
 document.addEventListener('pointerlockchange',()=>{
   if(document.pointerLockElement){_lockAcquiredAt=performance.now();return;}
@@ -573,11 +592,16 @@ document.addEventListener('mousemove',e=>{
   if(isCalib){calMov+=Math.abs(e.movementX);return;}
   if(!renderer||document.pointerLockElement!==renderer.domElement)return;
   if(!active)return;
-  // Lock yeni alındıysa settle süresi geçene kadar yoksay
-  if(performance.now()-_lockAcquiredAt<LOCK_SETTLE_MS)return;
-  const dx=Math.max(-MAX_DELTA,Math.min(MAX_DELTA,e.movementX));
-  const dy=Math.max(-MAX_DELTA,Math.min(MAX_DELTA,e.movementY));
-  _dbgUpdate(dx,dy,{x:e.movementX,y:e.movementY});
+  const msSinceLock = performance.now() - _lockAcquiredAt;
+  const absX = Math.abs(e.movementX), absY = Math.abs(e.movementY);
+  // Settle window: timestamp guard — sahte erken deltalar
+  if(msSinceLock < LOCK_SETTLE_MS){_dbgFiltered_inc();return;}
+  // Burst window: lock alındıktan sonraki kısa sürede gelen anormal büyük delta
+  // = browser'ın biriktirdiği hareket. Normal flick bile 200px'i geçmez.
+  if(msSinceLock < BURST_WINDOW_MS && (absX > BURST_THRESHOLD || absY > BURST_THRESHOLD)){_dbgFiltered_inc();return;}
+  const dx = Math.max(-MAX_DELTA, Math.min(MAX_DELTA, e.movementX));
+  const dy = Math.max(-MAX_DELTA, Math.min(MAX_DELTA, e.movementY));
+  _dbgUpdate(dx, dy, {x: e.movementX, y: e.movementY});
   const c=GC[game];const scale=c.yaw*curTS*(Math.PI/180);
   yaw-=dx*scale;
   pitch-=dy*scale;
@@ -673,6 +697,7 @@ function resumeGame(){
     setTimeout(()=>{
       if(!active){
         document.removeEventListener('pointerlockchange',onLock);
+        _lockAcquiredAt=performance.now();
         active=true;schedJ(cMode);if(_pauseRes){_pauseRes();_pauseRes=null;}
       }
     },800);
@@ -754,18 +779,18 @@ function startRound(){
   camera.quaternion.setFromEuler(new THREE.Euler(pitch,yaw,0,'YXZ'));
   active=false;
   if(document.pointerLockElement===renderer.domElement){
-    // Lock zaten var — hemen aktive et, settle guard sıfırla
     _lockAcquiredAt=performance.now();active=true;
   } else {
     function _onRoundLock(){
       if(document.pointerLockElement===renderer.domElement){
         document.removeEventListener('pointerlockchange',_onRoundLock);
+        _lockAcquiredAt=performance.now();  // ← burst guard bu olmadan çalışmıyor
         active=true;
       }
     }
     document.addEventListener('pointerlockchange',_onRoundLock);
     renderer.domElement.requestPointerLock();
-    setTimeout(()=>{if(!active){document.removeEventListener('pointerlockchange',_onRoundLock);active=true;}},800);
+    setTimeout(()=>{if(!active){document.removeEventListener('pointerlockchange',_onRoundLock);_lockAcquiredAt=performance.now();active=true;}},800);
   }
 
   (async()=>{
@@ -948,16 +973,38 @@ function showRR(sens,h,m,conf){
   $('mb-rows').innerHTML=mbHtml;
 
   $('ft-ov').textContent=T('ftOv');$('ft-un').textContent=T('ftUn');
-
-  const maxSc=Math.max(...hist.map(r=>r.totalSc),1);
+  // Kişiselleştirilmiş ince ayar ipucu: en az güvenilir mod
+  const _ftTip=$('ft-tip');if(_ftTip)_ftTip.remove();
+  if(hist.length>0){
+    const weakest=MODES.reduce((w,m)=>{
+      const conf=1-(modHi[m]-modLo[m])/(modInitRange[m]||0.001);
+      const wConf=1-(modHi[w]-modLo[w])/(modInitRange[w]||0.001);
+      return conf<wConf?m:w;
+    },MODES[0]);
+    const wName={flick:{tr:'Flick',en:'Flick'},grid:{tr:'Gridshot',en:'Gridshot'},track:{tr:'Takip',en:'Track'}};
+    const tipEl=document.createElement('div');
+    tipEl.id='ft-tip';
+    tipEl.style.cssText='font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.22);margin-top:8px;line-height:1.7;border-top:1px solid rgba(255,255,255,.06);padding-top:8px;';
+    tipEl.textContent=lang==='tr'
+      ?`En az güven: ${wName[weakest].tr} — daha fazla tur bu modu güçlendirir.`
+      :`Least confident: ${wName[weakest].en} — more rounds will refine this.`;
+    $('ft-ov').closest('.ft-box').appendChild(tipEl);
+  }=Math.max(...hist.map(r=>r.totalSc),1);
   let html='';
-  hist.forEach(r=>{
+  hist.forEach((r,i)=>{
     const w=(r.totalSc/maxSc*100).toFixed(1);
-    // Marker: sens'i kendi lo/hi aralığında konumlandır (daha anlamlı görsel)
     const rLo=r.lo??r.sens*.97, rHi=r.hi??r.sens*1.03;
     const span=Math.max(rHi-rLo,0.001);
     const mk=Math.min(Math.max(((r.sens-rLo)/span)*100,2),97).toFixed(1);
-    html+=`<div class="rh-row"><span class="rh-n">${r.round}</span><div class="rh-bar"><div class="rh-fill" style="width:${w}%"></div><div class="rh-mk" style="left:${mk}%"></div></div><span class="rh-val">${r.sens.toFixed(3)}</span></div>`;
+    // Trend: önceki round'a göre yukarı/aşağı/sabit
+    let trend='';
+    if(i>0){
+      const diff=r.sens-hist[i-1].sens;
+      if(Math.abs(diff)>0.005) trend=diff>0
+        ?`<span style="color:rgba(255,255,255,.3);font-size:8px;"> ↑</span>`
+        :`<span style="color:rgba(255,255,255,.3);font-size:8px;"> ↓</span>`;
+    }
+    html+=`<div class="rh-row"><span class="rh-n">${r.round}</span><div class="rh-bar"><div class="rh-fill" style="width:${w}%"></div><div class="rh-mk" style="left:${mk}%"></div></div><span class="rh-val">${r.sens.toFixed(3)}${trend}</span></div>`;
   });
   $('rh-rows').innerHTML=html;
   showMenu('rr');
@@ -970,6 +1017,19 @@ function showMenu(id){hideAll();$(id).style.display='block';}
 
 // ─── INIT ───
 applyI18n();setGame('cs2');updPv();checkSaved();
+
+// Mousewheel ile hassas sens/DPI ayarı
+['is','id'].forEach(id=>{
+  $(id).addEventListener('wheel',e=>{
+    e.preventDefault();
+    const el=$(id);
+    const step=id==='is'?(game==='val'?.005:.05):50;
+    const cur=parseFloat(el.value)||0;
+    const dir=e.deltaY<0?1:-1;
+    el.value=(cur+dir*step).toFixed(id==='is'?3:0);
+    updPv();
+  },{passive:false});
+});
 </script>
 </body>
 </html>
