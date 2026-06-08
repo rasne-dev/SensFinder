@@ -201,7 +201,7 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
         <div class="mt-sub" id="ms">CS2 &amp; VALORANT</div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
-        <div class="lbtns"><button class="lbtn on" onclick="setLang('tr')">TR</button><button class="lbtn" onclick="setLang('en')">EN</button></div>
+        <div class="lbtns"><button class="lbtn on" onclick="setLang('tr')">TR</button><button class="lbtn" onclick="setLang('en')">EN</button><button class="lbtn" id="sfx-btn" onclick="toggleSfx()" style="min-width:28px;" title="Sound (M)">🔊</button><button class="lbtn" onclick="toggleFS()" title="Fullscreen (F)" style="min-width:28px;">⛶</button></div>
       </div>
     </div>
   </div>
@@ -209,7 +209,7 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
   <div class="t2"><button class="tab on" id="gCS2" onclick="setGame('cs2')">CS2</button><button class="tab" id="gVAL" onclick="setGame('val')">VALORANT</button></div>
   <div class="g2">
     <div class="fg"><label class="flbl" id="ld">Mouse DPI</label><input class="fi" type="number" id="id" value="800" min="100" max="32000" step="50" oninput="updPv()"></div>
-    <div class="fg"><label class="flbl" id="lf">FOV</label><input class="fi" type="number" id="if" value="90" min="60" max="120" oninput="if(camera){camera.fov=Math.max(60,Math.min(120,parseInt(this.value)||90));camera.updateProjectionMatrix();}"></div>
+    <div class="fg"><label class="flbl" id="lf">FOV</label><input class="fi" type="number" id="if" value="90" min="60" max="120" oninput="if(camera){camera.fov=Math.max(60,Math.min(120,parseInt(this.value)||90));camera.updateProjectionMatrix();}localStorage.setItem('sf_fov',this.value);"></div>
   </div>
   <div class="sg">
     <label class="flbl" id="ls">Current Sensitivity</label>
@@ -353,7 +353,7 @@ function setGame(g){
   if(parseFloat(si.value)>c.sensMax)si.value=c.sensD;
   applyI18n();updPv();if(tM)updTC();
 }
-function gS(){return Math.max(.01,parseFloat($('is').value)||GC[game].sensD);}
+function gS(){const v=parseFloat($('is').value)||GC[game].sensD;const c=GC[game];return Math.max(c.sensMin,Math.min(c.sensMax,v));}
 function gD(){return Math.max(100,parseInt($('id').value)||800);}
 function cm360(s,dpi){return(360/(GC[game].yaw*s))/dpi*2.54;}
 function updPv(){
@@ -499,19 +499,20 @@ function doRender(){
     const sp=Math.hypot(tVX,tVY);
     if(sp>.052){tVX=tVX/sp*.052;tVY=tVY/sp*.052;}
     if(sp<.018){tVX=tVX/sp*.018;tVY=tVY/sp*.018;}
-    tZ+=(Math.random()-.5)*.004;tZ=Math.max(-9,Math.min(-7,tZ));
-    tZ+=(Math.random()-.5)*.004;tZ=Math.max(-9,Math.min(-7,tZ));
+    tZ+=(Math.random()-.5)*.003;tZ=Math.max(-9,Math.min(-7,tZ));
     tM.position.set(tX,tY,tZ);
   }
   const prim=tM||(tMs[gridActiveIdx]??tMs[0]??null);if(tL&&prim)tL.position.copy(prim.position);
   if(active&&cMode==='track'&&document.pointerLockElement===renderer.domElement&&tM){
     rc2.setFromCamera({x:0,y:0},camera);
+    const _wasOnT=onT;
     onT=rc2.intersectObject(tM).length>0;
     const xhEl=$('xh');
     _trackFrames++;
     if(onT){
       curScore+=2;_trackOnFrames++;
       xhEl.classList.add('on-target');
+      if(!_wasOnT)playTrackOn();
     } else {
       xhEl.classList.remove('on-target');
     }
@@ -530,6 +531,49 @@ function doRender(){
   renderer.render(scene,camera);
 }
 
+
+// ─── AUDIO ───
+let _ac=null;
+let _sfxOn=localStorage.getItem("sf_sfx")!=="0";
+function toggleSfx(){
+  _sfxOn=!_sfxOn;localStorage.setItem("sf_sfx",_sfxOn?"1":"0");
+  const el=$("sfx-btn");if(el)el.textContent=_sfxOn?"🔊":"🔇";
+}
+
+function _getAC(){if(!_ac){try{_ac=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}return _ac;}
+function playHit(){
+  if(!_sfxOn)return;
+  const ac=_getAC();if(!ac)return;
+  const o=ac.createOscillator(),g=ac.createGain();
+  o.connect(g);g.connect(ac.destination);
+  o.frequency.setValueAtTime(1800,ac.currentTime);
+  o.frequency.exponentialRampToValueAtTime(900,ac.currentTime+0.04);
+  g.gain.setValueAtTime(0.18,ac.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.0001,ac.currentTime+0.06);
+  o.start(ac.currentTime);o.stop(ac.currentTime+0.07);
+}
+function playMiss(){
+  if(!_sfxOn)return;
+  const ac=_getAC();if(!ac)return;
+  const o=ac.createOscillator(),g=ac.createGain();
+  o.connect(g);g.connect(ac.destination);
+  o.type='sawtooth';
+  o.frequency.setValueAtTime(220,ac.currentTime);
+  o.frequency.exponentialRampToValueAtTime(80,ac.currentTime+0.08);
+  g.gain.setValueAtTime(0.08,ac.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.0001,ac.currentTime+0.1);
+  o.start(ac.currentTime);o.stop(ac.currentTime+0.11);
+}
+function playTrackOn(){
+  if(!_sfxOn)return;
+  const ac=_getAC();if(!ac)return;
+  const o=ac.createOscillator(),g=ac.createGain();
+  o.connect(g);g.connect(ac.destination);
+  o.frequency.setValueAtTime(2400,ac.currentTime);
+  g.gain.setValueAtTime(0.04,ac.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.0001,ac.currentTime+0.025);
+  o.start(ac.currentTime);o.stop(ac.currentTime+0.03);
+}
 
 // ─── INPUT ───
 let isCalib=false,calMov=0,curTS=2.5,hits=0,miss=0,isPaused=false;
@@ -584,13 +628,12 @@ document.addEventListener('mousedown',e=>{
       const elapsed=Date.now()-gridLastHitTime;
       // Üstel decay: 0ms→500, 500ms→300, 1000ms→180, 2000ms→65, 3000ms→50
       const speedBonus=Math.max(50,Math.round(500*Math.exp(-elapsed/1200)));
-      curScore+=speedBonus;hits++;
-      showFB('+'+speedBonus,true);
+      curScore+=speedBonus;hits++;playHit();
       // Bir sonraki hedefi seç (aynı olmasın)
       let next,_gi=0;do{next=Math.floor(Math.random()*tMs.length);_gi++;}while(next===gridActiveIdx&&tMs.length>1&&_gi<20);
       setGridActive(next);
     } else {
-      curScore=Math.max(0,curScore-200);miss++;showFB('✕',false);
+      curScore=Math.max(0,curScore-200);miss++;playMiss();showFB('✕',false);
     }
     $('hv-sc').textContent=Math.floor(curScore);
     return;
@@ -600,16 +643,17 @@ document.addEventListener('mousedown',e=>{
   let h=false;
   for(const m of cands){
     if(rc2.intersectObject(m).length>0){
-      curScore+=500;hits++;h=true;
+      curScore+=500;hits++;h=true;playHit();
       spawnS(true);schedJ(cMode);
-      showFB('+500',true);break;
+      break;
     }
   }
-  if(!h){curScore=Math.max(0,curScore-125);miss++;showFB('✕',false);}
+  if(!h){curScore=Math.max(0,curScore-125);miss++;playMiss();showFB('✕',false);}
   $('hv-sc').textContent=Math.floor(curScore);
 });
 
 window.addEventListener('keydown',e=>{
+  if(e.key==='m'||e.key==='M'){toggleSfx();return;}
   if(e.key==='Escape'){
     if(isCalib){return;} // browser lock'u zaten bırakır → pointerlockchange → finCalib
     // Browser ESC'de lock'u otomatik bırakır; pauseG bunu pointerlockchange'den yakalar.
@@ -683,7 +727,7 @@ function finCalib(){
   // sens = 360 / (yaw * calMov) -- burada calMov DPI ile zaten ilişkili (pointer lock raw pixel)
   // Doğru formül: sens = (360 / (GC[game].yaw * calMov)) * (gD() / gD()) -- DPI iptal olur
   // Gerçekte pointer lock movementX DPI'ye bağlı olduğundan sens = 360/(yaw*calMov) doğrudur
-  if(calMov>50){
+  if(calMov>500){
     const rawSens=360/(GC[game].yaw*calMov);
     const clampedSens=Math.min(Math.max(rawSens,GC[game].sensMin),GC[game].sensMax);
     $('is').value=clampedSens.toFixed(4);updPv();
@@ -729,7 +773,15 @@ function _initModRanges(centerSens){
 const SCORE_CAP={flick:12000,grid:15000,track:1440};
 function normScore(raw,mode){return Math.min(1,Math.max(0,raw/SCORE_CAP[mode]));}
 
-function startFresh(){clearSession();hist=[];curRound=1;_initModRanges(gS());startRound();}
+function startFresh(){
+  clearSession();hist=[];curRound=1;modLo={};modHi={};modInitRange={};
+  _initModRanges(gS());
+  // Kısa "başlatılıyor" feedback
+  const btn=document.querySelector(".sbtn:not(.g)");
+  if(btn){const orig=btn.innerHTML;btn.style.opacity=".6";btn.innerHTML='<span>…</span>';
+  setTimeout(()=>{btn.innerHTML=orig;btn.style.opacity="";},900);}
+  startRound();
+}
 function startNextRound(){if(window._cuTimer){clearInterval(window._cuTimer);window._cuTimer=null;}curRound++;hideAll();startRound();}
 
 function startRound(){
@@ -773,7 +825,8 @@ function startRound(){
         const margin=Math.abs(hiRatio-0.5)*2; // 0=eşit, 1=tek taraflı
         // Adım: düşük farkta küçük güncelleme, yüksek farkta büyük güncelleme
         const span=modHi[mode]-modLo[mode];
-        const step=span*0.5*(0.15+margin*0.75);
+        // margin=0→span*0.25 min daralma, margin=1→span*0.75 agresif
+        const step=span*(0.25+margin*0.50);
         if(hiRatio>0.5){
           modLo[mode]=Math.min(modLo[mode]+step, modHi[mode]-span*0.03);
         } else {
@@ -799,8 +852,8 @@ function startRound(){
       wSum+=MODE_W[m];
     });
     if(wSum<0.99){
-      // Bazı modlar atlandıysa (endEarly) global lo/hi orta noktasını kullan
-      finalS=finalS/wSum||((lo+hi)/2);
+      if(wSum>0.01)finalS=finalS/wSum;
+      else{let cnt=0;MODES.forEach(m=>{if(modLo[m]&&modHi[m]){finalS+=(modLo[m]+modHi[m])/2;cnt++;}});finalS=cnt>0?finalS/cnt:(lo+hi)/2;}
     }
     finalS=Math.max(GC[game].sensMin,Math.min(GC[game].sensMax,finalS));
 
@@ -931,7 +984,7 @@ function buildDots(n){const el=$('idots');el.innerHTML='';for(let i=0;i<n;i++){c
 function updDots(act){for(let i=0;i<6;i++){const d=$('dot'+i);if(!d)continue;if(i<act-1)d.className='idot done';else if(i===act-1)d.className='idot active';else d.className='idot';}}
 
 // ─── ROUND RESULT ───
-function showRR(sens,h,m,conf,trkOn=0,trkTot=0){
+function showRR(sens,h,miss_,conf,trkOn=0,trkTot=0){
   const c=GC[game];const dpi=gD();
   $('rr-ey').textContent=T('rrEy',curRound);
   // Count-up animasyonu
@@ -947,20 +1000,22 @@ function showRR(sens,h,m,conf,trkOn=0,trkTot=0){
   $('rr-e').textContent=Math.round(sens*dpi);
   $('rr-cm').textContent=cm360(sens,dpi).toFixed(2);
   // Accuracy: flick+grid için isabet%, tracking için — göster
-  let accTxt=h+m>0?Math.round(h/(h+m)*100)+'%':'—';
-  if(trkTot>0)accTxt+=(h+m>0?' · ':'')+Math.round(trkOn/trkTot*100)+'% ↗';
+  let accTxt=h+miss_>0?Math.round(h/(h+miss_)*100)+'%':'—';
+  if(trkTot>0){const trkPct=Math.round(trkOn/trkTot*100);const trkLbl=lang==='tr'?'% hedefe':'% on-target';accTxt+=(h+miss_>0?' · ':'')+trkPct+trkLbl;}
   $('rr-a').textContent=accTxt;
   $('rr-al').textContent=T('rrAl');
   $('rr-cl').textContent=T('rrCl',c.opp);$('rr-cv').textContent=(sens*c.convF).toFixed(3);
   $('conf-f').style.width=conf+'%';$('conf-p').textContent=conf+'%';
+  const _cm=conf<40?'Daha fazla tur gerekli / More rounds needed':conf<70?'İyileşiyor / Getting there':'Yüksek güven / High confidence';
+  $('conf-f').parentElement.title=_cm;$('conf-p').title=_cm;
 
   // Per-mode breakdown
   const modeNames={flick:{tr:'Flick',en:'Flick'},grid:{tr:'Gridshot',en:'Gridshot'},track:{tr:'Takip',en:'Track'}};
   let mbHtml='';
   MODES.forEach(m=>{
     const mid=((modLo[m]||0)+(modHi[m]||0))/2;
-    const span=modHi[m]-modLo[m];
-    const initSpan=modInitRange[m]||0.001;
+    const span=Math.max(0,(modHi[m]||0)-(modLo[m]||0));
+    const initSpan=Math.max(span,modInitRange[m]||0.001);
     const mConf=Math.max(0,Math.min(100,Math.round((1-span/initSpan)*100)));
     // Bar width: conf oranında dolu
     const barW=mConf;
@@ -991,8 +1046,26 @@ const MENUS=['mm','pm','rr'];
 function hideAll(){MENUS.forEach(id=>$(id).style.display='none');}
 function showMenu(id){hideAll();$(id).style.display='block';}
 
+// ─── FULLSCREEN ───
+function toggleFS(){
+  if(!document.fullscreenElement){document.documentElement.requestFullscreen().catch(()=>{});}
+  else{document.exitFullscreen();}
+}
+document.addEventListener("fullscreenchange",()=>{
+  const btn=document.querySelector('[title="Fullscreen (F)"]');
+  if(btn)btn.textContent=document.fullscreenElement?"⛶":"⛶";
+});
+window.addEventListener("keydown",e=>{
+  if(e.key==="f"||e.key==="F")toggleFS();
+});
+
 // ─── INIT ───
-applyI18n();setGame('cs2');updPv();checkSaved();
+applyI18n();setGame('cs2');
+// Kaydedilen FOV varsa yükle
+const _sfov=localStorage.getItem("sf_fov");if(_sfov){$('if').value=_sfov;}
+// Sfx butonunu başlat
+setTimeout(()=>{const el=$('sfx-btn');if(el)el.textContent=_sfxOn?"🔊":"🔇";},0);
+updPv();checkSaved();
 ['is','id'].forEach(id=>{
   $(id).addEventListener('wheel',e=>{
     e.preventDefault();
