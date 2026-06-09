@@ -598,13 +598,16 @@ function playTrackOn(){
 let isCalib=false,calMov=0,curTS=2.5,hits=0,miss=0,isPaused=false;
 
 let _lockAcquiredAt=0;
-const LOCK_SETTLE_MS=120;
-const BURST_WINDOW_MS = 300;   // lock alındıktan sonraki ilk 300ms
-const BURST_THRESHOLD = 200;   // bu pencerede tek event'te >200px → birikmiş delta, at
-const MAX_DELTA = 150;         // burst window dışında normal clamp
+const LOCK_SETTLE_MS=150;    // lock alınınca ilk 150ms tamamen yoksay
+const BURST_WINDOW_MS=600;   // 600ms boyunca büyük delta'ları filtrele (uzatıldı)
+const BURST_THRESHOLD=80;    // 80px üzeri tek event bu pencerede birikmiş delta (düşürüldü)
+const MAX_DELTA=100;         // her zaman geçerli hard clamp
+// Frame-to-frame velocity limiter: önceki frame'den N kat fazla hareket = sahte
+let _prevDx=0,_prevDy=0;
+const VELOCITY_RATIO=8;      // bir frame'de öncekinin 8 katından fazla = sahte burst
 
 document.addEventListener('pointerlockchange',()=>{
-  if(document.pointerLockElement){_lockAcquiredAt=performance.now();return;}
+  if(document.pointerLockElement){_lockAcquiredAt=performance.now();_prevDx=0;_prevDy=0;return;}
   // Lock kayboldu
   if(isCalib){finCalib();return;}
   if(!isCalib&&active&&!isPaused){
@@ -624,8 +627,13 @@ document.addEventListener('mousemove',e=>{
   // Settle window: timestamp guard — sahte erken deltalar
   if(ms<LOCK_SETTLE_MS)return;
   if(ms<BURST_WINDOW_MS&&(absX>BURST_THRESHOLD||absY>BURST_THRESHOLD))return;
-  const dx = Math.max(-MAX_DELTA, Math.min(MAX_DELTA, e.movementX));
-  const dy = Math.max(-MAX_DELTA, Math.min(MAX_DELTA, e.movementY));
+  const dx=Math.max(-MAX_DELTA,Math.min(MAX_DELTA,e.movementX));
+  const dy=Math.max(-MAX_DELTA,Math.min(MAX_DELTA,e.movementY));
+  // Velocity limiter: önceki frame'den 8 kat büyükse sahte burst — yoksay
+  const prevMag=Math.hypot(_prevDx,_prevDy)||1;
+  const curMag=Math.hypot(dx,dy);
+  if(curMag>prevMag*VELOCITY_RATIO&&curMag>30){_prevDx=0;_prevDy=0;return;}
+  _prevDx=dx;_prevDy=dy;
   const scale=GC[game].yaw*curTS*(Math.PI/180);
   yaw-=dx*scale;
   pitch-=dy*scale;
@@ -815,7 +823,7 @@ function startRound(){
   active=false;
 
   const _runLoop=()=>{
-    _lockAcquiredAt=performance.now();active=true;
+    _lockAcquiredAt=performance.now();_prevDx=0;_prevDy=0;active=true;
     (async()=>{
     let totalH=0,totalM=0,totalSc=0;let phIdx=0;
 
@@ -996,7 +1004,7 @@ function showSOv(sens,label,mode,phIdx,cb){
       $('sov').classList.remove('on');
       // Lock zaten elimizde — sadece settle guard'ı sıfırla ve aktive et
       playCountdown(0); // 'go' sesi
-      _lockAcquiredAt=performance.now();
+      _lockAcquiredAt=performance.now();_prevDx=0;_prevDy=0;
       active=true;cb();
     }
   },1000);
