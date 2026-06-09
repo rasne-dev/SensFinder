@@ -241,6 +241,7 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
   <div class="pm-st"><span class="pm-sl" id="pml-r">Round</span><span class="pm-sv" id="pmv-r">—</span></div>
   <div class="pm-st"><span class="pm-sl" id="pml-b">Best so far</span><span class="pm-sv" id="pmv-b">—</span></div>
   <div class="pm-st"><span class="pm-sl">cm/360°</span><span class="pm-sv" id="pmv-cm">—</span></div>
+  <div class="pm-st"><span class="pm-sl" id="pml-ph">Phase</span><span class="pm-sv" id="pmv-ph">—</span></div>
   <hr class="sep">
   <button class="sbtn" onclick="resumeGame()"><span id="lr">▶ Resume</span></button>
   <button class="sbtn g" onclick="endEarly()"><span id="le">✓ End &amp; Show Results</span></button>
@@ -291,10 +292,10 @@ const L={
     rrAl:'İsabet',confL:'Güven',rhL:'Geçmiş',perMode:'Mod Bazlı',
     ftTi:'Oyun İçi İnce Ayar',ftOv:'Hedefi aşıyorsan (overshooting) — 0.05–0.1 azalt',ftUn:'Hedefe yetişemiyorsan — 0.05–0.1 artır',
     nextR:'▶ Sonraki Tur (Daha Hassas)',done:'✓ Tamamlandı',
-    pmTi:'Durakladı',pmSu:'Test askıya alındı',pmR:'Tur',pmB:'En iyi şu ana kadar',
+    pmTi:'Durakladı',pmSu:'Test askıya alındı',pmR:'Tur',pmB:'En iyi şu ana kadar',pmPh:'Aşama',
     resume:'▶ Devam Et',early:'✓ Bitir & Sonuçları Göster',quit:'✕ Çık',
     sbL:'Son Oturum',sbR:'Devam',sbC:'Sil',
-    pvC:'VAL eşd.',pvCA:'CS2 eşd.',},
+    pvC:'Valorant eşd.',pvCA:'CS2 eşd.',},
   en:{sub:'Sensitivity Finder · CS2 & Valorant',game:'Game',dpi:'Mouse DPI',fov:'FOV',sens:'Current Sensitivity',
     calib:'Calibrate via 360° mousepad movement',start:'START TEST',
     rLbl:'Round',phLbl:'Phase',scLbl:'Score',piLbl:'Progress',
@@ -305,10 +306,10 @@ const L={
     rrAl:'Accuracy',confL:'Confidence',rhL:'History',perMode:'Per Mode',
     ftTi:'In-Game Fine Tuning',ftOv:'Overshooting — lower by 0.05–0.1',ftUn:'Undershooting — raise by 0.05–0.1',
     nextR:'▶ Next Round (More Precise)',done:'✓ Done',
-    pmTi:'Paused',pmSu:'Test suspended',pmR:'Round',pmB:'Best so far',
+    pmTi:'Paused',pmSu:'Test suspended',pmR:'Round',pmB:'Best so far',pmPh:'Phase',
     resume:'▶ Resume',early:'✓ End & Show Results',quit:'✕ Quit',
     sbL:'Last Session',sbR:'Resume',sbC:'Clear',
-    pvC:'VAL eq.',pvCA:'CS2 eq.',}
+    pvC:'Valorant eq.',pvCA:'CS2 eq.',}
 };
 let lang=navigator.language.startsWith('tr')?'tr':'en';
 const $=id=>document.getElementById(id);
@@ -327,7 +328,7 @@ function applyI18n(){
   $('rh-l').textContent=T('rhL');$('mb-l').textContent=T('perMode');$('ft-ti').textContent=T('ftTi');
   $('ft-ov').textContent=T('ftOv');$('ft-un').textContent=T('ftUn');
   $('ln').textContent=T('nextR');$('ld2').textContent=T('done');
-  $('pm-ti').textContent=T('pmTi');$('pm-su').textContent=T('pmSu');
+  $('pm-ti').textContent=T('pmTi');$('pm-su').textContent=T('pmSu');if($('pml-ph'))$('pml-ph').textContent=T('pmPh');
   $('pml-r').textContent=T('pmR');$('pml-b').textContent=T('pmB');
   $('lr').textContent=T('resume');$('le').textContent=T('early');$('lq').textContent=T('quit');
   $('sbl').textContent=T('sbL');$('sbr').textContent=T('sbR');$('sbc').textContent=T('sbC');
@@ -348,7 +349,7 @@ function setGame(g){
   document.body.className=g==='val'?'val':'';
   const r=document.documentElement.style;
   r.setProperty('--a',c.a);r.setProperty('--a2',c.a2);r.setProperty('--ag',c.ag);
-  $('if').value=c.fovD;
+  $('if').value=localStorage.getItem('sf_fov')||c.fovD;
   const si=$('is');si.max=c.sensMax;si.step=g==='val'?.01:.05;
   if(parseFloat(si.value)>c.sensMax)si.value=c.sensD;
   applyI18n();updPv();if(tM)updTC();
@@ -378,7 +379,10 @@ function checkSaved(){
 }
 function resumeSession(){
   const s=load();if(!s)return;
-  setGame(s.game||'cs2');$('id').value=s.dpi||800;$('is').value=s.sens.toFixed(3);updPv();
+  setGame(s.game||'cs2');$('id').value=s.dpi||800;$('is').value=s.sens.toFixed(3);
+  // FOV restore (localStorage'dan — setGame default'u ezmişse koru)
+  const _rfov=localStorage.getItem('sf_fov');if(_rfov)$('if').value=_rfov;
+  updPv();
   $('sb').style.display='none';
   hist=s.hist||[];curRound=s.round||1;
   // Per-mod state restore (yeni format) ya da eski format'tan reconstruct
@@ -459,7 +463,7 @@ function setupT(mode){
   } else spawnS(false);
 }
 function spawnS(jump){
-  if(tM)scene.remove(tM);tM=mkSph();
+  if(tM)scene.remove(tM);tM=tRadius!=null?mkSph(tRadius):mkSph();
   if(jump){
     // Anti-center: crosshair'den en az 0.4 birim uzakta spawnla
     let attempts=0;
@@ -469,6 +473,8 @@ function spawnS(jump){
   }
   else{tX=(Math.random()-.5)*2.5;tY=(Math.random()-.5)*.5;tZ=-8;}
   const isTrack=cMode==='track';
+  // Track: round arttıkça hedef küçülür (min 0.22, başlangıç 0.36)
+  const tRadius=isTrack?Math.max(0.22,0.36-curRound*0.02):undefined;
   // Tracking hızı flick/grid'den ~2.5x fazla
   const spBase=isTrack?(.025+Math.random()*.02):(.01+Math.random()*.007);
   const ang=Math.random()*Math.PI*2;
@@ -564,6 +570,19 @@ function playMiss(){
   g.gain.exponentialRampToValueAtTime(0.0001,ac.currentTime+0.1);
   o.start(ac.currentTime);o.stop(ac.currentTime+0.11);
 }
+function playCountdown(n){
+  if(!_sfxOn)return;
+  const ac=_getAC();if(!ac)return;
+  const o=ac.createOscillator(),g=ac.createGain();
+  o.connect(g);g.connect(ac.destination);
+  // 3→yüksek, 2→orta, 1→düşük, 0(go)→çok yüksek
+  const freqs=[0,800,600,400];
+  o.frequency.setValueAtTime(n===0?1200:(freqs[n]||400),ac.currentTime);
+  g.gain.setValueAtTime(0.12,ac.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.0001,ac.currentTime+0.15);
+  o.start(ac.currentTime);o.stop(ac.currentTime+0.16);
+}
+
 function playTrackOn(){
   if(!_sfxOn)return;
   const ac=_getAC();if(!ac)return;
@@ -677,6 +696,8 @@ function pauseG(){
   if(wSum<0.01)best=(lo+hi)/2;else best=best/wSum;
   best=Math.max(GC[game].sensMin,Math.min(GC[game].sensMax,best));
   $('pmv-r').textContent=curRound;$('pmv-b').textContent=best.toFixed(3);$('pmv-cm').textContent=cm360(best,gD()).toFixed(1);
+  // Faz ilerlemesi
+  const _phEl=$('pmv-ph');if(_phEl){const _phV=parseInt($('hv-ph')?.textContent)||0;_phEl.textContent=_phV?`${_phV}/6`:'-';}
   showMenu('pm');
   save({game,dpi:gD(),sens:best,round:curRound,lo,hi,hist,modLo,modHi});
   // Lock'u BIRAKMIYORUZ — resume'da drift olmaz
@@ -770,7 +791,7 @@ function _initModRanges(centerSens){
 // Flick: 60fps * 12s = 720 click fırsatı; gerçekçi max ~20 hit → 10000 puan; cap 12000
 // Grid : benzer → cap 15000
 // Track: 60fps * 12s * 2 = 1440 teorik max → cap 1440
-const SCORE_CAP={flick:12000,grid:15000,track:1440};
+const SCORE_CAP={flick:12000,grid:8000,track:1440};
 function normScore(raw,mode){return Math.min(1,Math.max(0,raw/SCORE_CAP[mode]));}
 
 function startFresh(){
@@ -969,11 +990,12 @@ function showSOv(sens,label,mode,phIdx,cb){
   _flashCd();
   const cd=setInterval(()=>{
     n--;
-    if(n>0){$('sw-cd').textContent=n;_flashCd();}
+    if(n>0){$('sw-cd').textContent=n;_flashCd();playCountdown(n);}
     else{
       clearInterval(cd);
       $('sov').classList.remove('on');
       // Lock zaten elimizde — sadece settle guard'ı sıfırla ve aktive et
+      playCountdown(0); // 'go' sesi
       _lockAcquiredAt=performance.now();
       active=true;cb();
     }
@@ -1004,7 +1026,9 @@ function showRR(sens,h,miss_,conf,trkOn=0,trkTot=0){
   if(trkTot>0){const trkPct=Math.round(trkOn/trkTot*100);const trkLbl=lang==='tr'?'% hedefe':'% on-target';accTxt+=(h+miss_>0?' · ':'')+trkPct+trkLbl;}
   $('rr-a').textContent=accTxt;
   $('rr-al').textContent=T('rrAl');
-  $('rr-cl').textContent=T('rrCl',c.opp);$('rr-cv').textContent=(sens*c.convF).toFixed(3);
+  $('rr-cl').textContent=T('rrCl',c.opp);const _cvVal=(sens*c.convF).toFixed(3);
+  $('rr-cv').textContent=_cvVal;
+  $('rr-cv').title=`${c.opp} sensitivity: ${_cvVal} (${lang==='tr'?'aynı cm/360° için':'same cm/360°'})`;$('rr-cl').title=$('rr-cv').title;
   $('conf-f').style.width=conf+'%';$('conf-p').textContent=conf+'%';
   const _cm=conf<40?'Daha fazla tur gerekli / More rounds needed':conf<70?'İyileşiyor / Getting there':'Yüksek güven / High confidence';
   $('conf-f').parentElement.title=_cm;$('conf-p').title=_cm;
@@ -1053,10 +1077,10 @@ function toggleFS(){
 }
 document.addEventListener("fullscreenchange",()=>{
   const btn=document.querySelector('[title="Fullscreen (F)"]');
-  if(btn)btn.textContent=document.fullscreenElement?"⛶":"⛶";
+  if(btn)btn.textContent=document.fullscreenElement?"✕fs":"⛶";
 });
 window.addEventListener("keydown",e=>{
-  if(e.key==="f"||e.key==="F")toggleFS();
+  if((e.key==="f"||e.key==="F")&&!active&&!document.pointerLockElement)toggleFS();
 });
 
 // ─── INIT ───
