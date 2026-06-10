@@ -123,6 +123,7 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
 .mb-fill{position:absolute;top:0;left:0;bottom:0;background:var(--a);opacity:.55;transition:width .7s cubic-bezier(.16,1,.3,1);}
 .mb-val{font-family:var(--mono);font-size:9px;color:var(--a);min-width:38px;text-align:right;}
 .mb-conf{font-family:var(--mono);font-size:7px;color:rgba(255,255,255,.22);min-width:28px;text-align:right;}
+.rc-v{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--a);letter-spacing:-.02em;margin-top:3px;}
 .ft-box{border:1px solid rgba(255,255,255,.07);padding:13px;margin-bottom:13px;background:rgba(255,255,255,.02);}
 .ft-ti{font-family:var(--mono);font-size:7px;letter-spacing:.18em;color:var(--a);text-transform:uppercase;display:block;margin-bottom:9px;transition:color .3s;}
 .ft-it{display:flex;gap:8px;margin-bottom:5px;font-size:11px;line-height:1.6;color:rgba(255,255,255,.4);}
@@ -438,7 +439,9 @@ function updTC(){
 }
 function clrT(){if(tM){scene.remove(tM);tM=null;}tMs.forEach(m=>scene.remove(m));tMs=[];}
 
-const GP=[[-2.1,.65,-8],[0,.65,-8],[2.1,.65,-8],[-2.1,-.3,-8],[0,-.3,-8],[2.1,-.3,-8]];
+// Grid base konumları — setupT'de her test için hafifçe rastgele kaydırılır
+const GP_BASE=[[-2.1,.65,-8],[0,.65,-8],[2.1,.65,-8],[-2.1,-.3,-8],[0,-.3,-8],[2.1,-.3,-8]];
+let GP=[...GP_BASE];
 let gridActiveIdx=-1,gridLastHitTime=0;
 
 function setGridActive(idx){
@@ -453,6 +456,8 @@ function setGridActive(idx){
 function setupT(mode){
   clrT();gridActiveIdx=-1;
   if(mode==='grid'){
+    // Her testte GP konumlarını ±0.25 birim rastgele kaydır — pattern öğrenmeyi önle
+    GP=GP_BASE.map(([x,y,z])=>[x+(Math.random()-.5)*.5,y+(Math.random()-.5)*.25,z]);
     GP.forEach(p=>{
       const m=new THREE.Mesh(new THREE.SphereGeometry(.28,20,20),new THREE.MeshBasicMaterial({color:0x883333}));
       m.position.set(...p);scene.add(m);tMs.push(m);
@@ -463,18 +468,18 @@ function setupT(mode){
   } else spawnS(false);
 }
 function spawnS(jump){
+  const isTrack=cMode==='track';
+  // Track: round arttıkça hedef küçülür (min 0.22, başlangıç 0.36)
+  const tRadius=isTrack?Math.max(0.22,0.36-curRound*0.02):undefined;
   if(tM)scene.remove(tM);tM=tRadius!=null?mkSph(tRadius):mkSph();
   if(jump){
-    // Anti-center: crosshair'den en az 0.4 birim uzakta spawnla
+    // Anti-center: crosshair'den en az 0.6 birim uzakta spawnla
     let attempts=0;
     do{tX=(Math.random()-.5)*6;tY=(Math.random()-.5)*.7+.15;attempts++;}
     while(Math.sqrt(tX*tX+tY*tY)<0.6&&attempts<10);
     tZ=-8+Math.random()*1.5;
   }
   else{tX=(Math.random()-.5)*2.5;tY=(Math.random()-.5)*.5;tZ=-8;}
-  const isTrack=cMode==='track';
-  // Track: round arttıkça hedef küçülür (min 0.22, başlangıç 0.36)
-  const tRadius=isTrack?Math.max(0.22,0.36-curRound*0.02):undefined;
   // Tracking hızı flick/grid'den ~2.5x fazla
   const spBase=isTrack?(.025+Math.random()*.02):(.01+Math.random()*.007);
   const ang=Math.random()*Math.PI*2;
@@ -541,17 +546,36 @@ function doRender(){
 // ─── AUDIO ───
 let _ac=null;
 let _sfxOn=localStorage.getItem("sf_sfx")!=="0";
-function toggleSfx(){
+function toggleSfx(half=false){
+  if(half&&_sfxOn){
+    // Shift+M: 100%→50%→100% döngüsü
+    const cur=parseFloat(localStorage.getItem('sf_vol')||'0.7');
+    const nv=cur>0.4?0.3:0.7;
+    localStorage.setItem('sf_vol',nv);
+    if(_masterGain)_masterGain.gain.value=nv;
+    const el=$("sfx-btn");if(el)el.textContent=nv<0.5?"🔉":"🔊";
+    return;
+  }
   _sfxOn=!_sfxOn;localStorage.setItem("sf_sfx",_sfxOn?"1":"0");
   const el=$("sfx-btn");if(el)el.textContent=_sfxOn?"🔊":"🔇";
 }
 
-function _getAC(){if(!_ac){try{_ac=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}return _ac;}
+let _masterGain=null;
+function _getAC(){
+  if(!_ac){try{
+    _ac=new(window.AudioContext||window.webkitAudioContext)();
+    _masterGain=_ac.createGain();
+    _masterGain.gain.value=parseFloat(localStorage.getItem('sf_vol')||'0.7');
+    _masterGain.connect(_ac.destination);
+  }catch(e){}}
+  return _ac;
+}
+function _dest(){return _masterGain||(_getAC()&&_masterGain);}
 function playHit(){
   if(!_sfxOn)return;
   const ac=_getAC();if(!ac)return;
   const o=ac.createOscillator(),g=ac.createGain();
-  o.connect(g);g.connect(ac.destination);
+  o.connect(g);g.connect(_dest()||ac.destination);
   o.frequency.setValueAtTime(1800,ac.currentTime);
   o.frequency.exponentialRampToValueAtTime(900,ac.currentTime+0.04);
   g.gain.setValueAtTime(0.18,ac.currentTime);
@@ -562,7 +586,7 @@ function playMiss(){
   if(!_sfxOn)return;
   const ac=_getAC();if(!ac)return;
   const o=ac.createOscillator(),g=ac.createGain();
-  o.connect(g);g.connect(ac.destination);
+  o.connect(g);g.connect(_dest()||ac.destination);
   o.type='sawtooth';
   o.frequency.setValueAtTime(220,ac.currentTime);
   o.frequency.exponentialRampToValueAtTime(80,ac.currentTime+0.08);
@@ -574,7 +598,7 @@ function playCountdown(n){
   if(!_sfxOn)return;
   const ac=_getAC();if(!ac)return;
   const o=ac.createOscillator(),g=ac.createGain();
-  o.connect(g);g.connect(ac.destination);
+  o.connect(g);g.connect(_dest()||ac.destination);
   // 3→yüksek, 2→orta, 1→düşük, 0(go)→çok yüksek
   const freqs=[0,800,600,400];
   o.frequency.setValueAtTime(n===0?1200:(freqs[n]||400),ac.currentTime);
@@ -587,7 +611,7 @@ function playTrackOn(){
   if(!_sfxOn)return;
   const ac=_getAC();if(!ac)return;
   const o=ac.createOscillator(),g=ac.createGain();
-  o.connect(g);g.connect(ac.destination);
+  o.connect(g);g.connect(_dest()||ac.destination);
   o.frequency.setValueAtTime(2400,ac.currentTime);
   g.gain.setValueAtTime(0.04,ac.currentTime);
   g.gain.exponentialRampToValueAtTime(0.0001,ac.currentTime+0.025);
@@ -680,7 +704,7 @@ document.addEventListener('mousedown',e=>{
 });
 
 window.addEventListener('keydown',e=>{
-  if(e.key==='m'||e.key==='M'){toggleSfx();return;}
+  if(e.key==='m'||e.key==='M'){toggleSfx(e.shiftKey);return;}
   if(e.key==='Escape'){
     if(isCalib){return;} // browser lock'u zaten bırakır → pointerlockchange → finCalib
     // Browser ESC'de lock'u otomatik bırakır; pauseG bunu pointerlockchange'den yakalar.
@@ -896,7 +920,10 @@ function startRound(){
     lo=MODES.reduce((s,m)=>s+modLo[m],0)/MODES.length;
     hi=MODES.reduce((s,m)=>s+modHi[m],0)/MODES.length;
 
-    hist.push({round:curRound,sens:finalS,totalSc,totalH,totalM,conf,lo:finalS*.97,hi:finalS*1.03});
+    // History bar için gerçek arama aralığı — sabit %3 sapma yerine
+    const _hLo=MODES.reduce((s,m)=>s+modLo[m],0)/MODES.length;
+    const _hHi=MODES.reduce((s,m)=>s+modHi[m],0)/MODES.length;
+    hist.push({round:curRound,sens:finalS,totalSc,totalH,totalM,conf,lo:_hLo,hi:_hHi});
     save({game,dpi:gD(),sens:finalS,round:curRound+1,lo,hi,hist,modLo,modHi});
 
     active=false;clearTimeout(_jt);document.exitPointerLock();
@@ -943,9 +970,10 @@ function runH(sens,label,mode,phIdx){
       else{$('hl-sc').textContent=T('scLbl');}
       $('hv-ph').textContent=`${phIdx}/6`;
       // HUD sens smooth micro-animation
+      if(window._hudTimer)clearInterval(window._hudTimer);
       (()=>{const p=parseFloat($('hv-s').textContent)||0,d=sens-p;let s=0;
-      const u=setInterval(()=>{s++;const e=1-Math.pow(1-s/10,3);
-      $('hv-s').textContent=(p+d*e).toFixed(3);if(s>=10){clearInterval(u);$('hv-s').textContent=sens.toFixed(3);}},16);})();
+      window._hudTimer=setInterval(()=>{s++;const e=1-Math.pow(1-s/10,3);
+      $('hv-s').textContent=(p+d*e).toFixed(3);if(s>=10){clearInterval(window._hudTimer);window._hudTimer=null;$('hv-s').textContent=sens.toFixed(3);}},16);})();
       $('hv-cm').textContent=cm360(sens,gD()).toFixed(1);$('hv-sc').textContent='0';
       $('bbar').textContent=`${isL?T('eyLow'):T('eyHigh')} · ESC pause`;
 
