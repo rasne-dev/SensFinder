@@ -297,7 +297,11 @@ const L={
     pmTi:'Durakladı',pmSu:'Test askıya alındı',pmR:'Tur',pmB:'En iyi şu ana kadar',pmPh:'Aşama',
     resume:'▶ Devam Et',early:'✓ Bitir & Sonuçları Göster',quit:'✕ Çık',
     sbL:'Son Oturum',sbR:'Devam',sbC:'Sil',
-    pvC:'Valorant eşd.',pvCA:'CS2 eşd.',},
+    pvC:'Valorant eşd.',pvCA:'CS2 eşd.',
+    msHigh:(r)=>`Tur ${r} tamam — yüksek güven. Bu sonuç oldukça güvenilir.`,
+    msMid:(r)=>`Tur ${r} tamam — orta güven. 1-2 tur daha aralığı netleştirir.`,
+    msLow:(r)=>`Tur ${r} tamam — düşük güven. Daha kesin sonuç için devam et.`,
+    msEq:`Aralık daralmıyor — bu sens etrafındaki değerler senin için fark etmiyor olabilir.`,},
   en:{sub:'Sensitivity Finder · CS2 & Valorant',game:'Game',dpi:'Mouse DPI',fov:'FOV',sens:'Current Sensitivity',
     calib:'Calibrate via 360° mousepad movement',start:'START TEST',
     rLbl:'Round',phLbl:'Phase',scLbl:'Score',piLbl:'Progress',
@@ -311,7 +315,11 @@ const L={
     pmTi:'Paused',pmSu:'Test suspended',pmR:'Round',pmB:'Best so far',pmPh:'Phase',
     resume:'▶ Resume',early:'✓ End & Show Results',quit:'✕ Quit',
     sbL:'Last Session',sbR:'Resume',sbC:'Clear',
-    pvC:'Valorant eq.',pvCA:'CS2 eq.',}
+    pvC:'Valorant eq.',pvCA:'CS2 eq.',
+    msHigh:(r)=>`Round ${r} done — high confidence. This result is quite reliable.`,
+    msMid:(r)=>`Round ${r} done — moderate confidence. 1-2 more rounds will narrow it down.`,
+    msLow:(r)=>`Round ${r} done — low confidence. Keep going for a more precise result.`,
+    msEq:`Range isn't narrowing — values around this sens may feel equally good to you.`,}
 };
 let lang=navigator.language.startsWith('tr')?'tr':'en';
 const $=id=>document.getElementById(id);
@@ -625,16 +633,23 @@ function playTrackOn(){
 let isCalib=false,calMov=0,curTS=2.5,hits=0,miss=0,isPaused=false;
 
 let _lockAcquiredAt=0;
-const LOCK_SETTLE_MS=150;    // lock alınınca ilk 150ms tamamen yoksay
-const BURST_WINDOW_MS=600;   // 600ms boyunca büyük delta'ları filtrele (uzatıldı)
-const BURST_THRESHOLD=80;    // 80px üzeri tek event bu pencerede birikmiş delta (düşürüldü)
-const MAX_DELTA=100;         // her zaman geçerli hard clamp
-// Frame-to-frame velocity limiter: önceki frame'den N kat fazla hareket = sahte
-let _prevDx=0,_prevDy=0;
-const VELOCITY_RATIO=8;      // bir frame'de öncekinin 8 katından fazla = sahte burst
+// Drift koruması — 3 katmanlı:
+// 1. Settle: lock alındıktan sonraki LOCK_SETTLE_MS ms → tümünü yoksay
+// 2. Warmup: settle bittikten sonraki ilk WARMUP_EVENTS event → max 20px clamp
+//    Burst her zaman ilk birkaç event içinde gelir; 20px clamp kamerayı korur
+//    ama meşru küçük hareketi zaten geçirir
+// 3. Normal oyun: MAX_DELTA=150px hard clamp
+//
+// Önceki velocity limiter KALDIRILDI — _prevDx=0 başlangıcından dolayı
+// meşru hızlı hareketleri de düşürüyordu (cascading drop bug).
+const LOCK_SETTLE_MS=80;     // lock alınca ilk 80ms tamamen yoksay
+const WARMUP_EVENTS=6;       // settle sonrası ilk 6 event → kademeli aç
+const WARMUP_CAP=45;         // warmup başlangıç clamp (40-80px normal flick'i geçirir)
+const MAX_DELTA=150;         // normal oyun hard clamp
+let _warmupCount=0;          // lock başına sayaç — reset edilir
 
 document.addEventListener('pointerlockchange',()=>{
-  if(document.pointerLockElement){_lockAcquiredAt=performance.now();_prevDx=0;_prevDy=0;return;}
+  if(document.pointerLockElement){_lockAcquiredAt=performance.now();_warmupCount=0;return;}
   // Lock kayboldu
   if(isCalib){finCalib();return;}
   if(!isCalib&&active&&!isPaused){
@@ -649,18 +664,17 @@ document.addEventListener('mousemove',e=>{
   if(isCalib){if(!$('cov').classList.contains('on'))calMov+=Math.abs(e.movementX);return;}
   if(!renderer||!renderer.domElement||document.pointerLockElement!==renderer.domElement)return;
   if(!active)return;
-  const ms=performance.now()-_lockAcquiredAt;
-  const absX=Math.abs(e.movementX),absY=Math.abs(e.movementY);
-  // Settle window: timestamp guard — sahte erken deltalar
-  if(ms<LOCK_SETTLE_MS)return;
-  if(ms<BURST_WINDOW_MS&&(absX>BURST_THRESHOLD||absY>BURST_THRESHOLD))return;
-  const dx=Math.max(-MAX_DELTA,Math.min(MAX_DELTA,e.movementX));
-  const dy=Math.max(-MAX_DELTA,Math.min(MAX_DELTA,e.movementY));
-  // Velocity limiter: önceki frame'den 8 kat büyükse sahte burst — yoksay
-  const prevMag=Math.hypot(_prevDx,_prevDy)||1;
-  const curMag=Math.hypot(dx,dy);
-  if(curMag>prevMag*VELOCITY_RATIO&&curMag>30){_prevDx=0;_prevDy=0;return;}
-  _prevDx=dx;_prevDy=dy;
+  // 1. Settle: lock alındıktan sonraki ilk 100ms → tümünü yoksay
+  if(performance.now()-_lockAcquiredAt<LOCK_SETTLE_MS)return;
+  // 2. Warmup: ilk 12 event → max 20px clamp (burst bu pencerede gelir)
+  // Kademeli warmup: WARMUP_CAP'ten MAX_DELTA'ya lineer geçiş
+  // Sert sıçrama yerine yumuşak açılma — "kayma" hissini azaltır
+  const _cap=_warmupCount<WARMUP_EVENTS
+    ?WARMUP_CAP+(MAX_DELTA-WARMUP_CAP)*(_warmupCount/WARMUP_EVENTS)
+    :MAX_DELTA;
+  _warmupCount++;
+  const dx=Math.max(-_cap,Math.min(_cap,e.movementX));
+  const dy=Math.max(-_cap,Math.min(_cap,e.movementY));
   const scale=GC[game].yaw*curTS*(Math.PI/180);
   yaw-=dx*scale;
   pitch-=dy*scale;
@@ -741,8 +755,7 @@ function resumeGame(){
   if(!isPaused)return;isPaused=false;hideAll();
   if(cMode==='track'&&tM){const sp=Math.hypot(tVX,tVY);if(sp<0.01){const ang=Math.random()*Math.PI*2;tVX=Math.cos(ang)*.032;tVY=Math.sin(ang)*.022;}}
   if(renderer&&document.pointerLockElement===renderer.domElement){
-    // Lock zaten var — sadece settle guard sıfırla ve aktive et
-    _lockAcquiredAt=performance.now();
+    // Lock zaten var — settle guard'a DOKUNMA (kayma hissi yaratır)
     active=true;schedJ(cMode);
     if(_pauseRes){_pauseRes();_pauseRes=null;}
   } else {
@@ -850,7 +863,7 @@ function startRound(){
   active=false;
 
   const _runLoop=()=>{
-    _lockAcquiredAt=performance.now();_prevDx=0;_prevDy=0;active=true;
+    _lockAcquiredAt=performance.now();_warmupCount=0;active=true;
     (async()=>{
     let totalH=0,totalM=0,totalSc=0;let phIdx=0;
 
@@ -1036,18 +1049,20 @@ function showSOv(sens,label,mode,phIdx,cb){
       playCountdown(0);
       if(renderer&&document.pointerLockElement!==renderer.domElement){
         // Geri sayım sırasında lock kaybolmuş — yeniden al
-        _prevDx=0;_prevDy=0;
         function _sovLock(){
           if(document.pointerLockElement===renderer.domElement){
             document.removeEventListener('pointerlockchange',_sovLock);
-            _lockAcquiredAt=performance.now();active=true;cb();
+            _lockAcquiredAt=performance.now();_warmupCount=0;active=true;cb();
           }
         }
         document.addEventListener('pointerlockchange',_sovLock);
         renderer.domElement.requestPointerLock();
-        setTimeout(()=>{if(!active){document.removeEventListener('pointerlockchange',_sovLock);_lockAcquiredAt=performance.now();_prevDx=0;_prevDy=0;active=true;cb();}},800);
+        setTimeout(()=>{if(!active){document.removeEventListener('pointerlockchange',_sovLock);_lockAcquiredAt=performance.now();_warmupCount=0;active=true;cb();}},800);
       } else {
-        _lockAcquiredAt=performance.now();_prevDx=0;_prevDy=0;
+        // Lock hiç kopmadı — _lockAcquiredAt'i SIFIRLAMA.
+        // Sıfırlarsak LOCK_SETTLE_MS boyunca mousemove yutulur ve
+        // "GO" dedikten sonra ilk hareket kaybolup sonraki büyük
+        // hareket aniden işlenir → kayma hissi yaratır.
         active=true;cb();
       }
     }
@@ -1085,6 +1100,29 @@ function showRR(sens,h,miss_,conf,trkOn=0,trkTot=0){
   $('conf-f').style.background=conf>=90?'#00ff88':conf>=70?'var(--a)':'var(--a)';$('conf-p').style.color=conf>=90?'#00ff88':'var(--a)';
   const _cm=conf<40?'Daha fazla tur gerekli / More rounds needed':conf<70?'İyileşiyor / Getting there':'Yüksek güven / High confidence';
   $('conf-f').parentElement.title=_cm;$('conf-p').title=_cm;
+
+  // Milestone rehberlik mesajı — confidence seviyesine göre
+  let _msEl=$('conf-ms');
+  if(!_msEl){
+    _msEl=document.createElement('div');_msEl.id='conf-ms';
+    _msEl.style.cssText='font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.32);margin-top:6px;line-height:1.6;';
+    $('conf-f').closest('.confrow').appendChild(_msEl);
+  }
+  // Aralık daralmıyor mu kontrolü: tüm modlarda span/initSpan > 0.85 ise "fark etmiyor" mesajı
+  const _stuck=MODES.every(m=>{
+    const span=Math.max(0,(modHi[m]||0)-(modLo[m]||0));
+    const init=modInitRange[m]||0.001;
+    return span/init>0.85;
+  });
+  if(curRound>=2&&_stuck){
+    _msEl.textContent=T('msEq');
+  } else if(conf>=80){
+    _msEl.textContent=T('msHigh',curRound);
+  } else if(conf>=55){
+    _msEl.textContent=T('msMid',curRound);
+  } else {
+    _msEl.textContent=T('msLow',curRound);
+  }
 
   // Per-mode breakdown
   const modeNames={flick:{tr:'Flick',en:'Flick'},grid:{tr:'Gridshot',en:'Gridshot'},track:{tr:'Takip',en:'Track'}};
