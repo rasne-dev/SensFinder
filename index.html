@@ -455,8 +455,10 @@ let GP=[...GP_BASE];
 let gridActiveIdx=-1,gridLastHitTime=0;
 
 function setGridActive(idx){
+  // Tek hedef görünür — diğerleri tamamen gizli (pattern ezberlenmesin)
   tMs.forEach((m,i)=>{
-    m.material.color.setHex(i===idx?0xff2020:0x883333);
+    m.visible=(i===idx);
+    m.material.color.setHex(0xff2020);
   });
   if(tL)tL.position.copy(tMs[idx].position);
   gridActiveIdx=idx;
@@ -469,8 +471,8 @@ function setupT(mode){
     // Her testte GP konumlarını ±0.25 birim rastgele kaydır — pattern öğrenmeyi önle
     GP=GP_BASE.map(([x,y,z])=>[x+(Math.random()-.5)*.5,y+(Math.random()-.5)*.25,z]);
     GP.forEach(p=>{
-      const m=new THREE.Mesh(new THREE.SphereGeometry(.28,20,20),new THREE.MeshBasicMaterial({color:0x883333}));
-      m.position.set(...p);scene.add(m);tMs.push(m);
+      const m=new THREE.Mesh(new THREE.SphereGeometry(.28,20,20),new THREE.MeshBasicMaterial({color:0xff2020}));
+      m.position.set(...p);m.visible=false;scene.add(m);tMs.push(m);
     });
     // Rastgele başlangıç hedefi
     const first=Math.floor(Math.random()*6);
@@ -506,6 +508,7 @@ const rc2=new THREE.Raycaster();let curScore=0,onT=false;
 let cMode='flick';
 // Track on-target yüzdesi
 let _trackFrames=0,_trackOnFrames=0;
+let _sessTrackFrames=0,_sessTrackOnFrames=0; // session boyunca kümülatif (3 takip testi)
 
 function doRender(){
   animF=requestAnimationFrame(doRender);
@@ -529,9 +532,9 @@ function doRender(){
     const _wasOnT=onT;
     onT=rc2.intersectObject(tM).length>0;
     const xhEl=$('xh');
-    _trackFrames++;
+    _trackFrames++;_sessTrackFrames++;
     if(onT){
-      curScore+=2;_trackOnFrames++;
+      curScore+=2;_trackOnFrames++;_sessTrackOnFrames++;
       xhEl.classList.add('on-target');
       if(!_wasOnT)playTrackOn();
     } else {
@@ -871,6 +874,7 @@ function startRound(){
 
   const _runLoop=()=>{
     _lockAcquiredAt=performance.now();_warmupCount=0;active=true;
+    _sessTrackFrames=0;_sessTrackOnFrames=0; // her yeni session/round başında sıfırla
     (async()=>{
     let totalH=0,totalM=0,totalSc=0;let phIdx=0;
     const _startRound=curRound;
@@ -957,7 +961,7 @@ function startRound(){
 
     active=false;clearTimeout(_jt);document.exitPointerLock();
     $('hud').style.display='none';$('pi').style.display='none';$('bbar').style.display='none';
-    showRR(finalS,totalH,totalM,conf,_trackOnFrames,_trackFrames);
+    showRR(finalS,totalH,totalM,conf,_sessTrackOnFrames,_sessTrackFrames);
     })(); // end async
   }; // end _runLoop
 
