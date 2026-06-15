@@ -812,7 +812,7 @@ function finCalib(){
 // bu sayede 3 farklı scoring sistemi birbirini ezmez.
 const MODES=['flick','grid','track'];
 const MODE_W={flick:.35,grid:.35,track:.30};   // ağırlıklar toplamı = 1.00
-const HALF_DUR=8;
+const HALF_DUR=15;
 const SESSION_ROUNDS=3; // varsayılan antreman = 3 tur arka arkaya
 let _sessionTarget=1;
 
@@ -842,8 +842,8 @@ function _initModRanges(centerSens){
 // Flick: 60fps * 12s = 720 click fırsatı; gerçekçi max ~20 hit → 10000 puan; cap 12000
 // Grid : benzer → cap 15000
 // Track: 60fps * 12s * 2 = 1440 teorik max → cap 1440
-// 8s/12s = 0.667 ölçek faktörü ile capler orantılı küçültüldü
-const SCORE_CAP={flick:8000,grid:5300,track:960};
+// 15s/12s = 1.25 ölçek faktörü ile capler orantılı büyütüldü
+const SCORE_CAP={flick:15000,grid:10000,track:1800};
 function normScore(raw,mode){return Math.min(1,Math.max(0,raw/SCORE_CAP[mode]));}
 
 function startFresh(){
