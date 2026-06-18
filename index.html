@@ -25,9 +25,6 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
 .xh-v{position:absolute!important;width:2px!important;height:26px!important;background:#ffffff!important;left:-1px!important;top:-13px!important;outline:1px solid #000!important;box-shadow:0 0 3px #000!important;}
 .xh-dot{position:absolute!important;width:4px!important;height:4px!important;background:#ffffff!important;border-radius:50%!important;top:-2px!important;left:-2px!important;outline:1px solid #000!important;}
 #xh.on-target .xh-h,#xh.on-target .xh-v,#xh.on-target .xh-dot{background:#00ff88!important;outline-color:#006633!important;}
-#xh.hit .xh-h,#xh.hit .xh-v{background:#ff4400!important;}
-#xh.miss .xh-h,#xh.miss .xh-v{background:#ff0000!important;}
-.hit-ring{display:none;}
 #pw{position:fixed;bottom:0;left:0;right:0;z-index:8;height:2px;background:rgba(255,255,255,.04);}
 #pb{height:100%;background:var(--a);width:0;box-shadow:0 0 8px var(--ag);transition:background .3s;}
 #hud{position:fixed;top:18px;left:18px;z-index:8;background:rgba(7,7,8,.9);border:1px solid var(--b);padding:12px 16px;min-width:178px;display:none;backdrop-filter:blur(12px);}
@@ -140,11 +137,12 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
 .pm-sl{font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.25);text-transform:uppercase;letter-spacing:.12em;}
 .pm-sv{font-family:var(--mono);font-size:15px;color:var(--a);}
 /* overlays */
-.menu{animation:none;}
+@keyframes menuIn{from{opacity:0;transform:translate(-50%,-48%)}to{opacity:1;transform:translate(-50%,-50%)}}
+.menu{animation:menuIn .25s cubic-bezier(.16,1,.3,1) both;}
 /* scan-line overlay üst menü için */
 .menu::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,.012) 2px,rgba(255,255,255,.012) 4px);pointer-events:none;z-index:0;}
 .menu>*{position:relative;z-index:1;}
-#cov{display:none;position:fixed;inset:0;z-index:30;background:rgba(7,7,8,.8);align-items:center;justify-content:center;text-align:center;backdrop-filter:blur(4px);}
+#cov{display:none;position:fixed;inset:0;z-index:30;background:rgba(7,7,8,.97);align-items:center;justify-content:center;text-align:center;}
 #cov.on{display:flex;}
 .cal-box{border:1px solid var(--a);padding:30px 42px;max-width:440px;background:rgba(7,7,8,0.9);box-shadow:0 0 50px rgba(0,0,0,0.5);}
 .cal-ti{font-size:13px;font-weight:800;color:var(--a);letter-spacing:.15em;text-transform:uppercase;margin-bottom:10px;font-family:var(--sans);}
@@ -155,13 +153,13 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
 .sw-sn{font-size:50px;font-weight:900;color:var(--a);line-height:1;letter-spacing:-.03em;font-family:var(--sans);transition:color .3s;}
 .sw-tg{font-family:var(--mono);font-size:9px;color:var(--td);letter-spacing:.1em;margin-top:5px;}
 .sw-cd{font-family:var(--mono);font-size:32px;color:rgba(255,255,255,.12);margin-top:18px;}
-.sw-cd.flash{opacity:.9;}
+@keyframes cdFlash{0%{transform:scale(1.6);opacity:.9;}100%{transform:scale(1);opacity:.12;}}
+.sw-cd.flash{animation:cdFlash .35s cubic-bezier(.16,1,.3,1) both;}
 </style>
 </head>
 <body>
 <div id="rc"></div>
 <div id="xh"><div class="xh-h"></div><div class="xh-v"></div><div class="xh-dot"></div></div>
-<div id="hr" class="hit-ring"></div>
 <div id="pw"><div id="pb"></div></div>
 <div id="fb"></div>
 
@@ -191,7 +189,7 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
 
 <div id="cov"><div class="cal-box">
   <div class="cal-ti" id="cal-ti">Calibration</div>
-  <div style="font-size:32px;margin:16px 0;">🖱️ ↔️ 🔄</div>
+  <div style="font-size:24px;margin:12px 0;">🖱️ ↔️</div>
   <div class="cal-de" id="cal-de">...</div>
 </div></div>
 
@@ -414,7 +412,7 @@ function resumeSession(){
 
 // ─── THREE.JS ───
 let scene,camera,renderer,tM,tL;
-let tMs=[],tTrail=[];
+let tMs=[];
 let tVX=0,tVY=0,tX=0,tY=0,tZ=-8;
 let yaw=0,pitch=0,animF=null,active=false;
 
@@ -438,12 +436,6 @@ function initThree(){
   const fl=new THREE.PointLight(0xff3344,2,18);fl.position.set(-4,2,-6);scene.add(fl);
   yaw=0;pitch=0;
   camera.quaternion.setFromEuler(new THREE.Euler(0,0,0,'YXZ'));
-  
-  // Init trail meshes
-  for(let i=0;i<6;i++){
-    const m=new THREE.Mesh(new THREE.SphereGeometry(.1,12,12),new THREE.MeshBasicMaterial({color:0xff2020,transparent:true,opacity:0.4/(i+1)}));
-    m.visible=false;scene.add(m);tTrail.push(m);
-  }
   
   doRender();
   window.addEventListener('resize',()=>{if(!renderer)return;const W=window.innerWidth,H=window.innerHeight;renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));renderer.setSize(W,H);camera.aspect=W/H;camera.updateProjectionMatrix();});
@@ -477,13 +469,12 @@ function setGridActive(idx){
 
 function setupT(mode,label){
   clrT();gridActiveIdx=-1;
-  const isMid=label==='MID';
-  const tColor=isMid?0x47ffb8:0xff2020;
+  const tColor=0xff2020;
   if(mode==='grid'){
     // Her testte GP konumlarını ±0.25 birim rastgele kaydır — pattern öğrenmeyi önle
     GP=GP_BASE.map(([x,y,z])=>[x+(Math.random()-.5)*.5,y+(Math.random()-.5)*.25,z]);
     GP.forEach(p=>{
-      const m=new THREE.Mesh(new THREE.SphereGeometry(.32,20,20),new THREE.MeshBasicMaterial({color:tColor}));
+      const m=new THREE.Mesh(new THREE.SphereGeometry(.28,20,20),new THREE.MeshBasicMaterial({color:tColor}));
       m.position.set(...p);m.visible=false;scene.add(m);tMs.push(m);
     });
     // Rastgele başlangıç hedefi
@@ -493,11 +484,10 @@ function setupT(mode,label){
 }
 function spawnS(jump,label){
   const isTrack=cMode==='track';
-  const isMid=label==='MID';
-  const tColor=isMid?0x47ffb8:0xff2020;
+  const tColor=0xff2020;
   // Track: round arttıkça hedef küçülür (min 0.22, başlangıç 0.36)
   const tRadius=isTrack?Math.max(0.22,0.36-curRound*0.02):undefined;
-  if(tM)scene.remove(tM);tM=tRadius!=null?new THREE.Mesh(new THREE.SphereGeometry(tRadius,20,20),new THREE.MeshBasicMaterial({color:tColor})):new THREE.Mesh(new THREE.SphereGeometry(.32,20,20),new THREE.MeshBasicMaterial({color:tColor}));
+  if(tM)scene.remove(tM);tM=tRadius!=null?mkSph(tRadius):mkSph();
   if(jump){
     // Anti-center: crosshair'den en az 0.6 birim uzakta spawnla
     let attempts=0;
@@ -523,8 +513,6 @@ let cMode='flick';
 // Track on-target yüzdesi
 let _trackFrames=0,_trackOnFrames=0;
 let _sessTrackFrames=0,_sessTrackOnFrames=0; // session boyunca kümülatif (3 takip testi)
-
-let _trailPos=[];
 function doRender(){
   animF=requestAnimationFrame(doRender);
   if(active&&cMode==='track'&&tM){
@@ -540,18 +528,6 @@ function doRender(){
     if(sp<.018){tVX=tVX/sp*.018;tVY=tVY/sp*.018;}
     tZ+=(Math.random()-.5)*.003;tZ=Math.max(-9,Math.min(-7.5,tZ));
     tM.position.set(tX,tY,tZ);
-    
-    // Trail logic
-    _trailPos.unshift(new THREE.Vector3(tX,tY,tZ));
-    if(_trailPos.length>30)_trailPos.pop();
-    tTrail.forEach((m,i)=>{
-      const p=_trailPos[(i+1)*4];
-      if(p){m.position.copy(p);m.visible=true;}
-      else m.visible=false;
-    });
-  } else {
-    tTrail.forEach(m=>m.visible=false);
-    _trailPos=[];
   }
   const prim=tM||(tMs[gridActiveIdx]??tMs[0]??null);if(tL&&prim)tL.position.copy(prim.position);
   if(active&&phaseScoreActive&&cMode==='track'&&document.pointerLockElement===renderer.domElement&&tM){
@@ -664,23 +640,10 @@ function playTrackOn(){
 let isCalib=false,calMov=0,curTS=2.5,hits=0,miss=0,isPaused=false;
 
 let _lockAcquiredAt=0;
-// Drift koruması — 3 katmanlı:
-// 1. Settle: lock alındıktan sonraki LOCK_SETTLE_MS ms → tümünü yoksay
-// 2. Warmup: settle bittikten sonraki ilk WARMUP_EVENTS event → max 20px clamp
-//    Burst her zaman ilk birkaç event içinde gelir; 20px clamp kamerayı korur
-//    ama meşru küçük hareketi zaten geçirir
-// 3. Normal oyun: MAX_DELTA=150px hard clamp
-//
-// Önceki velocity limiter KALDIRILDI — _prevDx=0 başlangıcından dolayı
-// meşru hızlı hareketleri de düşürüyordu (cascading drop bug).
-const LOCK_SETTLE_MS=80;     // lock alınca ilk 80ms tamamen yoksay
-const WARMUP_EVENTS=6;       // settle sonrası ilk 6 event → kademeli aç
-const WARMUP_CAP=45;         // warmup başlangıç clamp (40-80px normal flick'i geçirir)
-const MAX_DELTA=150;         // normal oyun hard clamp
-let _warmupCount=0;          // lock başına sayaç — reset edilir
+const MAX_DELTA=1000;        // sadece anormal tarayıcı sıçramalarını keser
 
 document.addEventListener('pointerlockchange',()=>{
-  if(document.pointerLockElement){_lockAcquiredAt=performance.now();_warmupCount=0;return;}
+  if(document.pointerLockElement){_lockAcquiredAt=performance.now();return;}
   // Lock kayboldu
   if(isCalib){finCalib();return;}
   if(!isCalib&&active&&!isPaused){
@@ -705,17 +668,8 @@ document.addEventListener('mousemove',e=>{
   }
 
   if(!active)return;
-  // 1. Settle: lock alındıktan sonraki ilk 100ms → tümünü yoksay
-  if(performance.now()-_lockAcquiredAt<LOCK_SETTLE_MS)return;
-  // 2. Warmup: ilk 12 event → max 20px clamp (burst bu pencerede gelir)
-  // Kademeli warmup: WARMUP_CAP'ten MAX_DELTA'ya lineer geçiş
-  // Sert sıçrama yerine yumuşak açılma — "kayma" hissini azaltır
-  const _cap=_warmupCount<WARMUP_EVENTS
-    ?WARMUP_CAP+(MAX_DELTA-WARMUP_CAP)*(_warmupCount/WARMUP_EVENTS)
-    :MAX_DELTA;
-  _warmupCount++;
-  const dx=Math.max(-_cap,Math.min(_cap,e.movementX));
-  const dy=Math.max(-_cap,Math.min(_cap,e.movementY));
+  const dx=Math.max(-MAX_DELTA,Math.min(MAX_DELTA,e.movementX));
+  const dy=Math.max(-MAX_DELTA,Math.min(MAX_DELTA,e.movementY));
   const scale=GC[game].yaw*curTS*(Math.PI/180);
   yaw-=dx*scale;
   pitch-=dy*scale;
@@ -772,18 +726,7 @@ window.addEventListener('keydown',e=>{
   }
 });
 let _fbT;
-function showFB(t,g){
-  const el=$('fb'),xh=$('xh');
-  el.textContent=t;el.style.color=g?'var(--a)':'#ff4455';el.style.opacity='1';
-  if(g){
-    xh.classList.add('hit');
-    setTimeout(()=>xh.classList.remove('hit'),120);
-  } else {
-    xh.classList.add('miss');
-    setTimeout(()=>xh.classList.remove('miss'),120);
-  }
-  clearTimeout(_fbT);_fbT=setTimeout(()=>el.style.opacity='0',280);
-}
+function showFB(t,g){const el=$('fb');el.textContent=t;el.style.color=g?'var(--a)':'#ff4455';el.style.opacity='1';clearTimeout(_fbT);_fbT=setTimeout(()=>el.style.opacity='0',280);}
 
 // ─── PAUSE ───
 let _pauseRes=null,_endEarly=false;
@@ -966,7 +909,7 @@ function startRound(){
   active=false;
 
   const _runLoop=()=>{
-    _lockAcquiredAt=performance.now();_warmupCount=0;active=true;
+    _lockAcquiredAt=performance.now();active=true;
     _sessTrackFrames=0;_sessTrackOnFrames=0; // her yeni session/round başında sıfırla
     (async()=>{
     let totalH=0,totalM=0,totalSc=0;let phIdx=0;
@@ -1171,17 +1114,13 @@ function showSOv(sens,label,mode,phIdx,totalPhases,cfg,cb){
         function _sovLock(){
           if(document.pointerLockElement===renderer.domElement){
             document.removeEventListener('pointerlockchange',_sovLock);
-            _lockAcquiredAt=performance.now();_warmupCount=0;active=true;cb();
+            _lockAcquiredAt=performance.now();active=true;cb();
           }
         }
         document.addEventListener('pointerlockchange',_sovLock);
         renderer.domElement.requestPointerLock();
-        setTimeout(()=>{if(!active){document.removeEventListener('pointerlockchange',_sovLock);_lockAcquiredAt=performance.now();_warmupCount=0;active=true;cb();}},800);
+        setTimeout(()=>{if(!active){document.removeEventListener('pointerlockchange',_sovLock);_lockAcquiredAt=performance.now();active=true;cb();}},800);
       } else {
-        // Lock hiç kopmadı — _lockAcquiredAt'i SIFIRLAMA.
-        // Sıfırlarsak LOCK_SETTLE_MS boyunca mousemove yutulur ve
-        // "GO" dedikten sonra ilk hareket kaybolup sonraki büyük
-        // hareket aniden işlenir → kayma hissi yaratır.
         active=true;cb();
       }
     }
