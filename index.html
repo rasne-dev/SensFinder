@@ -25,6 +25,11 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
 .xh-v{position:absolute!important;width:2px!important;height:26px!important;background:#ffffff!important;left:-1px!important;top:-13px!important;outline:1px solid #000!important;box-shadow:0 0 3px #000!important;}
 .xh-dot{position:absolute!important;width:4px!important;height:4px!important;background:#ffffff!important;border-radius:50%!important;top:-2px!important;left:-2px!important;outline:1px solid #000!important;}
 #xh.on-target .xh-h,#xh.on-target .xh-v,#xh.on-target .xh-dot{background:#00ff88!important;outline-color:#006633!important;}
+#xh.hit .xh-h,#xh.hit .xh-v{background:#ff4400!important;transform:translate(-50%,-50%) scale(1.5)!important;}
+#xh.miss .xh-h,#xh.miss .xh-v{background:#ff0000!important;}
+.hit-ring{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:20px;height:20px;border:2px solid var(--a);border-radius:50%;pointer-events:none;z-index:99998;opacity:0;transition:all .2s;}
+.hit-ring.anim{animation:hrIn .25s ease-out both;}
+@keyframes hrIn{0%{width:20px;height:20px;opacity:1;border-width:4px;}100%{width:80px;height:80px;opacity:0;border-width:1px;}}
 #pw{position:fixed;bottom:0;left:0;right:0;z-index:8;height:2px;background:rgba(255,255,255,.04);}
 #pb{height:100%;background:var(--a);width:0;box-shadow:0 0 8px var(--ag);transition:background .3s;}
 #hud{position:fixed;top:18px;left:18px;z-index:8;background:rgba(7,7,8,.9);border:1px solid var(--b);padding:12px 16px;min-width:178px;display:none;backdrop-filter:blur(12px);}
@@ -142,9 +147,9 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
 /* scan-line overlay üst menü için */
 .menu::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,.012) 2px,rgba(255,255,255,.012) 4px);pointer-events:none;z-index:0;}
 .menu>*{position:relative;z-index:1;}
-#cov{display:none;position:fixed;inset:0;z-index:30;background:rgba(7,7,8,.97);align-items:center;justify-content:center;text-align:center;}
+#cov{display:none;position:fixed;inset:0;z-index:30;background:rgba(7,7,8,.8);align-items:center;justify-content:center;text-align:center;backdrop-filter:blur(4px);}
 #cov.on{display:flex;}
-.cal-box{border:1px solid var(--a);padding:30px 42px;max-width:370px;}
+.cal-box{border:1px solid var(--a);padding:30px 42px;max-width:440px;background:rgba(7,7,8,0.9);box-shadow:0 0 50px rgba(0,0,0,0.5);}
 .cal-ti{font-size:13px;font-weight:800;color:var(--a);letter-spacing:.15em;text-transform:uppercase;margin-bottom:10px;font-family:var(--sans);}
 .cal-de{font-family:var(--mono);font-size:10px;color:var(--t);line-height:2;letter-spacing:.04em;}
 #sov{display:none;position:fixed;inset:0;z-index:15;background:rgba(7,7,8,.92);align-items:center;justify-content:center;text-align:center;backdrop-filter:blur(8px);}
@@ -160,6 +165,7 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
 <body>
 <div id="rc"></div>
 <div id="xh"><div class="xh-h"></div><div class="xh-v"></div><div class="xh-dot"></div></div>
+<div id="hr" class="hit-ring"></div>
 <div id="pw"><div id="pb"></div></div>
 <div id="fb"></div>
 
@@ -189,8 +195,8 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
 
 <div id="cov"><div class="cal-box">
   <div class="cal-ti" id="cal-ti">Calibration</div>
-  <div style="font-size:24px;margin:12px 0;">🖱️ ↔️</div>
-  <div class="cal-de" id="cal-de">Place mouse at one edge of your mousepad.<br>Drag to the opposite edge.<br>Press <strong>ESC</strong> to finish.</div>
+  <div style="font-size:32px;margin:16px 0;">🖱️ ↔️ 🔄</div>
+  <div class="cal-de" id="cal-de">...</div>
 </div></div>
 
 <!-- MAIN MENU -->
@@ -287,12 +293,12 @@ const L={
   tr:{sub:'Hassasiyet Bulucusu · CS2 & Valorant',game:'Oyun',dpi:'Mouse DPI',fov:'FOV',sens:'Mevcut Hassasiyet',
     calib:'360° mousepad hareketi ile kalibre et',start:'TESTİ BAŞLAT',
     rLbl:'Tur',phLbl:'Aşama',scLbl:'Puan',piLbl:'İlerleme',
-    calTi:'KALİBRASYON',calDe:'Fareyi mousepad\'ın bir kenarına koy.<br>Karşı kenara sürükle.<br><strong>ESC</strong> ile bitir.',
+    calTi:'KALİBRASYON',calDe:'Seçenek A: Mousepad\'in bir kenarından diğerine kaydır (fiziksel mesafe eşleme).<br>Seçenek B: Tam 360° dönene kadar kaydır (hassasiyet ölçümü).<br>Bitirmek için <strong>ESC</strong> tuşuna bas.',
     eyLow:'Test: DÜŞÜK',eyHigh:'Test: YÜKSEK',eyMid:'Doğrulama',
     tagF:'Flick',tagG:'Gridshot',tagT:'Takip',
     rrEy:(r)=>`Tur ${r} Sonucu`,rrU:(g)=>`${g} HASSASİYETİ`,rrCl:(g)=>`${g} Eşdeğeri`,
     rrAl:'İsabet',confL:'Güven',rhL:'Geçmiş',perMode:'Mod Bazlı',
-    ftTi:'Oyun İçi İnce Ayar',ftOv:'Hedefi aşıyorsan (overshooting) — 0.05–0.1 azalt',ftUn:'Hedefe yetişemiyorsan — 0.05–0.1 artır',
+    ftTi:'Oyun İçi İnce Ayar',ftOv:'Hedefi aşıyorsan (overshooting) — %5–10 azalt',ftUn:'Hedefe yetişemiyorsan — %5–10 artır',
     nextR:'▶ Sonraki Tur (Daha Hassas)',done:'✓ Tamamlandı',
     pmTi:'Durakladı',pmSu:'Test askıya alındı',pmR:'Tur',pmB:'En iyi şu ana kadar',pmPh:'Aşama',
     resume:'▶ Devam Et',early:'✓ Bitir & Sonuçları Göster',quit:'✕ Çık',
@@ -305,12 +311,12 @@ const L={
   en:{sub:'Sensitivity Finder · CS2 & Valorant',game:'Game',dpi:'Mouse DPI',fov:'FOV',sens:'Current Sensitivity',
     calib:'Calibrate via 360° mousepad movement',start:'START TEST',
     rLbl:'Round',phLbl:'Phase',scLbl:'Score',piLbl:'Progress',
-    calTi:'CALIBRATION',calDe:'Place mouse at one edge of your mousepad.<br>Drag to the opposite edge.<br>Press <strong>ESC</strong> to finish.',
+    calTi:'CALIBRATION',calDe:'Option A: Drag from one edge of your mousepad to the other (distance mapping).<br>Option B: Drag until you complete a full 360° turn (measure current sens).<br>Press <strong>ESC</strong> to finish.',
     eyLow:'Testing: LOW',eyHigh:'Testing: HIGH',eyMid:'Verification',
     tagF:'Flick',tagG:'Gridshot',tagT:'Tracking',
     rrEy:(r)=>`Round ${r} Result`,rrU:(g)=>`${g} SENSITIVITY`,rrCl:(g)=>`${g} Equivalent`,
     rrAl:'Accuracy',confL:'Confidence',rhL:'History',perMode:'Per Mode',
-    ftTi:'In-Game Fine Tuning',ftOv:'Overshooting — lower by 0.05–0.1',ftUn:'Undershooting — raise by 0.05–0.1',
+    ftTi:'In-Game Fine Tuning',ftOv:'Overshooting — lower by ~5-10%',ftUn:'Undershooting — raise by ~5-10%',
     nextR:'▶ Next Round (More Precise)',done:'✓ Done',
     pmTi:'Paused',pmSu:'Test suspended',pmR:'Round',pmB:'Best so far',pmPh:'Phase',
     resume:'▶ Resume',early:'✓ End & Show Results',quit:'✕ Quit',
@@ -411,7 +417,7 @@ function resumeSession(){
 
 // ─── THREE.JS ───
 let scene,camera,renderer,tM,tL;
-let tMs=[];
+let tMs=[],tTrail=[];
 let tVX=0,tVY=0,tX=0,tY=0,tZ=-8;
 let yaw=0,pitch=0,animF=null,active=false;
 
@@ -435,6 +441,13 @@ function initThree(){
   const fl=new THREE.PointLight(0xff3344,2,18);fl.position.set(-4,2,-6);scene.add(fl);
   yaw=0;pitch=0;
   camera.quaternion.setFromEuler(new THREE.Euler(0,0,0,'YXZ'));
+  
+  // Init trail meshes
+  for(let i=0;i<6;i++){
+    const m=new THREE.Mesh(new THREE.SphereGeometry(.1,12,12),new THREE.MeshBasicMaterial({color:0xff2020,transparent:true,opacity:0.4/(i+1)}));
+    m.visible=false;scene.add(m);tTrail.push(m);
+  }
+  
   doRender();
   window.addEventListener('resize',()=>{if(!renderer)return;const W=window.innerWidth,H=window.innerHeight;renderer.setPixelRatio(window.devicePixelRatio||1);renderer.setSize(W,H);camera.aspect=W/H;camera.updateProjectionMatrix();});
 }
@@ -465,25 +478,29 @@ function setGridActive(idx){
   gridLastHitTime=Date.now();
 }
 
-function setupT(mode){
+function setupT(mode,label){
   clrT();gridActiveIdx=-1;
+  const isMid=label==='MID';
+  const tColor=isMid?0x47ffb8:0xff2020;
   if(mode==='grid'){
     // Her testte GP konumlarını ±0.25 birim rastgele kaydır — pattern öğrenmeyi önle
     GP=GP_BASE.map(([x,y,z])=>[x+(Math.random()-.5)*.5,y+(Math.random()-.5)*.25,z]);
     GP.forEach(p=>{
-      const m=new THREE.Mesh(new THREE.SphereGeometry(.28,20,20),new THREE.MeshBasicMaterial({color:0xff2020}));
+      const m=new THREE.Mesh(new THREE.SphereGeometry(.32,20,20),new THREE.MeshBasicMaterial({color:tColor}));
       m.position.set(...p);m.visible=false;scene.add(m);tMs.push(m);
     });
     // Rastgele başlangıç hedefi
     const first=Math.floor(Math.random()*6);
     setGridActive(first);
-  } else spawnS(false);
+  } else spawnS(false,label);
 }
-function spawnS(jump){
+function spawnS(jump,label){
   const isTrack=cMode==='track';
+  const isMid=label==='MID';
+  const tColor=isMid?0x47ffb8:0xff2020;
   // Track: round arttıkça hedef küçülür (min 0.22, başlangıç 0.36)
   const tRadius=isTrack?Math.max(0.22,0.36-curRound*0.02):undefined;
-  if(tM)scene.remove(tM);tM=tRadius!=null?mkSph(tRadius):mkSph();
+  if(tM)scene.remove(tM);tM=tRadius!=null?new THREE.Mesh(new THREE.SphereGeometry(tRadius,20,20),new THREE.MeshBasicMaterial({color:tColor})):new THREE.Mesh(new THREE.SphereGeometry(.32,20,20),new THREE.MeshBasicMaterial({color:tColor}));
   if(jump){
     // Anti-center: crosshair'den en az 0.6 birim uzakta spawnla
     let attempts=0;
@@ -499,10 +516,10 @@ function spawnS(jump){
   tM.position.set(tX,tY,tZ);scene.add(tM);
 }
 let _jt=null;
-function schedJ(mode){
+function schedJ(mode,label){
   clearTimeout(_jt);if(mode==='track')return;
   const d=mode==='flick'?(1500+Math.random()*1100):(800+Math.random()*500);
-  _jt=setTimeout(()=>{if(!active)return;if(mode!=='grid')spawnS(true);schedJ(mode);},d);
+  _jt=setTimeout(()=>{if(!active)return;if(mode!=='grid')spawnS(true,label);schedJ(mode,label);},d);
 }
 const rc2=new THREE.Raycaster();let curScore=0,onT=false;
 let cMode='flick';
@@ -510,6 +527,7 @@ let cMode='flick';
 let _trackFrames=0,_trackOnFrames=0;
 let _sessTrackFrames=0,_sessTrackOnFrames=0; // session boyunca kümülatif (3 takip testi)
 
+let _trailPos=[];
 function doRender(){
   animF=requestAnimationFrame(doRender);
   if(active&&cMode==='track'&&tM){
@@ -525,6 +543,18 @@ function doRender(){
     if(sp<.018){tVX=tVX/sp*.018;tVY=tVY/sp*.018;}
     tZ+=(Math.random()-.5)*.003;tZ=Math.max(-9,Math.min(-7.5,tZ));
     tM.position.set(tX,tY,tZ);
+    
+    // Trail logic
+    _trailPos.unshift(new THREE.Vector3(tX,tY,tZ));
+    if(_trailPos.length>30)_trailPos.pop();
+    tTrail.forEach((m,i)=>{
+      const p=_trailPos[(i+1)*4];
+      if(p){m.position.copy(p);m.visible=true;}
+      else m.visible=false;
+    });
+  } else {
+    tTrail.forEach(m=>m.visible=false);
+    _trailPos=[];
   }
   const prim=tM||(tMs[gridActiveIdx]??tMs[0]??null);if(tL&&prim)tL.position.copy(prim.position);
   if(active&&cMode==='track'&&document.pointerLockElement===renderer.domElement&&tM){
@@ -665,8 +695,18 @@ document.addEventListener('pointerlockchange',()=>{
   }
 });
 document.addEventListener('mousemove',e=>{
-  if(isCalib){if(!$('cov').classList.contains('on'))calMov+=Math.abs(e.movementX);return;}
   if(!renderer||!renderer.domElement||document.pointerLockElement!==renderer.domElement)return;
+  
+  if(isCalib){
+    calMov+=Math.abs(e.movementX);
+    const scale=GC[game].yaw*gS()*(Math.PI/180);
+    yaw-=e.movementX*scale;
+    pitch-=e.movementY*scale;
+    pitch=Math.max(-Math.PI/2.1,Math.min(Math.PI/2.1,pitch));
+    camera.quaternion.setFromEuler(new THREE.Euler(pitch,yaw,0,'YXZ'));
+    return;
+  }
+
   if(!active)return;
   // 1. Settle: lock alındıktan sonraki ilk 100ms → tümünü yoksay
   if(performance.now()-_lockAcquiredAt<LOCK_SETTLE_MS)return;
@@ -700,7 +740,7 @@ document.addEventListener('mousedown',e=>{
       const elapsed=Date.now()-gridLastHitTime;
       // Üstel decay: 0ms→500, 500ms→300, 1000ms→180, 2000ms→65, 3000ms→50
       const speedBonus=Math.max(50,Math.round(500*Math.exp(-elapsed/1200)));
-      curScore+=speedBonus;hits++;playHit();
+      curScore+=speedBonus;hits++;playHit();showFB('+',true);
       // Bir sonraki hedefi seç (aynı olmasın)
       let next,_gi=0;do{next=Math.floor(Math.random()*tMs.length);_gi++;}while(next===gridActiveIdx&&tMs.length>1&&_gi<20);
       setGridActive(next);
@@ -715,8 +755,8 @@ document.addEventListener('mousedown',e=>{
   let h=false;
   for(const m of cands){
     if(rc2.intersectObject(m).length>0){
-      curScore+=500;hits++;h=true;playHit();
-      spawnS(true);schedJ(cMode);
+      curScore+=500;hits++;h=true;playHit();showFB('+',true);
+      spawnS(true,curLabel);schedJ(cMode,curLabel);
       break;
     }
   }
@@ -734,7 +774,18 @@ window.addEventListener('keydown',e=>{
   }
 });
 let _fbT;
-function showFB(t,g){const el=$('fb');el.textContent=t;el.style.color=g?'var(--a)':'#ff4455';el.style.opacity='1';clearTimeout(_fbT);_fbT=setTimeout(()=>el.style.opacity='0',280);}
+function showFB(t,g){
+  const el=$('fb'),xh=$('xh'),hr=$('hr');
+  el.textContent=t;el.style.color=g?'var(--a)':'#ff4455';el.style.opacity='1';
+  if(g){
+    xh.classList.add('hit');hr.classList.remove('anim');void hr.offsetWidth;hr.classList.add('anim');
+    setTimeout(()=>xh.classList.remove('hit'),120);
+  } else {
+    xh.classList.add('miss');
+    setTimeout(()=>xh.classList.remove('miss'),120);
+  }
+  clearTimeout(_fbT);_fbT=setTimeout(()=>el.style.opacity='0',280);
+}
 
 // ─── PAUSE ───
 let _pauseRes=null,_endEarly=false;
@@ -819,16 +870,19 @@ const HALF_DUR=15;
 const SESSION_ROUNDS=1; // 1 antreman = 9 faz (3 mod × 3 test)
 let _sessionTarget=1;
 
-// Per-mod binary search state — her round başında startFresh/resumeSession tarafından set edilir
+// Normalize skor: ham skoru 0–1'e çevir.
+const BASE_CAP={flick:12000,grid:8000,track:1440};
+function normScore(raw,mode){
+  const cap=BASE_CAP[mode]*(HALF_DUR/12); // durasyona göre ölçekle
+  return Math.min(1,Math.max(0,raw/cap));
+}
+
 let modLo={},modHi={},modInitRange={};
 let curRound=1,hist=[],_resT=null;
-// Eski lo/hi — geriye dönük compat (pause/save)
 let lo=0,hi=0;
 
 function _initModRanges(centerSens){
   const c=GC[game];
-  // Flick & grid: geniş arama aralığı (±50%)
-  // Track: biraz daha dar — tracking çok yüksek sens'e toleranslı
   modLo.flick=Math.max(c.sensMin,centerSens*.50);
   modHi.flick=Math.min(c.sensMax,centerSens*1.50);
   modLo.grid =Math.max(c.sensMin,centerSens*.50);
@@ -836,30 +890,24 @@ function _initModRanges(centerSens){
   modLo.track=Math.max(c.sensMin,centerSens*.55);
   modHi.track=Math.min(c.sensMax,centerSens*1.45);
   MODES.forEach(m=>{modInitRange[m]=modHi[m]-modLo[m];});
-  // Eski compat
   lo=Math.max(c.sensMin,centerSens*.50);
   hi=Math.min(c.sensMax,centerSens*1.50);
 }
 
-// Normalize skor: ham skoru 0–1'e çevir. Teorik max'lar:
-// Flick: 60fps * 12s = 720 click fırsatı; gerçekçi max ~20 hit → 10000 puan; cap 12000
-// Grid : benzer → cap 15000
-// Track: 60fps * 12s * 2 = 1440 teorik max → cap 1440
-// 15s/12s = 1.25 ölçek faktörü ile capler orantılı büyütüldü
-const SCORE_CAP={flick:15000,grid:10000,track:1800};
-function normScore(raw,mode){return Math.min(1,Math.max(0,raw/SCORE_CAP[mode]));}
-
 function startFresh(){
+  const ac=_getAC();if(ac&&ac.state==='suspended')ac.resume();
   clearSession();hist=[];curRound=1;modLo={};modHi={};modInitRange={};
   _initModRanges(gS());
   _sessionTarget=SESSION_ROUNDS; // 1 antreman
   // Kısa "başlatılıyor" feedback
   const btn=document.querySelector(".sbtn:not(.g)");
-  if(btn){const orig=btn.innerHTML;btn.style.opacity=".6";btn.innerHTML='<span>…</span>';
-  setTimeout(()=>{btn.innerHTML=orig;btn.style.opacity="";},900);}
-  startRound();
+  if(btn){
+    const orig=btn.innerHTML;btn.style.opacity=".6";btn.innerHTML='<span>PREPARING...</span>';
+    setTimeout(()=>{btn.innerHTML=orig;btn.style.opacity="";startRound();},600);
+  } else startRound();
 }
 function startNextRound(){
+  const ac=_getAC();if(ac&&ac.state==='suspended')ac.resume();
   if(window._cuTimer){clearInterval(window._cuTimer);window._cuTimer=null;}
   curRound++;
   _sessionTarget=curRound; // 1 antreman daha (9 faz)
@@ -1000,13 +1048,15 @@ function startRound(){
   }
 }
 
+let curLabel='LOW';
 function runH(sens,label,mode,phIdx){
+  curLabel=label;
   return new Promise(resolve=>{
     _resT=resolve;
     showSOv(sens,label,mode,phIdx,()=>{
       curTS=sens;curScore=0;hits=0;miss=0;onT=false;
       _trackFrames=0;_trackOnFrames=0;
-      cMode=mode;setupT(mode);schedJ(mode);      const modeIdx=['flick','grid','track'].indexOf(mode);
+      cMode=mode;setupT(mode,label);schedJ(mode,label);      const modeIdx=['flick','grid','track'].indexOf(mode);
       $('hpill').textContent=T('tag'+['F','G','T'][modeIdx]);
       // Tracking modunda HUD'da farklı açıklama
       if(mode==='track'){$('hl-sc').textContent=lang==='tr'?'Takip Puanı':'Track Score';}
@@ -1020,26 +1070,26 @@ function runH(sens,label,mode,phIdx){
       $('hv-cm').textContent=cm360(sens,gD()).toFixed(1);$('hv-sc').textContent='0';
       $('bbar').textContent=`${label==='LOW'?T('eyLow'):label==='HIGH'?T('eyHigh'):T('eyMid')} · ESC pause`;
 
-      const start=Date.now(),dur=HALF_DUR*1000;
-      const tick=setInterval(()=>{
-        if(_endEarly){clearInterval(tick);_resT=null;resolve(Math.floor(curScore));return;}
+      const start=performance.now(),dur=HALF_DUR*1000;
+      let _pausedAt=0,_totalPaused=0;
+
+      const _tick=()=>{
+        if(_endEarly){_resT=null;resolve(Math.floor(curScore));return;}
         if(isPaused){
-          clearInterval(tick);const pa=Date.now();
-          waitResume().then(()=>{
-            if(_endEarly){_resT=null;resolve(Math.floor(curScore));return;}
-            const rem=Math.max(0,dur-(pa-start));
-            if(rem<=0){_resT=null;resolve(Math.floor(curScore));return;}
-            const rt=setInterval(()=>{
-              if(_endEarly){clearInterval(rt);_resT=null;resolve(Math.floor(curScore));return;}
-              const el=Date.now()-pa;
-              $('pb').style.width=(((pa-start)+el)/dur*100)+'%';
-              if(el>=rem){clearInterval(rt);_resT=null;resolve(Math.floor(curScore));}
-            },50);
-          });return;
+          if(!_pausedAt)_pausedAt=performance.now();
+          requestAnimationFrame(_tick);
+          return;
         }
-        const el=Date.now()-start;$('pb').style.width=(el/dur*100)+'%';
-        if(el>=dur){clearInterval(tick);_resT=null;resolve(Math.floor(curScore));}
-      },50);
+        if(_pausedAt){_totalPaused+=performance.now()-_pausedAt;_pausedAt=0;}
+        
+        const el=performance.now()-start-_totalPaused;
+        const pct=Math.min(100,el/dur*100);
+        $('pb').style.width=pct+'%';
+        
+        if(el>=dur){_resT=null;resolve(Math.floor(curScore));}
+        else requestAnimationFrame(_tick);
+      };
+      requestAnimationFrame(_tick);
     });
   });
 }
