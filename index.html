@@ -191,6 +191,7 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
   <div class="cal-ti" id="cal-ti">Calibration</div>
   <div style="font-size:24px;margin:12px 0;">🖱️ ↔️</div>
   <div class="cal-de" id="cal-de">...</div>
+  <div id="cal-live" style="font-family:var(--mono);font-size:12px;color:var(--a);margin-top:16px;font-weight:500;min-height:18px;"></div>
 </div></div>
 
 <!-- MAIN MENU -->
@@ -588,6 +589,7 @@ function _getAC(){
     _masterGain.gain.value=parseFloat(localStorage.getItem('sf_vol')||'0.7');
     _masterGain.connect(_ac.destination);
   }catch(e){}}
+  if(_ac&&_ac.state==='suspended'){_ac.resume().catch(()=>{});}
   return _ac;
 }
 function _dest(){const ac=_getAC();return _masterGain||(ac&&ac.destination)||null;}
@@ -671,7 +673,16 @@ document.addEventListener('mousemove',e=>{
   if(performance.now() - _lockAcquiredAt < 100)return;
   
   if(isCalib){
-    calMov+=Math.abs(e.movementX);
+    calMov+=e.movementX;
+    const absCal=Math.abs(calMov);
+    const liveSens=absCal>50?(360/(GC[game].yaw*absCal)):0;
+    const liveCm=liveSens>0?cm360(liveSens,gD()):0;
+    const liveEl=$('cal-live');
+    if(liveEl){
+      liveEl.innerHTML=liveSens>0
+        ?`${lang==='tr'?'Tahmini Hassasiyet':'Est. Sens'}: <span style="font-weight:700">${liveSens.toFixed(3)}</span> (${liveCm.toFixed(1)} cm/360°)`
+        :'...';
+    }
     const scale=GC[game].yaw*gS()*(Math.PI/180);
     yaw-=e.movementX*scale;
     pitch-=e.movementY*scale;
@@ -692,7 +703,6 @@ document.addEventListener('mousemove',e=>{
 document.addEventListener('mousedown',e=>{
   if(e.button!==0||isCalib)return;
   if(!active||!renderer||document.pointerLockElement!==renderer.domElement)return;
-  if(!phaseScoreActive)return;
   if(cMode==='track')return;
   rc2.setFromCamera({x:0,y:0},camera);
 
@@ -701,16 +711,19 @@ document.addEventListener('mousedown',e=>{
     const activeM=tMs[gridActiveIdx];
     if(!activeM)return;
     if(rc2.intersectObject(activeM).length>0){
-      // Hız bonusu: ne kadar hızlı vurursan o kadar puan
       const elapsed=Date.now()-gridLastHitTime;
-      // Üstel decay: 0ms→500, 500ms→300, 1000ms→180, 2000ms→65, 3000ms→50
       const speedBonus=Math.max(50,Math.round(500*Math.exp(-elapsed/1200)));
-      curScore+=speedBonus;hits++;playHit();showFB('+',true);
-      // Bir sonraki hedefi seç (aynı olmasın)
+      if(phaseScoreActive){
+        curScore+=speedBonus;hits++;
+      }
+      playHit();showFB('+',true);
       let next,_gi=0;do{next=Math.floor(Math.random()*tMs.length);_gi++;}while(next===gridActiveIdx&&tMs.length>1&&_gi<20);
       setGridActive(next);
     } else {
-      curScore=Math.max(0,curScore-200);miss++;playMiss();showFB('✕',false);
+      if(phaseScoreActive){
+        curScore=Math.max(0,curScore-200);miss++;
+      }
+      playMiss();showFB('✕',false);
     }
     $('hv-sc').textContent=Math.floor(curScore);
     return;
@@ -720,12 +733,20 @@ document.addEventListener('mousedown',e=>{
   let h=false;
   for(const m of cands){
     if(rc2.intersectObject(m).length>0){
-      curScore+=500;hits++;h=true;playHit();showFB('+',true);
+      if(phaseScoreActive){
+        curScore+=500;hits++;
+      }
+      h=true;playHit();showFB('+',true);
       spawnS(true,curLabel);schedJ(cMode,curLabel);
       break;
     }
   }
-  if(!h){curScore=Math.max(0,curScore-125);miss++;playMiss();showFB('✕',false);}
+  if(!h){
+    if(phaseScoreActive){
+      curScore=Math.max(0,curScore-125);miss++;
+    }
+    playMiss();showFB('✕',false);
+  }
   $('hv-sc').textContent=Math.floor(curScore);
 });
 
@@ -795,18 +816,18 @@ function waitResume(){return new Promise(r=>{_pauseRes=r;});}
 
 // ─── CALIBRATION ───
 function startCalib(){
-  isCalib=true;calMov=0;hideAll();$('cov').classList.add('on');
+  isCalib=true;calMov=0;
+  const liveEl=$('cal-live');if(liveEl)liveEl.textContent='...';
+  hideAll();$('cov').classList.add('on');
   if(!renderer)initThree();setTimeout(()=>safeRequestPointerLock(renderer.domElement),200);
 }
 function finCalib(){
   isCalib=false;$('cov').classList.remove('on');showMenu('mm');
-  // calMov = toplam piksel hareketi (raw mousemove.movementX)
+  // calMov = toplam net piksel hareketi (raw mousemove.movementX yönlü toplamı)
   // 360 derece = mousepad_cm * DPI piksel
-  // sens = 360 / (yaw * calMov) -- burada calMov DPI ile zaten ilişkili (pointer lock raw pixel)
-  // Doğru formül: sens = (360 / (GC[game].yaw * calMov)) * (gD() / gD()) -- DPI iptal olur
-  // Gerçekte pointer lock movementX DPI'ye bağlı olduğundan sens = 360/(yaw*calMov) doğrudur
-  if(calMov>500){
-    const rawSens=360/(GC[game].yaw*calMov);
+  const absCalMov=Math.abs(calMov);
+  if(absCalMov>500){
+    const rawSens=360/(GC[game].yaw*absCalMov);
     const clampedSens=Math.min(Math.max(rawSens,GC[game].sensMin),GC[game].sensMax);
     $('is').value=clampedSens.toFixed(4);updPv();
   }
