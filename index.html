@@ -211,7 +211,7 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
   <div class="t2"><button class="tab on" id="gCS2" onclick="setGame('cs2')">CS2</button><button class="tab" id="gVAL" onclick="setGame('val')">VALORANT</button></div>
   <div class="g2">
     <div class="fg"><label class="flbl" id="ld">Mouse DPI</label><input class="fi" type="number" id="id" value="800" min="100" max="32000" step="50" oninput="updPv()" onfocus="this.select()"></div>
-    <div class="fg"><label class="flbl" id="lf">FOV</label><input class="fi" type="number" id="if" value="90" min="60" max="120" oninput="if(camera){camera.fov=Math.max(60,Math.min(120,parseInt(this.value)||90));camera.updateProjectionMatrix();}localStorage.setItem('sf_fov',this.value);"></div>
+    <div class="fg"><label class="flbl" id="lf">FOV</label><input class="fi" type="number" id="if" value="90" min="60" max="120" oninput="updateCameraFov();localStorage.setItem('sf_fov',this.value);"></div>
   </div>
   <div class="sg">
     <label class="flbl" id="ls">Current Sensitivity</label>
@@ -348,9 +348,9 @@ function applyI18n(){
 
 // ─── GAME CFG ───
 const GC={
-  cs2:{name:'CS2',opp:'Valorant',yaw:.022,sensMin:.1,sensMax:10,sensD:2.5,fovD:90,convF:.022/.07,
+  cs2:{name:'CS2',opp:'Valorant',yaw:.022,sensMin:.1,sensMax:10,sensD:2.5,fovD:90,convF:.022/.07,minSpan:0.05,
        a:'#e8ff47',a2:'#47ffb8',ag:'rgba(232,255,71,.15)',tc:0xff2233,te:0x550008,ti:.6,lc:0xff1122,gc:0x111111},
-  val:{name:'Valorant',opp:'CS2',yaw:.07,sensMin:.1,sensMax:2,sensD:.4,fovD:103,convF:.07/.022,
+  val:{name:'Valorant',opp:'CS2',yaw:.07,sensMin:.1,sensMax:2,sensD:.4,fovD:103,convF:.07/.022,minSpan:0.015,
        a:'#c084fc',a2:'#818cf8',ag:'rgba(192,132,252,.15)',tc:0xff2233,te:0x550008,ti:.6,lc:0xff1122,gc:0x111122}
 };
 let game='cs2';
@@ -363,7 +363,7 @@ function setGame(g){
   $('if').value=localStorage.getItem('sf_fov')||c.fovD;
   const si=$('is');si.max=c.sensMax;si.step=g==='val'?.01:.05;
   if(parseFloat(si.value)>c.sensMax)si.value=c.sensD;
-  applyI18n();updPv();if(tM)updTC();
+  applyI18n();updPv();if(camera)updateCameraFov();if(tM)updTC();
 }
 function gS(){const v=parseFloat($('is').value)||GC[game].sensD;const c=GC[game];return Math.max(c.sensMin,Math.min(c.sensMax,v));}
 function gD(){return Math.max(100,parseInt($('id').value)||800);}
@@ -417,21 +417,29 @@ let tMs=[];
 let tVX=0,tVY=0,tX=0,tY=0,tZ=-8;
 let yaw=0,pitch=0,animF=null,active=false;
 
+function updateCameraFov(){
+  if(!camera)return;
+  const hFov=Math.max(60,Math.min(120,parseInt($('if').value)||90));
+  const aspect=window.innerWidth/window.innerHeight;
+  camera.fov=2*Math.atan(Math.tan(hFov*Math.PI/360)/aspect)*180/Math.PI;
+  camera.updateProjectionMatrix();
+}
+
 function initThree(){
   if(renderer)return; // prevent double init
   const c=GC[game];const W=window.innerWidth,H=window.innerHeight;
-  const fov=parseInt($('if').value)||c.fovD;
   scene=new THREE.Scene();scene.background=new THREE.Color(0x070708);
   scene.fog=new THREE.FogExp2(0x070708,.018);
-  camera=new THREE.PerspectiveCamera(fov,W/H,.1,200);
+  camera=new THREE.PerspectiveCamera(75,W/H,.1,200);
+  updateCameraFov();
   renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
   renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
   renderer.setSize(W,H);$('rc').appendChild(renderer.domElement);
   scene.add(new THREE.AmbientLight(0x222222,.8));
   const dl=new THREE.DirectionalLight(0xfff0ee,.6);dl.position.set(3,8,4);scene.add(dl);
-  const g=new THREE.GridHelper(120,60,c.gc,c.gc);g.position.y=-2.5;scene.add(g);
+  const g=new THREE.GridHelper(120,60,c.gc,c.gc);g.position.y=-3.5;scene.add(g);
   const wm=new THREE.MeshBasicMaterial({color:0x070708,side:THREE.BackSide});
-  const rm=new THREE.Mesh(new THREE.BoxGeometry(80,40,80),wm);rm.position.set(0,18,0);scene.add(rm);
+  const rm=new THREE.Mesh(new THREE.BoxGeometry(80,40,80),wm);rm.position.set(0,16.5,0);scene.add(rm);
   // Red fill lights so targets are vivid from all angles
   tL=new THREE.PointLight(0xff1122,4,16);scene.add(tL);
   const fl=new THREE.PointLight(0xff3344,2,18);fl.position.set(-4,2,-6);scene.add(fl);
@@ -439,7 +447,14 @@ function initThree(){
   camera.quaternion.setFromEuler(new THREE.Euler(0,0,0,'YXZ'));
   
   doRender();
-  window.addEventListener('resize',()=>{if(!renderer)return;const W=window.innerWidth,H=window.innerHeight;renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));renderer.setSize(W,H);camera.aspect=W/H;camera.updateProjectionMatrix();});
+  window.addEventListener('resize',()=>{
+    if(!renderer)return;
+    const W=window.innerWidth,H=window.innerHeight;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+    renderer.setSize(W,H);
+    camera.aspect=W/H;
+    updateCameraFov();
+  });
 }
 
 function mkSph(r=.3){
@@ -985,6 +1000,14 @@ function startRound(){
       }
       modLo[mode]=Math.max(modLo[mode],GC[game].sensMin);
       modHi[mode]=Math.min(modHi[mode],GC[game].sensMax);
+      const minS=GC[game].minSpan||0.02;
+      if(modHi[mode]-modLo[mode]<minS){
+        const mid=(modLo[mode]+modHi[mode])/2;
+        let nLo=mid-minS/2,nHi=mid+minS/2;
+        if(nLo<GC[game].sensMin){nLo=GC[game].sensMin;nHi=nLo+minS;}
+        else if(nHi>GC[game].sensMax){nHi=GC[game].sensMax;nLo=nHi-minS;}
+        modLo[mode]=nLo;modHi[mode]=nHi;
+      }
 
       // ── Test 3: Doğrulama (daraltılmış aralığın mid'i) ──────────
       const sMid=(modLo[mode]+modHi[mode])/2;
@@ -1012,6 +1035,14 @@ function startRound(){
       }
       modLo[mode]=Math.max(modLo[mode],GC[game].sensMin);
       modHi[mode]=Math.min(modHi[mode],GC[game].sensMax);
+      const minS2=GC[game].minSpan||0.02;
+      if(modHi[mode]-modLo[mode]<minS2){
+        const mid=(modLo[mode]+modHi[mode])/2;
+        let nLo=mid-minS2/2,nHi=mid+minS2/2;
+        if(nLo<GC[game].sensMin){nLo=GC[game].sensMin;nHi=nLo+minS2;}
+        else if(nHi>GC[game].sensMax){nHi=GC[game].sensMax;nLo=nHi-minS2;}
+        modLo[mode]=nLo;modHi[mode]=nHi;
+      }
 
       totalSc+=rawLo+rawHi+rawMid;
     }
