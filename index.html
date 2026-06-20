@@ -537,15 +537,17 @@ function doRender(){
     const xhEl=$('xh');
     _trackFrames++;_sessTrackFrames++;
     if(onT){
-      curScore+=2;_trackOnFrames++;_sessTrackOnFrames++;
+      _trackOnFrames++;_sessTrackOnFrames++;
       xhEl.classList.add('on-target');
       if(!_wasOnT)playTrackOn();
     } else {
       xhEl.classList.remove('on-target');
     }
     // HUD: puan + on-target %
-    const pct=_trackFrames>0?Math.round(_trackOnFrames/_trackFrames*100):0;
-    $('hv-sc').textContent=`${Math.floor(curScore)} (${pct}%)`;
+    const pct=_trackFrames>0?(_trackOnFrames/_trackFrames):0;
+    const activeDur=typeof currentPhaseActiveDur!=='undefined'?currentPhaseActiveDur:12;
+    curScore=pct*BASE_CAP.track*(activeDur/12);
+    $('hv-sc').textContent=`${Math.floor(curScore)} (${Math.round(pct*100)}%)`;
   } else if(cMode==='flick'||cMode==='grid'){
     // Flick/Grid: hedef üzerindeyken crosshair yeşil
     const xhEl=$('xh');
@@ -638,6 +640,16 @@ function playTrackOn(){
 
 // ─── INPUT ───
 let isCalib=false,calMov=0,curTS=2.5,hits=0,miss=0,isPaused=false;
+let currentPhaseActiveDur=12;
+
+function safeRequestPointerLock(el){
+  if(!el)return;
+  if(el.requestPointerLock){
+    el.requestPointerLock({unadjustedMovement:true}).catch(()=>{
+      el.requestPointerLock();
+    });
+  }
+}
 
 let _lockAcquiredAt=0;
 const MAX_DELTA=1000;        // sadece anormal tarayıcı sıçramalarını keser
@@ -656,6 +668,7 @@ document.addEventListener('pointerlockchange',()=>{
 });
 document.addEventListener('mousemove',e=>{
   if(!renderer||!renderer.domElement||document.pointerLockElement!==renderer.domElement)return;
+  if(performance.now() - _lockAcquiredAt < 100)return;
   
   if(isCalib){
     calMov+=Math.abs(e.movementX);
@@ -765,7 +778,7 @@ function resumeGame(){
       }
     }
     document.addEventListener('pointerlockchange',onLock);
-    renderer.domElement.requestPointerLock();
+    safeRequestPointerLock(renderer.domElement);
     setTimeout(()=>{
       if(!active){
         document.removeEventListener('pointerlockchange',onLock);
@@ -783,7 +796,7 @@ function waitResume(){return new Promise(r=>{_pauseRes=r;});}
 // ─── CALIBRATION ───
 function startCalib(){
   isCalib=true;calMov=0;hideAll();$('cov').classList.add('on');
-  if(!renderer)initThree();setTimeout(()=>renderer.domElement.requestPointerLock(),200);
+  if(!renderer)initThree();setTimeout(()=>safeRequestPointerLock(renderer.domElement),200);
 }
 function finCalib(){
   isCalib=false;$('cov').classList.remove('on');showMenu('mm');
@@ -1021,7 +1034,7 @@ function startRound(){
       }
     }
     document.addEventListener('pointerlockchange',_onRoundLock);
-    renderer.domElement.requestPointerLock();
+    safeRequestPointerLock(renderer.domElement);
     setTimeout(()=>{
       if(!_rlDone){
         _rlDone=true;
@@ -1040,6 +1053,7 @@ function runH(sens,label,mode,phIdx,totalPhases,cfg){
     showSOv(sens,label,mode,phIdx,totalPhases,cfg,()=>{
       curTS=sens;curScore=0;hits=0;miss=0;onT=false;phaseScoreActive=false;
       _trackFrames=0;_trackOnFrames=0;
+      currentPhaseActiveDur=cfg.activeDur;
       cMode=mode;setupT(mode,label);schedJ(mode,label);      const modeIdx=['flick','grid','track'].indexOf(mode);
       $('hpill').textContent=T('tag'+['F','G','T'][modeIdx]);
       // Tracking modunda HUD'da farklı açıklama
@@ -1118,7 +1132,7 @@ function showSOv(sens,label,mode,phIdx,totalPhases,cfg,cb){
           }
         }
         document.addEventListener('pointerlockchange',_sovLock);
-        renderer.domElement.requestPointerLock();
+        safeRequestPointerLock(renderer.domElement);
         setTimeout(()=>{if(!active){document.removeEventListener('pointerlockchange',_sovLock);_lockAcquiredAt=performance.now();active=true;cb();}},800);
       } else {
         active=true;cb();
