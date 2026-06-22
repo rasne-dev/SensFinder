@@ -184,6 +184,7 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
   <div class="sw-ey" id="sw-ey">Now testing</div>
   <div class="sw-sn" id="sw-sn">—</div>
   <div class="sw-tg" id="sw-tg">sensitivity</div>
+  <div id="sw-cm" style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.28);letter-spacing:.1em;margin-top:3px;min-height:14px;"></div>
   <div class="sw-cd" id="sw-cd">3</div>
 </div></div>
 
@@ -254,8 +255,9 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
 <!-- ROUND RESULT -->
 <div class="menu" id="rr" style="display:none;">
   <span class="rr-eye" id="rr-ey">Round 1 Result</span>
-  <div class="rr-main" id="rr-m">2.750</div>
+  <div class="rr-main" id="rr-m" title="Click to copy" style="cursor:pointer;" onclick="(function(){try{navigator.clipboard.writeText(document.getElementById('rr-m').textContent.trim());}catch(e){} const el=document.getElementById('rr-m');const orig=el.style.color;el.style.color='var(--a2)';el.style.textShadow='0 0 20px var(--a2)';setTimeout(()=>{el.style.color=orig;el.style.textShadow='';},500);})()">2.750</div>
   <div class="rr-unit" id="rr-u">CS2 SENSITIVITY</div>
+  <div style="font-family:var(--mono);font-size:7px;letter-spacing:.12em;color:rgba(255,255,255,.18);text-transform:uppercase;margin-top:-10px;margin-bottom:12px;text-align:center;" id="rr-cp-hint">↑ click to copy</div>
   <div class="rr-stats">
     <div class="rs"><span class="rs-l">eDPI</span><span class="rs-v" id="rr-e">—</span></div>
     <div class="rs"><span class="rs-l">cm/360°</span><span class="rs-v" id="rr-cm">—</span></div>
@@ -302,7 +304,8 @@ const L={
     msHigh:(r)=>`Tur ${r} tamam — yüksek güven. Bu sonuç oldukça güvenilir.`,
     msMid:(r)=>`Tur ${r} tamam — orta güven. 1-2 tur daha aralığı netleştirir.`,
     msLow:(r)=>`Tur ${r} tamam — düşük güven. Daha kesin sonuç için devam et.`,
-    msEq:`Aralık daralmıyor — bu sens etrafındaki değerler senin için fark etmiyor olabilir.`,},
+    msEq:`Aralık daralmıyor — bu sens etrafındaki değerler senin için fark etmiyor olabilir.`,
+    cpHint:'↑ kopyalamak için tıkla',},
   en:{sub:'Sensitivity Finder · CS2 & Valorant',game:'Game',dpi:'Mouse DPI',fov:'FOV',sens:'Current Sensitivity',
     calib:'Calibrate via 360° mousepad movement',start:'START TEST',
     rLbl:'Round',phLbl:'Phase',scLbl:'Score',piLbl:'Progress',
@@ -320,7 +323,8 @@ const L={
     msHigh:(r)=>`Round ${r} done — high confidence. This result is quite reliable.`,
     msMid:(r)=>`Round ${r} done — moderate confidence. 1-2 more rounds will narrow it down.`,
     msLow:(r)=>`Round ${r} done — low confidence. Keep going for a more precise result.`,
-    msEq:`Range isn't narrowing — values around this sens may feel equally good to you.`,}
+    msEq:`Range isn't narrowing — values around this sens may feel equally good to you.`,
+    cpHint:'↑ click to copy',}
 };
 let lang=navigator.language.startsWith('tr')?'tr':'en';
 const $=id=>document.getElementById(id);
@@ -338,6 +342,7 @@ function applyI18n(){
   $('rr-al').textContent=T('rrAl');$('conf-l').textContent=T('confL');
   $('rh-l').textContent=T('rhL');$('mb-l').textContent=T('perMode');$('ft-ti').textContent=T('ftTi');
   $('ft-ov').textContent=T('ftOv');$('ft-un').textContent=T('ftUn');
+  const _cpHintEl=$('rr-cp-hint');if(_cpHintEl)_cpHintEl.textContent=T('cpHint');
   $('ln').textContent=T('nextR');$('ld2').textContent=T('done');
   $('pm-ti').textContent=T('pmTi');$('pm-su').textContent=T('pmSu');if($('pml-ph'))$('pml-ph').textContent=T('pmPh');
   $('pml-r').textContent=T('pmR');$('pml-b').textContent=T('pmB');
@@ -399,7 +404,14 @@ function resumeSession(){
   // Per-mod state restore (yeni format) ya da eski format'tan reconstruct
   if(s.modLo&&s.modHi){
     modLo=s.modLo;modHi=s.modHi;
-    MODES.forEach(m=>{modInitRange[m]=modHi[m]-modLo[m];});
+    // modInitRange: kaydedilmişse restore et; yoksa mevcut span'den reconstruct
+    // (eski format uyumluluğu - eski kayıtlarda modInitRange yoktu)
+    if(s.modInitRange){
+      modInitRange=s.modInitRange;
+    } else {
+      // Eski kayıt: mevcut span'i başlangıç olarak kabul et (confidence biraz yanıltıcı olur ama crash olmaz)
+      MODES.forEach(m=>{modInitRange[m]=modHi[m]-modLo[m];});
+    }
     lo=MODES.reduce((a,m)=>a+modLo[m],0)/MODES.length;
     hi=MODES.reduce((a,m)=>a+modHi[m],0)/MODES.length;
   } else {
@@ -520,9 +532,13 @@ function spawnS(jump,label){
 }
 let _jt=null;
 function schedJ(mode,label){
-  clearTimeout(_jt);if(mode==='track')return;
-  const d=mode==='flick'?(1500+Math.random()*1100):(800+Math.random()*500);
-  _jt=setTimeout(()=>{if(!active)return;if(mode!=='grid')spawnS(true,label);schedJ(mode,label);},d);
+  // Track ve grid modlarında schedJ gerekmez:
+  // Track: hedef sürekli hareket ediyor, yeni spawn yok.
+  // Grid: setGridActive() ile manuel geçiş yapılıyor.
+  clearTimeout(_jt);if(mode==='track'||mode==='grid')return;
+  // Sadece flick modu: hedef vurulduktan sonra belirli süre bekleyip yeniden spawn
+  const d=1500+Math.random()*1100;
+  _jt=setTimeout(()=>{if(!active)return;spawnS(true,label);schedJ(mode,label);},d);
 }
 const rc2=new THREE.Raycaster();let curScore=0,onT=false;
 let cMode='flick';
@@ -793,7 +809,7 @@ function pauseG(){
   // Faz ilerlemesi
   const _phEl=$('pmv-ph');if(_phEl){const _phV=parseInt($('hv-ph')?.textContent)||0;_phEl.textContent=_phV?`${_phV}/${currentPhaseTotal}`:'-';}
   showMenu('pm');
-  save({game,dpi:gD(),sens:best,round:curRound,lo,hi,hist,modLo,modHi});
+  save({game,dpi:gD(),sens:best,round:curRound,lo,hi,hist,modLo,modHi,modInitRange});
   // Lock'u BIRAKMIYORUZ — resume'da drift olmaz
 }
 function resumeGame(){
@@ -988,25 +1004,24 @@ function startRound(){
       // LOW/HIGH karşılaştır → aralık güncelle
       const nLo=normScore(rawLo,mode,cfg.activeDur),nHi=normScore(rawHi,mode,cfg.activeDur);
       const total=nLo+nHi;
-      if(total>0){
+      if(total>0.001){
         const hiRatio=nHi/total;
         const margin=Math.abs(hiRatio-0.5)*2;
         const span=modHi[mode]-modLo[mode];
         const step=span*(0.25+margin*0.50);
         if(hiRatio>0.5) modLo[mode]=Math.min(modLo[mode]+step,modHi[mode]-span*0.03);
         else            modHi[mode]=Math.max(modHi[mode]-step,modLo[mode]+span*0.03);
-      } else {
-        if(nHi>=nLo) modLo[mode]=mid1; else modHi[mode]=mid1;
       }
+      // total≈0: kullanıcı tıklamadı / hiç puan yapamadı → range bilgisizce değiştirme
       modLo[mode]=Math.max(modLo[mode],GC[game].sensMin);
       modHi[mode]=Math.min(modHi[mode],GC[game].sensMax);
       const minS=GC[game].minSpan||0.02;
       if(modHi[mode]-modLo[mode]<minS){
-        const mid=(modLo[mode]+modHi[mode])/2;
-        let nLo=mid-minS/2,nHi=mid+minS/2;
-        if(nLo<GC[game].sensMin){nLo=GC[game].sensMin;nHi=nLo+minS;}
-        else if(nHi>GC[game].sensMax){nHi=GC[game].sensMax;nLo=nHi-minS;}
-        modLo[mode]=nLo;modHi[mode]=nHi;
+        const _spMid=(modLo[mode]+modHi[mode])/2;
+        let _spLo=_spMid-minS/2,_spHi=_spMid+minS/2;
+        if(_spLo<GC[game].sensMin){_spLo=GC[game].sensMin;_spHi=_spLo+minS;}
+        else if(_spHi>GC[game].sensMax){_spHi=GC[game].sensMax;_spLo=_spHi-minS;}
+        modLo[mode]=_spLo;modHi[mode]=_spHi;
       }
 
       // ── Test 3: Doğrulama (daraltılmış aralığın mid'i) ──────────
@@ -1037,11 +1052,11 @@ function startRound(){
       modHi[mode]=Math.min(modHi[mode],GC[game].sensMax);
       const minS2=GC[game].minSpan||0.02;
       if(modHi[mode]-modLo[mode]<minS2){
-        const mid=(modLo[mode]+modHi[mode])/2;
-        let nLo=mid-minS2/2,nHi=mid+minS2/2;
-        if(nLo<GC[game].sensMin){nLo=GC[game].sensMin;nHi=nLo+minS2;}
-        else if(nHi>GC[game].sensMax){nHi=GC[game].sensMax;nLo=nHi-minS2;}
-        modLo[mode]=nLo;modHi[mode]=nHi;
+        const _sp2Mid=(modLo[mode]+modHi[mode])/2;
+        let _sp2Lo=_sp2Mid-minS2/2,_sp2Hi=_sp2Mid+minS2/2;
+        if(_sp2Lo<GC[game].sensMin){_sp2Lo=GC[game].sensMin;_sp2Hi=_sp2Lo+minS2;}
+        else if(_sp2Hi>GC[game].sensMax){_sp2Hi=GC[game].sensMax;_sp2Lo=_sp2Hi-minS2;}
+        modLo[mode]=_sp2Lo;modHi[mode]=_sp2Hi;
       }
 
       totalSc+=rawLo+rawHi+rawMid;
@@ -1066,7 +1081,7 @@ function startRound(){
     hi=MODES.reduce((s,m)=>s+modHi[m],0)/MODES.length;
     hist.push({round:curRound,sens:finalS,totalSc,lo,hi,conf,modeMids:lastAnalysis.mids,agreement:lastAnalysis.agreement,stability:lastAnalysis.stability});
     if(hist.length>12)hist=hist.slice(-12);
-    save({game,dpi:gD(),sens:finalS,round:curRound+1,lo,hi,hist,modLo,modHi});
+    save({game,dpi:gD(),sens:finalS,round:curRound+1,lo,hi,hist,modLo,modHi,modInitRange});
 
     active=false;clearTimeout(_jt);document.exitPointerLock();
     $('hud').style.display='none';$('pi').style.display='none';$('bbar').style.display='none';
@@ -1150,6 +1165,7 @@ function showSOv(sens,label,mode,phIdx,totalPhases,cfg,cb){
   $('sw-ey').textContent=label==='LOW'?T('eyLow'):label==='HIGH'?T('eyHigh'):T('eyMid');
   $('sw-sn').textContent=sens.toFixed(3);
   $('sw-tg').textContent=T('tag'+['F','G','T'][['flick','grid','track'].indexOf(mode)]);
+  const _swCm=$('sw-cm');if(_swCm)_swCm.textContent=cm360(sens,gD()).toFixed(1)+' cm/360°';
   const dots=[];
   for(let r=0;r<cfg.repeats;r++)MODES.forEach(m=>{dots.push(m,m,m);});
   const dotHtml=dots.map((m,i)=>{
@@ -1166,8 +1182,8 @@ function showSOv(sens,label,mode,phIdx,totalPhases,cfg,cb){
   // active=false ile input handler'ı susturuyoruz, bu yeterli.
   active=false;clearTimeout(_jt);
   let n=cfg.countdown;$('sw-cd').textContent=n;
-  const _flashCd=()=>{const el=$('sw-cd');el.classList.add('flash');};
-  _flashCd();
+  const _flashCd=()=>{const el=$('sw-cd');el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash');};
+  _flashCd();playCountdown(n); // İlk rakam için de ses çal
   const cd=setInterval(()=>{
     n--;
     if(n>0){$('sw-cd').textContent=n;_flashCd();playCountdown(n);}
