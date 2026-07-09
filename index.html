@@ -235,6 +235,10 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
     </div>
   </div>
   <button class="sbtn" onclick="startFresh()">▶ &nbsp;<span id="lst">START TEST</span></button>
+<div id="histWrap" style="display:none;margin-top:13px;">
+  <span class="slbl" id="hist-l">Recent Results</span>
+  <div id="histRows"></div>
+</div>
 </div>
 
 <!-- PAUSE MENU -->
@@ -280,7 +284,7 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
     <div class="ft-it"><span class="ft-b">↓</span><span id="ft-un"></span></div>
   </div>
   <button class="sbtn" onclick="startNextRound()"><span id="ln">▶ Next Round (More Precise)</span></button>
-  <button class="sbtn g" onclick="showMenu('mm');checkSaved();applyI18n();"><span id="ld2">✓ Done</span></button>
+  <button class="sbtn g" onclick="showMenu('mm');checkSaved();applyI18n();renderHistLog();"><span id="ld2">✓ Done</span></button>
 </div>
 
 <script>
@@ -305,7 +309,8 @@ const L={
     msMid:(r)=>`Tur ${r} tamam — orta güven. 1-2 tur daha aralığı netleştirir.`,
     msLow:(r)=>`Tur ${r} tamam — düşük güven. Daha kesin sonuç için devam et.`,
     msEq:`Aralık daralmıyor — bu sens etrafındaki değerler senin için fark etmiyor olabilir.`,
-    cpHint:'↑ kopyalamak için tıkla',},
+    cpHint:'↑ kopyalamak için tıkla',
+    histTi:'Son Sonuçların',},
   en:{sub:'Sensitivity Finder · CS2 & Valorant',game:'Game',dpi:'Mouse DPI',fov:'FOV',sens:'Current Sensitivity',
     calib:'Calibrate via 360° mousepad movement',start:'START TEST',
     rLbl:'Round',phLbl:'Phase',scLbl:'Score',piLbl:'Progress',
@@ -324,7 +329,8 @@ const L={
     msMid:(r)=>`Round ${r} done — moderate confidence. 1-2 more rounds will narrow it down.`,
     msLow:(r)=>`Round ${r} done — low confidence. Keep going for a more precise result.`,
     msEq:`Range isn't narrowing — values around this sens may feel equally good to you.`,
-    cpHint:'↑ click to copy',}
+    cpHint:'↑ click to copy',
+    histTi:'Recent Results',}
 };
 let lang=navigator.language.startsWith('tr')?'tr':'en';
 const $=id=>document.getElementById(id);
@@ -343,6 +349,8 @@ function applyI18n(){
   $('rh-l').textContent=T('rhL');$('mb-l').textContent=T('perMode');$('ft-ti').textContent=T('ftTi');
   $('ft-ov').textContent=T('ftOv');$('ft-un').textContent=T('ftUn');
   const _cpHintEl=$('rr-cp-hint');if(_cpHintEl)_cpHintEl.textContent=T('cpHint');
+  const _histLEl=$('hist-l');if(_histLEl)_histLEl.textContent=T('histTi');
+  renderHistLog();
   $('ln').textContent=T('nextR');$('ld2').textContent=T('done');
   $('pm-ti').textContent=T('pmTi');$('pm-su').textContent=T('pmSu');if($('pml-ph'))$('pml-ph').textContent=T('pmPh');
   $('pml-r').textContent=T('pmR');$('pml-b').textContent=T('pmB');
@@ -383,9 +391,38 @@ function updPv(){
 
 // ─── STORAGE ───
 const SK='sf_v3';
+const HK='sf_hist_log'; // Çoklu-oturum ilerleme geçmişi (resume/save mekanizmasından bağımsız, sadece görüntüleme amaçlı)
 function save(d){try{localStorage.setItem(SK,JSON.stringify(d));}catch(e){}}
 function load(){try{const d=localStorage.getItem(SK);return d?JSON.parse(d):null;}catch(e){return null;}}
 function clearSession(){localStorage.removeItem(SK);$('sb').style.display='none';}
+function loadHistLog(){try{const d=localStorage.getItem(HK);return d?JSON.parse(d):[];}catch(e){return [];}}
+function pushHistLog(entry){
+  try{
+    const arr=loadHistLog();
+    arr.push(entry);
+    while(arr.length>20)arr.shift(); // son 20 kayıt yeterli, localStorage şişmesin
+    localStorage.setItem(HK,JSON.stringify(arr));
+  }catch(e){}
+}
+function renderHistLog(){
+  const wrap=$('histWrap');if(!wrap)return;
+  const arr=loadHistLog();
+  if(!arr.length){wrap.style.display='none';return;}
+  wrap.style.display='block';
+  const recent=arr.slice(-5).reverse();
+  let html='';
+  recent.forEach(e=>{
+    const d=new Date(e.date);
+    const dstr=d.toLocaleDateString(lang==='tr'?'tr-TR':'en-US',{month:'short',day:'numeric'});
+    const gName=(GC[e.game]?GC[e.game].name:e.game)||'?';
+    html+=`<div style="display:flex;justify-content:space-between;align-items:baseline;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05);font-family:var(--mono);font-size:9px;">
+      <span style="color:rgba(255,255,255,.3);min-width:44px;">${dstr}</span>
+      <span style="color:rgba(255,255,255,.35);flex:1;text-align:center;">${gName} · R${e.round||1}</span>
+      <span style="color:var(--a);font-weight:500;">${(e.sens||0).toFixed(3)} · ${e.conf??'—'}%</span>
+    </div>`;
+  });
+  $('histRows').innerHTML=html;
+}
 function checkSaved(){
   const s=load();if(!s||!s.sens)return;
   $('sb').style.display='block';
@@ -1082,6 +1119,7 @@ function startRound(){
     hist.push({round:curRound,sens:finalS,totalSc,lo,hi,conf,modeMids:lastAnalysis.mids,agreement:lastAnalysis.agreement,stability:lastAnalysis.stability});
     if(hist.length>12)hist=hist.slice(-12);
     save({game,dpi:gD(),sens:finalS,round:curRound+1,lo,hi,hist,modLo,modHi,modInitRange});
+    pushHistLog({date:Date.now(),game,sens:finalS,conf,round:curRound});
 
     active=false;clearTimeout(_jt);document.exitPointerLock();
     $('hud').style.display='none';$('pi').style.display='none';$('bbar').style.display='none';
@@ -1323,7 +1361,7 @@ applyI18n();setGame('cs2');
 const _sfov=localStorage.getItem("sf_fov");if(_sfov){$('if').value=_sfov;}
 // Sfx butonunu başlat
 setTimeout(()=>{const el=$('sfx-btn');if(el)el.textContent=_sfxOn?"🔊":"🔇";},0);
-updPv();checkSaved();
+updPv();checkSaved();renderHistLog();
 ['is','id'].forEach(id=>{
   $(id).addEventListener('wheel',e=>{
     e.preventDefault();
