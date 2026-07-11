@@ -211,7 +211,14 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
   <span class="slbl" id="lg">Game</span>
   <div class="t2"><button class="tab on" id="gCS2" onclick="setGame('cs2')">CS2</button><button class="tab" id="gVAL" onclick="setGame('val')">VALORANT</button></div>
   <div class="g2">
-    <div class="fg"><label class="flbl" id="ld">Mouse DPI</label><input class="fi" type="number" id="id" value="800" min="100" max="32000" step="50" oninput="updPv()" onfocus="this.select()"></div>
+    <div class="fg"><label class="flbl" id="ld">Mouse DPI</label><input class="fi" type="number" id="id" value="800" min="100" max="32000" step="50" oninput="updPv()" onfocus="this.select()">
+      <div style="display:flex;gap:4px;margin-top:5px;">
+        <button type="button" class="lbtn" style="flex:1;padding:4px 2px;" onclick="$('id').value=400;updPv();">400</button>
+        <button type="button" class="lbtn" style="flex:1;padding:4px 2px;" onclick="$('id').value=800;updPv();">800</button>
+        <button type="button" class="lbtn" style="flex:1;padding:4px 2px;" onclick="$('id').value=1600;updPv();">1600</button>
+        <button type="button" class="lbtn" style="flex:1;padding:4px 2px;" onclick="$('id').value=3200;updPv();">3200</button>
+      </div>
+    </div>
     <div class="fg"><label class="flbl" id="lf">FOV</label><input class="fi" type="number" id="if" value="90" min="60" max="120" oninput="updateCameraFov();localStorage.setItem('sf_fov',this.value);"></div>
   </div>
   <div class="sg">
@@ -235,6 +242,8 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
     </div>
   </div>
   <button class="sbtn" onclick="startFresh()">▶ &nbsp;<span id="lst">START TEST</span></button>
+  <div id="est-dur" style="text-align:center;font-family:var(--mono);font-size:8px;letter-spacing:.1em;color:rgba(255,255,255,.22);margin-top:7px;">~5 dk</div>
+  <div style="text-align:center;font-family:var(--mono);font-size:7px;letter-spacing:.08em;color:rgba(255,255,255,.15);margin-top:10px;" id="kb-hint">⌨ M ses · F tam ekran · ESC duraklat</div>
 <div id="histWrap" style="display:none;margin-top:13px;">
   <span class="slbl" id="hist-l">Recent Results</span>
   <div id="histRows"></div>
@@ -284,6 +293,7 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
     <div class="ft-it"><span class="ft-b">↓</span><span id="ft-un"></span></div>
   </div>
   <button class="sbtn" onclick="startNextRound()"><span id="ln">▶ Next Round (More Precise)</span></button>
+  <button class="sbtn g" id="share-btn" onclick="shareResult()"><span id="lsh">📋 Share result</span></button>
   <button class="sbtn g" onclick="showMenu('mm');checkSaved();applyI18n();renderHistLog();"><span id="ld2">✓ Done</span></button>
 </div>
 
@@ -310,7 +320,12 @@ const L={
     msLow:(r)=>`Tur ${r} tamam — düşük güven. Daha kesin sonuç için devam et.`,
     msEq:`Aralık daralmıyor — bu sens etrafındaki değerler senin için fark etmiyor olabilir.`,
     cpHint:'↑ kopyalamak için tıkla',
-    histTi:'Son Sonuçların',},
+    histTi:'Son Sonuçların',
+    kbHint:'⌨ M ses · F tam ekran · ESC duraklat',
+    estDur:(m)=>`~${m} dk sürer (3 mod × isabet/hız testi)`,
+    shareTxt:(g,s,cm,c)=>`SensFinder sonucum: ${g} ${s} sens (${cm} cm/360°) · %${c} güven`,
+    shareBtn:'📋 Sonucu paylaş',
+    shared:'✓ Kopyalandı!',},
   en:{sub:'Sensitivity Finder · CS2 & Valorant',game:'Game',dpi:'Mouse DPI',fov:'FOV',sens:'Current Sensitivity',
     calib:'Calibrate via 360° mousepad movement',start:'START TEST',
     rLbl:'Round',phLbl:'Phase',scLbl:'Score',piLbl:'Progress',
@@ -330,7 +345,12 @@ const L={
     msLow:(r)=>`Round ${r} done — low confidence. Keep going for a more precise result.`,
     msEq:`Range isn't narrowing — values around this sens may feel equally good to you.`,
     cpHint:'↑ click to copy',
-    histTi:'Recent Results',}
+    histTi:'Recent Results',
+    kbHint:'⌨ M sound · F fullscreen · ESC pause',
+    estDur:(m)=>`~${m} min (3 modes × accuracy/speed tests)`,
+    shareTxt:(g,s,cm,c)=>`My SensFinder result: ${g} ${s} sens (${cm} cm/360°) · ${c}% confidence`,
+    shareBtn:'📋 Share result',
+    shared:'✓ Copied!',}
 };
 let lang=navigator.language.startsWith('tr')?'tr':'en';
 const $=id=>document.getElementById(id);
@@ -351,7 +371,10 @@ function applyI18n(){
   const _cpHintEl=$('rr-cp-hint');if(_cpHintEl)_cpHintEl.textContent=T('cpHint');
   const _histLEl=$('hist-l');if(_histLEl)_histLEl.textContent=T('histTi');
   renderHistLog();
+  const _kbEl=$('kb-hint');if(_kbEl)_kbEl.textContent=T('kbHint');
+  updEstDur();
   $('ln').textContent=T('nextR');$('ld2').textContent=T('done');
+  const _lshEl=$('lsh');if(_lshEl)_lshEl.textContent=T('shareBtn');
   $('pm-ti').textContent=T('pmTi');$('pm-su').textContent=T('pmSu');if($('pml-ph'))$('pml-ph').textContent=T('pmPh');
   $('pml-r').textContent=T('pmR');$('pml-b').textContent=T('pmB');
   $('lr').textContent=T('resume');$('le').textContent=T('early');$('lq').textContent=T('quit');
@@ -926,6 +949,14 @@ function roundConfig(){
     :{repeats:1,activeDur:QUICK_DUR,warmupDur:QUICK_WARMUP_DUR,countdown:2,name:'quick'};
 }
 function phaseTotal(cfg){return MODES.length*3*cfg.repeats;}
+function updEstDur(){
+  const el=$('est-dur');if(!el)return;
+  // startFresh() her zaman "initial" config ile başlar (repeats:2, HALF_DUR+WARMUP_DUR)
+  const totalPhases=MODES.length*3*2;
+  const totalSec=totalPhases*(HALF_DUR+WARMUP_DUR);
+  const min=Math.round(totalSec/6)/10; // dakika, 1 ondalık
+  el.textContent=T('estDur',min);
+}
 function normScore(raw,mode,dur=HALF_DUR){
   const cap=BASE_CAP[mode]*(dur/12); // durasyona göre ölçekle
   return Math.min(1,Math.max(0,raw/cap));
@@ -1151,6 +1182,18 @@ function startRound(){
 }
 
 let curLabel='LOW';
+let _lastResult=null;
+function shareResult(){
+  if(!_lastResult)return;
+  const txt=T('shareTxt',_lastResult.game,_lastResult.sens.toFixed(3),_lastResult.cm.toFixed(1),Math.round(_lastResult.conf));
+  try{
+    navigator.clipboard.writeText(txt).then(()=>{
+      const el=$('lsh');if(!el)return;
+      const orig=el.textContent;el.textContent=T('shared');
+      setTimeout(()=>{el.textContent=orig;},1200);
+    }).catch(()=>{});
+  }catch(e){}
+}
 function runH(sens,label,mode,phIdx,totalPhases,cfg){
   curLabel=label;
   return new Promise(resolve=>{
@@ -1253,6 +1296,7 @@ function updDots(act){const dots=document.querySelectorAll('#idots .idot');dots.
 // ─── ROUND RESULT ───
 function showRR(sens,h,miss_,conf,trkOn=0,trkTot=0){
   const c=GC[game];const dpi=gD();
+  _lastResult={sens,cm:cm360(sens,dpi),conf,game:c.name};
   $('rr-ey').textContent=T('rrEy',curRound);
   if(window._cuTimer)clearInterval(window._cuTimer);
   window._cuTimer=null;
