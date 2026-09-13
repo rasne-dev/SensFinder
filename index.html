@@ -20,7 +20,8 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
   background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E");opacity:.35;}
 #rc{position:fixed;inset:0;z-index:0;}
 #rc canvas{display:block;width:100%!important;height:100%!important;}
-#xh{position:fixed!important;top:50%!important;left:50%!important;transform:translate(-50%,-50%)!important;pointer-events:none!important;z-index:99999!important;width:0!important;height:0!important;}
+#xh{display:none;position:fixed!important;top:50%!important;left:50%!important;transform:translate(-50%,-50%)!important;pointer-events:none!important;z-index:99999!important;width:0!important;height:0!important;}
+#xh.active{display:block;}
 .xh-h{position:absolute!important;width:26px!important;height:2px!important;background:#ffffff!important;top:-1px!important;left:-13px!important;outline:1px solid #000!important;box-shadow:0 0 3px #000!important;}
 .xh-v{position:absolute!important;width:2px!important;height:26px!important;background:#ffffff!important;left:-1px!important;top:-13px!important;outline:1px solid #000!important;box-shadow:0 0 3px #000!important;}
 .xh-dot{position:absolute!important;width:4px!important;height:4px!important;background:#ffffff!important;border-radius:50%!important;top:-2px!important;left:-2px!important;outline:1px solid #000!important;}
@@ -142,13 +143,15 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
 /* scan-line overlay üst menü için */
 .menu::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,.012) 2px,rgba(255,255,255,.012) 4px);pointer-events:none;z-index:0;}
 .menu>*{position:relative;z-index:1;}
-#cov{display:none;position:fixed;inset:0;z-index:30;background:rgba(7,7,8,.97);align-items:center;justify-content:center;text-align:center;}
+#cov{display:none;position:fixed;inset:0;z-index:30;background:rgba(7,7,8,.45);align-items:center;justify-content:center;text-align:center;backdrop-filter:blur(3px);}
 #cov.on{display:flex;}
-.cal-box{border:1px solid var(--a);padding:30px 42px;max-width:440px;background:rgba(7,7,8,0.9);box-shadow:0 0 50px rgba(0,0,0,0.5);}
+.cal-box{border:1px solid var(--a);padding:24px 36px;max-width:440px;background:rgba(7,7,8,0.85);box-shadow:0 0 50px rgba(0,0,0,0.7);backdrop-filter:blur(10px);}
 .cal-ti{font-size:13px;font-weight:800;color:var(--a);letter-spacing:.15em;text-transform:uppercase;margin-bottom:10px;font-family:var(--sans);}
 .cal-de{font-family:var(--mono);font-size:10px;color:var(--t);line-height:2;letter-spacing:.04em;}
 #sov{display:none;position:fixed;inset:0;z-index:15;background:rgba(7,7,8,.92);align-items:center;justify-content:center;text-align:center;backdrop-filter:blur(8px);}
 #sov.on{display:flex;}
+#lock-ov{display:none;position:fixed;inset:0;z-index:35;background:rgba(7,7,8,.85);align-items:center;justify-content:center;text-align:center;cursor:pointer;backdrop-filter:blur(8px);}
+#lock-ov.on{display:flex;}
 .sw-ey{font-family:var(--mono);font-size:8px;letter-spacing:.22em;color:var(--td);text-transform:uppercase;margin-bottom:8px;}
 .sw-sn{font-size:50px;font-weight:900;color:var(--a);line-height:1;letter-spacing:-.03em;font-family:var(--sans);transition:color .3s;}
 .sw-tg{font-family:var(--mono);font-size:9px;color:var(--td);letter-spacing:.1em;margin-top:5px;}
@@ -195,6 +198,11 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
   <div id="cal-live" style="font-family:var(--mono);font-size:12px;color:var(--a);margin-top:16px;font-weight:500;min-height:18px;"></div>
 </div></div>
 
+<div id="lock-ov" onclick="requestGameLock()"><div style="padding:24px 36px;border:1px solid var(--a);background:rgba(7,7,8,.9);box-shadow:0 0 40px rgba(0,0,0,.7);text-align:center;">
+  <div style="font-size:20px;font-weight:900;color:var(--a);letter-spacing:.12em;text-transform:uppercase;font-family:var(--sans);" id="lock-ti">CLICK TO PLAY</div>
+  <div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.5);margin-top:8px;" id="lock-su">Click anywhere to lock mouse and aim</div>
+</div></div>
+
 <!-- MAIN MENU -->
 <div class="menu" id="mm">
   <div class="menu-header-wrap">
@@ -219,7 +227,7 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
         <button type="button" class="lbtn" style="flex:1;padding:4px 2px;" onclick="$('id').value=3200;updPv();">3200</button>
       </div>
     </div>
-    <div class="fg"><label class="flbl" id="lf">FOV</label><input class="fi" type="number" id="if" value="90" min="60" max="120" oninput="updateCameraFov();localStorage.setItem('sf_fov',this.value);"></div>
+    <div class="fg"><label class="flbl" id="lf">FOV</label><input class="fi" type="number" id="if" value="90" min="60" max="120" oninput="updateCameraFov();localStorage.setItem('sf_fov_'+game,this.value);"></div>
   </div>
   <div class="sg">
     <label class="flbl" id="ls">Current Sensitivity</label>
@@ -276,7 +284,7 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
     <div class="rs"><span class="rs-l">cm/360°</span><span class="rs-v" id="rr-cm">—</span></div>
     <div class="rs"><span class="rs-l" id="rr-al">Accuracy</span><span class="rs-v" id="rr-a">—</span></div>
   </div>
-  <div class="rr-cv"><span class="rc-l" id="rr-cl">Equivalent</span><div class="rc-v" id="rr-cv">—</div></div>
+  <div class="rr-cv" style="cursor:pointer;" title="Click to copy equivalent sensitivity" onclick="copyEquivalent()"><span class="rc-l" id="rr-cl">Equivalent</span><div class="rc-v" id="rr-cv">—</div></div>
   <div class="confrow">
     <div class="conf-lbl"><span id="conf-l">Confidence</span><span class="conf-pct" id="conf-p">—</span></div>
     <div class="conf-tr"><div class="conf-fi" id="conf-f"></div></div>
@@ -323,9 +331,11 @@ const L={
     histTi:'Son Sonuçların',
     kbHint:'⌨ M ses · F tam ekran · ESC duraklat',
     estDur:(m)=>`~${m} dk sürer (3 mod × isabet/hız testi)`,
-    shareTxt:(g,s,cm,c)=>`SensFinder sonucum: ${g} ${s} sens (${cm} cm/360°) · %${c} güven`,
+    shareTxt:(g,s,cm,c,og,os,d)=>`🎯 SensFinder Sonucu:\n🎮 ${g}: ${s} (${d} DPI · ${cm} cm/360°)\n🔄 ${og} Eşdeğeri: ${os}\n⭐ Güven: %${c}\nhttps://rasne-dev.github.io/SensFinder`,
     shareBtn:'📋 Sonucu paylaş',
-    shared:'✓ Kopyalandı!',},
+    shared:'✓ Kopyalandı!',
+    lockTi:'TIKLA VE OYNA',
+    lockSu:'Nişan alabilmek ve fareyi kilitlemek için tıkla',},
   en:{sub:'Sensitivity Finder · CS2 & Valorant',game:'Game',dpi:'Mouse DPI',fov:'FOV',sens:'Current Sensitivity',
     calib:'Calibrate via 360° mousepad movement',start:'START TEST',
     rLbl:'Round',phLbl:'Phase',scLbl:'Score',piLbl:'Progress',
@@ -348,14 +358,16 @@ const L={
     histTi:'Recent Results',
     kbHint:'⌨ M sound · F fullscreen · ESC pause',
     estDur:(m)=>`~${m} min (3 modes × accuracy/speed tests)`,
-    shareTxt:(g,s,cm,c)=>`My SensFinder result: ${g} ${s} sens (${cm} cm/360°) · ${c}% confidence`,
+    shareTxt:(g,s,cm,c,og,os,d)=>`🎯 SensFinder Result:\n🎮 ${g}: ${s} (${d} DPI · ${cm} cm/360°)\n🔄 ${og} Equivalent: ${os}\n⭐ Confidence: ${c}%\nhttps://rasne-dev.github.io/SensFinder`,
     shareBtn:'📋 Share result',
-    shared:'✓ Copied!',}
+    shared:'✓ Copied!',
+    lockTi:'CLICK TO PLAY',
+    lockSu:'Click anywhere to lock mouse and aim',}
 };
-let lang=navigator.language.startsWith('tr')?'tr':'en';
+let lang=localStorage.getItem('sf_lang')||(navigator.language.startsWith('tr')?'tr':'en');
 const $=id=>document.getElementById(id);
 function T(k,...a){const v=L[lang][k];return typeof v==='function'?v(...a):(v??k);}
-function setLang(l){lang=l;document.querySelectorAll('.lbtn').forEach(b=>b.classList.toggle('on',b.textContent===l.toUpperCase()));applyI18n();}
+function setLang(l){lang=l;try{localStorage.setItem('sf_lang',l);}catch(e){}document.querySelectorAll('.lbtn').forEach(b=>b.classList.toggle('on',b.textContent===l.toUpperCase()));applyI18n();}
 function applyI18n(){
   // ms gizli, mt-sub sabit kalır
   // $('ms').textContent=T('sub');
@@ -375,6 +387,8 @@ function applyI18n(){
   updEstDur();
   $('ln').textContent=T('nextR');$('ld2').textContent=T('done');
   const _lshEl=$('lsh');if(_lshEl)_lshEl.textContent=T('shareBtn');
+  const _ltEl=$('lock-ti');if(_ltEl)_ltEl.textContent=T('lockTi');
+  const _lsEl=$('lock-su');if(_lsEl)_lsEl.textContent=T('lockSu');
   $('pm-ti').textContent=T('pmTi');$('pm-su').textContent=T('pmSu');if($('pml-ph'))$('pml-ph').textContent=T('pmPh');
   $('pml-r').textContent=T('pmR');$('pml-b').textContent=T('pmB');
   $('lr').textContent=T('resume');$('le').textContent=T('early');$('lq').textContent=T('quit');
@@ -390,15 +404,25 @@ const GC={
        a:'#c084fc',a2:'#818cf8',ag:'rgba(192,132,252,.15)',tc:0xff2233,te:0x550008,ti:.6,lc:0xff1122,gc:0x111122}
 };
 let game='cs2';
-function setGame(g){
+function setGame(g, force=false){
+  if(game===g && !force)return;
+  const prevGame=game;
   game=g;const c=GC[g];
   $('gCS2').classList.toggle('on',g==='cs2');$('gVAL').classList.toggle('on',g==='val');
   document.body.className=g==='val'?'val':'';
   const r=document.documentElement.style;
   r.setProperty('--a',c.a);r.setProperty('--a2',c.a2);r.setProperty('--ag',c.ag);
-  $('if').value=localStorage.getItem('sf_fov')||c.fovD;
+  $('if').value=localStorage.getItem('sf_fov_'+g)||localStorage.getItem('sf_fov')||c.fovD;
   const si=$('is');si.max=c.sensMax;si.step=g==='val'?.01:.05;
-  if(parseFloat(si.value)>c.sensMax)si.value=c.sensD;
+  if(!force && prevGame && prevGame!==g){
+    const curSens=parseFloat(si.value);
+    if(!isNaN(curSens)&&curSens>0){
+      const convSens=curSens*GC[prevGame].convF;
+      si.value=Math.max(c.sensMin,Math.min(c.sensMax,convSens)).toFixed(g==='val'?3:2);
+    }
+  } else {
+    if(parseFloat(si.value)>c.sensMax)si.value=c.sensD;
+  }
   applyI18n();updPv();if(camera)updateCameraFov();if(tM)updTC();
 }
 function gS(){const v=parseFloat($('is').value)||GC[game].sensD;const c=GC[game];return Math.max(c.sensMin,Math.min(c.sensMax,v));}
@@ -512,6 +536,9 @@ function initThree(){
   const g=new THREE.GridHelper(120,60,c.gc,c.gc);g.position.y=-3.5;scene.add(g);
   const wm=new THREE.MeshBasicMaterial({color:0x070708,side:THREE.BackSide});
   const rm=new THREE.Mesh(new THREE.BoxGeometry(80,40,80),wm);rm.position.set(0,16.5,0);scene.add(rm);
+  // Center orientation reference pole for 360° awareness
+  const refPole = new THREE.Mesh(new THREE.CylinderGeometry(.02,.02,6,12),new THREE.MeshBasicMaterial({color:0x22222e}));
+  refPole.position.set(0,-0.5,-8);scene.add(refPole);
   // Red fill lights so targets are vivid from all angles
   tL=new THREE.PointLight(0xff1122,4,16);scene.add(tL);
   const fl=new THREE.PointLight(0xff3344,2,18);fl.position.set(-4,2,-6);scene.add(fl);
@@ -537,26 +564,28 @@ function updTC(){
   [...(tM?[tM]:[]),...tMs].forEach(m=>{m.material.color.setHex(0xff2020);});
   if(tL)tL.color.setHex(0xff1122);
 }
-function clrT(){if(tM){scene.remove(tM);tM=null;}tMs.forEach(m=>scene.remove(m));tMs=[];}
+function clrT(){
+  if(tM){
+    scene.remove(tM);
+    if(tM.geometry)tM.geometry.dispose();
+    if(tM.material)tM.material.dispose();
+    tM=null;
+  }
+  tMs.forEach(m=>{
+    scene.remove(m);
+    if(m.geometry)m.geometry.dispose();
+    if(m.material)m.material.dispose();
+  });
+  tMs=[];
+}
 
 // Grid base konumları — setupT'de her test için hafifçe rastgele kaydırılır
 const GP_BASE=[[-2.1,.65,-8],[0,.65,-8],[2.1,.65,-8],[-2.1,-.3,-8],[0,-.3,-8],[2.1,-.3,-8]];
 let GP=[...GP_BASE];
-let gridActiveIdx=-1,gridLastHitTime=0;
-
-function setGridActive(idx){
-  // Tek hedef görünür — diğerleri tamamen gizli (pattern ezberlenmesin)
-  tMs.forEach((m,i)=>{
-    m.visible=(i===idx);
-    m.material.color.setHex(0xff2020);
-  });
-  if(tL)tL.position.copy(tMs[idx].position);
-  gridActiveIdx=idx;
-  gridLastHitTime=Date.now();
-}
+let gridActiveIndices=new Set(),gridLastHitTime=0;
 
 function setupT(mode,label){
-  clrT();gridActiveIdx=-1;
+  clrT();gridActiveIndices.clear();
   const tColor=0xff2020;
   if(mode==='grid'){
     // Her testte GP konumlarını ±0.25 birim rastgele kaydır — pattern öğrenmeyi önle
@@ -565,22 +594,37 @@ function setupT(mode,label){
       const m=new THREE.Mesh(new THREE.SphereGeometry(.28,20,20),new THREE.MeshBasicMaterial({color:tColor}));
       m.position.set(...p);m.visible=false;scene.add(m);tMs.push(m);
     });
-    // Rastgele başlangıç hedefi
-    const first=Math.floor(Math.random()*6);
-    setGridActive(first);
+    // Gerçek Gridshot: Aynı anda 3 hedef aktif olur
+    while(gridActiveIndices.size<3&&gridActiveIndices.size<tMs.length){
+      gridActiveIndices.add(Math.floor(Math.random()*tMs.length));
+    }
+    gridActiveIndices.forEach(idx=>{
+      if(tMs[idx])tMs[idx].visible=true;
+    });
+    gridLastHitTime=Date.now();
   } else spawnS(false,label);
 }
 function spawnS(jump,label){
   const isTrack=cMode==='track';
-  const tColor=0xff2020;
   // Track: round arttıkça hedef küçülür (min 0.22, başlangıç 0.36)
   const tRadius=isTrack?Math.max(0.22,0.36-curRound*0.02):undefined;
-  if(tM)scene.remove(tM);tM=tRadius!=null?mkSph(tRadius):mkSph();
+  if(tM){
+    scene.remove(tM);
+    if(tM.geometry)tM.geometry.dispose();
+    if(tM.material)tM.material.dispose();
+    tM=null;
+  }
+  tM=tRadius!=null?mkSph(tRadius):mkSph();
   if(jump){
-    // Anti-center: crosshair'den en az 0.6 birim uzakta spawnla
+    // Anti-center: crosshair'den en az 0.8 birim uzakta spawnla
     let attempts=0;
-    do{tX=(Math.random()-.5)*6;tY=(Math.random()-.5)*.7+.15;attempts++;}
-    while(Math.sqrt(tX*tX+tY*tY)<0.6&&attempts<10);
+    const spreadX=cMode==='flick'?8.5:6;
+    const spreadY=cMode==='flick'?1.4:.7;
+    do{
+      tX=(Math.random()-.5)*spreadX;
+      tY=(Math.random()-.5)*spreadY+.15;
+      attempts++;
+    } while(Math.sqrt(tX*tX+tY*tY)<0.8&&attempts<12);
     tZ=-8+Math.random()*1.5;
   }
   else{tX=(Math.random()-.5)*2.5;tY=(Math.random()-.5)*.5;tZ=-8;}
@@ -592,11 +636,8 @@ function spawnS(jump,label){
 }
 let _jt=null;
 function schedJ(mode,label){
-  // Track ve grid modlarında schedJ gerekmez:
-  // Track: hedef sürekli hareket ediyor, yeni spawn yok.
-  // Grid: setGridActive() ile manuel geçiş yapılıyor.
+  // Track ve grid modlarında schedJ gerekmez
   clearTimeout(_jt);if(mode==='track'||mode==='grid')return;
-  // Sadece flick modu: hedef vurulduktan sonra belirli süre bekleyip yeniden spawn
   const d=1500+Math.random()*1100;
   _jt=setTimeout(()=>{if(!active)return;spawnS(true,label);schedJ(mode,label);},d);
 }
@@ -605,35 +646,53 @@ let cMode='flick';
 // Track on-target yüzdesi
 let _trackFrames=0,_trackOnFrames=0;
 let _sessTrackFrames=0,_sessTrackOnFrames=0; // session boyunca kümülatif (3 takip testi)
+let _lastRenderTime=performance.now();
+
 function doRender(){
   animF=requestAnimationFrame(doRender);
+  const now=performance.now();
+  const rawDt=(now-_lastRenderTime)/1000;
+  _lastRenderTime=now;
+  // Delta time: 20fps ile 500fps arası sınırla (arka planda kalınca sıçramayı önle)
+  const dt=Math.min(Math.max(rawDt,0.001),0.05);
+  const dt60=dt*60; // 60 FPS'de tam 1.0, 144 FPS'de ~0.416, 240 FPS'de 0.25
+
+  // Crosshair görünürlüğü: sadece oyun aktifken ve kilitliyken göster
+  const xhEl=$('xh');
+  if(xhEl){
+    const shouldShowXh=active&&!isPaused&&document.pointerLockElement===renderer?.domElement;
+    xhEl.classList.toggle('active',shouldShowXh);
+  }
+
   if(active&&cMode==='track'&&tM){
-    tX+=tVX;tY+=tVY;
+    tX+=tVX*dt60;tY+=tVY*dt60;
     const dist=Math.sqrt(tX*tX+tY*tY);
     if(dist>2.5){
       const nx=tX/dist,ny=tY/dist;
-      tVX-=nx*.06;tVY-=ny*.06;
+      tVX-=nx*.06*dt60;tVY-=ny*.06*dt60;
     }
-    if(Math.random()<.025){tVX+=(Math.random()-.5)*.018;tVY+=(Math.random()-.5)*.012;}
+    if(Math.random()<.025*dt60){tVX+=(Math.random()-.5)*.018*dt60;tVY+=(Math.random()-.5)*.012*dt60;}
     const sp=Math.hypot(tVX,tVY);
     if(sp>.052){tVX=tVX/sp*.052;tVY=tVY/sp*.052;}
     if(sp<.018){tVX=tVX/sp*.018;tVY=tVY/sp*.018;}
-    tZ+=(Math.random()-.5)*.003;tZ=Math.max(-9,Math.min(-7.5,tZ));
+    tZ+=(Math.random()-.5)*.003*dt60;tZ=Math.max(-9,Math.min(-7.5,tZ));
     tM.position.set(tX,tY,tZ);
   }
-  const prim=tM||(tMs[gridActiveIdx]??tMs[0]??null);if(tL&&prim)tL.position.copy(prim.position);
+  const firstActiveGrid=Array.from(gridActiveIndices)[0];
+  const prim=tM||(tMs[firstActiveGrid]??tMs[0]??null);
+  if(tL&&prim)tL.position.copy(prim.position);
+
   if(active&&phaseScoreActive&&cMode==='track'&&document.pointerLockElement===renderer.domElement&&tM){
     rc2.setFromCamera({x:0,y:0},camera);
     const _wasOnT=onT;
     onT=rc2.intersectObject(tM).length>0;
-    const xhEl=$('xh');
     _trackFrames++;_sessTrackFrames++;
     if(onT){
       _trackOnFrames++;_sessTrackOnFrames++;
-      xhEl.classList.add('on-target');
+      if(xhEl)xhEl.classList.add('on-target');
       if(!_wasOnT)playTrackOn();
     } else {
-      xhEl.classList.remove('on-target');
+      if(xhEl)xhEl.classList.remove('on-target');
     }
     // HUD: puan + on-target %
     const pct=_trackFrames>0?(_trackOnFrames/_trackFrames):0;
@@ -642,12 +701,20 @@ function doRender(){
     $('hv-sc').textContent=`${Math.floor(curScore)} (${Math.round(pct*100)}%)`;
   } else if(cMode==='flick'||cMode==='grid'){
     // Flick/Grid: hedef üzerindeyken crosshair yeşil
-    const xhEl=$('xh');
     if(active&&document.pointerLockElement===renderer.domElement){
-      const prim=cMode==='grid'?(tMs[gridActiveIdx]??null):tM;
-      if(prim){rc2.setFromCamera({x:0,y:0},camera);xhEl.classList.toggle('on-target',rc2.intersectObject(prim).length>0);}
-      else xhEl.classList.remove('on-target');
-    } else xhEl.classList.remove('on-target');
+      rc2.setFromCamera({x:0,y:0},camera);
+      let isTargetHover=false;
+      if(cMode==='grid'){
+        for(const idx of gridActiveIndices){
+          if(tMs[idx]&&tMs[idx].visible&&rc2.intersectObject(tMs[idx]).length>0){
+            isTargetHover=true;break;
+          }
+        }
+      } else if(tM){
+        isTargetHover=rc2.intersectObject(tM).length>0;
+      }
+      if(xhEl)xhEl.classList.toggle('on-target',isTargetHover);
+    } else if(xhEl) xhEl.classList.remove('on-target');
   }
   renderer.render(scene,camera);
 }
@@ -748,7 +815,11 @@ let _lockAcquiredAt=0;
 const MAX_DELTA=1000;        // sadece anormal tarayıcı sıçramalarını keser
 
 document.addEventListener('pointerlockchange',()=>{
-  if(document.pointerLockElement){_lockAcquiredAt=performance.now();return;}
+  if(document.pointerLockElement){
+    _lockAcquiredAt=performance.now();
+    const lkOv=$('lock-ov');if(lkOv)lkOv.classList.remove('on');
+    return;
+  }
   // Lock kayboldu
   if(isCalib){finCalib();return;}
   if(!isCalib&&active&&!isPaused){
@@ -766,12 +837,14 @@ document.addEventListener('mousemove',e=>{
   if(isCalib){
     calMov+=e.movementX;
     const absCal=Math.abs(calMov);
+    const rotDeg=((absCal*GC[game].yaw*gS())%360).toFixed(0);
     const liveSens=absCal>50?(360/(GC[game].yaw*absCal)):0;
     const liveCm=liveSens>0?cm360(liveSens,gD()):0;
     const liveEl=$('cal-live');
     if(liveEl){
       liveEl.innerHTML=liveSens>0
-        ?`${lang==='tr'?'Tahmini Hassasiyet':'Est. Sens'}: <span style="font-weight:700">${liveSens.toFixed(3)}</span> (${liveCm.toFixed(1)} cm/360°)`
+        ?`<div>${lang==='tr'?'3D Dönüş Açısı':'3D Rotation'}: <span style="font-weight:700;color:var(--tb);">${rotDeg}°</span> / 360°</div>`
+         +`<div style="margin-top:4px;font-size:11px;">${lang==='tr'?'Tahmini Sens (360° için)':'Est. Sens (for 360°)'}: <span style="font-weight:700">${liveSens.toFixed(3)}</span> (${liveCm.toFixed(1)} cm/360°)</div>`
         :'...';
     }
     const scale=GC[game].yaw*gS()*(Math.PI/180);
@@ -798,19 +871,40 @@ document.addEventListener('mousedown',e=>{
   rc2.setFromCamera({x:0,y:0},camera);
 
   if(cMode==='grid'){
-    if(gridActiveIdx<0)return;
-    const activeM=tMs[gridActiveIdx];
-    if(!activeM)return;
-    if(rc2.intersectObject(activeM).length>0){
-      const elapsed=Date.now()-gridLastHitTime;
-      const speedBonus=Math.max(50,Math.round(500*Math.exp(-elapsed/1200)));
-      if(phaseScoreActive){
-        curScore+=speedBonus;hits++;
+    const activeTargets=[];
+    gridActiveIndices.forEach(idx=>{if(tMs[idx]&&tMs[idx].visible)activeTargets.push({idx,mesh:tMs[idx]});});
+    if(activeTargets.length===0)return;
+
+    let hitFound=false;
+    for(const item of activeTargets){
+      if(rc2.intersectObject(item.mesh).length>0){
+        hitFound=true;
+        const elapsed=Date.now()-gridLastHitTime;
+        const speedBonus=Math.max(50,Math.round(500*Math.exp(-elapsed/1200)));
+        if(phaseScoreActive){
+          curScore+=speedBonus;hits++;
+        }
+        playHit();showFB('+',true);
+        gridLastHitTime=Date.now();
+
+        // Vurulan hedefi gizle ve aktif kümeden çıkar
+        item.mesh.visible=false;
+        gridActiveIndices.delete(item.idx);
+
+        // Boşta kalan noktalardan birini seçip yeni aktif hedef yap
+        const inactiveIndices=[];
+        for(let i=0;i<tMs.length;i++){
+          if(!gridActiveIndices.has(i))inactiveIndices.push(i);
+        }
+        if(inactiveIndices.length>0){
+          const nextIdx=inactiveIndices[Math.floor(Math.random()*inactiveIndices.length)];
+          gridActiveIndices.add(nextIdx);
+          if(tMs[nextIdx])tMs[nextIdx].visible=true;
+        }
+        break;
       }
-      playHit();showFB('+',true);
-      let next,_gi=0;do{next=Math.floor(Math.random()*tMs.length);_gi++;}while(next===gridActiveIdx&&tMs.length>1&&_gi<20);
-      setGridActive(next);
-    } else {
+    }
+    if(!hitFound){
       if(phaseScoreActive){
         curScore=Math.max(0,curScore-200);miss++;
       }
@@ -901,6 +995,7 @@ function resumeGame(){
 }
 function endEarly(){
   isPaused=false;_endEarly=true;active=false;phaseScoreActive=false;clearTimeout(_jt);
+  if(_pauseRes){_pauseRes();_pauseRes=null;}
   if(_resT){_resT(Math.floor(curScore));_resT=null;}
 }
 function waitResume(){return new Promise(r=>{_pauseRes=r;});}
@@ -1038,7 +1133,8 @@ function startRound(){
   buildDots(totalPhases);
   $('hud').style.display='block';$('pi').style.display='block';$('bbar').style.display='block';
   $('pb').style.width='0%';$('hv-r').textContent=curRound;$('pi-v').textContent=`Rd ${curRound}`;
-  camera.quaternion.setFromEuler(new THREE.Euler(pitch,yaw,0,'YXZ'));
+  yaw=0;pitch=0;
+  camera.quaternion.setFromEuler(new THREE.Euler(0,0,0,'YXZ'));
   active=false;
 
   const _runLoop=()=>{
@@ -1149,7 +1245,7 @@ function startRound(){
     hi=MODES.reduce((s,m)=>s+modHi[m],0)/MODES.length;
     hist.push({round:curRound,sens:finalS,totalSc,lo,hi,conf,modeMids:lastAnalysis.mids,agreement:lastAnalysis.agreement,stability:lastAnalysis.stability});
     if(hist.length>12)hist=hist.slice(-12);
-    save({game,dpi:gD(),sens:finalS,round:curRound+1,lo,hi,hist,modLo,modHi,modInitRange});
+    save({game,dpi:gD(),sens:finalS,round:_endEarly?curRound:curRound+1,lo,hi,hist,modLo,modHi,modInitRange});
     pushHistLog({date:Date.now(),game,sens:finalS,conf,round:curRound});
 
     active=false;clearTimeout(_jt);document.exitPointerLock();
@@ -1183,16 +1279,41 @@ function startRound(){
 
 let curLabel='LOW';
 let _lastResult=null;
+
+function copyToClipboard(text){
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    return navigator.clipboard.writeText(text);
+  }
+  return new Promise((resolve, reject)=>{
+    try{
+      const ta=document.createElement('textarea');
+      ta.value=text;ta.style.position='fixed';ta.style.opacity='0';
+      document.body.appendChild(ta);ta.select();
+      const s=document.execCommand('copy');
+      document.body.removeChild(ta);
+      if(s)resolve();else reject(new Error('Copy failed'));
+    }catch(e){reject(e);}
+  });
+}
+
 function shareResult(){
   if(!_lastResult)return;
-  const txt=T('shareTxt',_lastResult.game,_lastResult.sens.toFixed(3),_lastResult.cm.toFixed(1),Math.round(_lastResult.conf));
-  try{
-    navigator.clipboard.writeText(txt).then(()=>{
-      const el=$('lsh');if(!el)return;
-      const orig=el.textContent;el.textContent=T('shared');
-      setTimeout(()=>{el.textContent=orig;},1200);
-    }).catch(()=>{});
-  }catch(e){}
+  const txt=T('shareTxt',_lastResult.game,_lastResult.sens.toFixed(3),_lastResult.cm.toFixed(1),Math.round(_lastResult.conf),_lastResult.oppGame,_lastResult.oppSens,_lastResult.dpi);
+  copyToClipboard(txt).then(()=>{
+    const el=$('lsh');if(!el)return;
+    const orig=el.textContent;el.textContent=T('shared');
+    setTimeout(()=>{el.textContent=orig;},1500);
+  }).catch(()=>{});
+}
+
+function copyEquivalent(){
+  if(!_lastResult)return;
+  copyToClipboard(_lastResult.oppSens).then(()=>{
+    const el=$('rr-cv');if(!el)return;
+    const orig=el.textContent;el.textContent=T('shared');
+    el.style.color='var(--a2)';
+    setTimeout(()=>{el.textContent=_lastResult.oppSens;el.style.color='';},800);
+  }).catch(()=>{});
 }
 function runH(sens,label,mode,phIdx,totalPhases,cfg){
   curLabel=label;
@@ -1242,6 +1363,12 @@ function runH(sens,label,mode,phIdx,totalPhases,cfg){
   });
 }
 
+function requestGameLock(){
+  if(renderer&&renderer.domElement){
+    safeRequestPointerLock(renderer.domElement);
+  }
+}
+
 function showSOv(sens,label,mode,phIdx,totalPhases,cfg,cb){
   $('sw-ey').textContent=label==='LOW'?T('eyLow'):label==='HIGH'?T('eyHigh'):T('eyMid');
   $('sw-sn').textContent=sens.toFixed(3);
@@ -1273,16 +1400,20 @@ function showSOv(sens,label,mode,phIdx,totalPhases,cfg,cb){
       $('sov').classList.remove('on');
       playCountdown(0);
       if(renderer&&document.pointerLockElement!==renderer.domElement){
-        // Geri sayım sırasında lock kaybolmuş — yeniden al
         function _sovLock(){
           if(document.pointerLockElement===renderer.domElement){
             document.removeEventListener('pointerlockchange',_sovLock);
+            const lkOv=$('lock-ov');if(lkOv)lkOv.classList.remove('on');
             _lockAcquiredAt=performance.now();active=true;cb();
           }
         }
         document.addEventListener('pointerlockchange',_sovLock);
         safeRequestPointerLock(renderer.domElement);
-        setTimeout(()=>{if(!active){document.removeEventListener('pointerlockchange',_sovLock);_lockAcquiredAt=performance.now();active=true;cb();}},800);
+        setTimeout(()=>{
+          if(document.pointerLockElement!==renderer.domElement){
+            const lkOv=$('lock-ov');if(lkOv)lkOv.classList.add('on');
+          }
+        },300);
       } else {
         active=true;cb();
       }
@@ -1296,7 +1427,8 @@ function updDots(act){const dots=document.querySelectorAll('#idots .idot');dots.
 // ─── ROUND RESULT ───
 function showRR(sens,h,miss_,conf,trkOn=0,trkTot=0){
   const c=GC[game];const dpi=gD();
-  _lastResult={sens,cm:cm360(sens,dpi),conf,game:c.name};
+  const _cvVal=(sens*c.convF).toFixed(3);
+  _lastResult={sens,cm:cm360(sens,dpi),conf,game:c.name,oppGame:c.opp,oppSens:_cvVal,dpi};
   $('rr-ey').textContent=T('rrEy',curRound);
   if(window._cuTimer)clearInterval(window._cuTimer);
   window._cuTimer=null;
@@ -1309,7 +1441,7 @@ function showRR(sens,h,miss_,conf,trkOn=0,trkTot=0){
   if(trkTot>0){const trkPct=Math.round(trkOn/trkTot*100);const trkLbl=lang==='tr'?'% hedefe':'% on-target';accTxt+=(h+miss_>0?' · ':'')+trkPct+trkLbl;}
   $('rr-a').textContent=accTxt;
   $('rr-al').textContent=T('rrAl');
-  $('rr-cl').textContent=T('rrCl',c.opp);const _cvVal=(sens*c.convF).toFixed(3);
+  $('rr-cl').textContent=T('rrCl',c.opp);
   $('rr-cv').textContent=_cvVal;
   $('rr-cv').title=`${c.opp} sensitivity: ${_cvVal} (${lang==='tr'?'aynı cm/360° için':'same cm/360°'})`;$('rr-cl').title=$('rr-cv').title;
   $('conf-f').style.width=conf+'%';$('conf-p').textContent=conf+'%';
@@ -1400,9 +1532,14 @@ window.addEventListener("keydown",e=>{
 });
 
 // ─── INIT ───
-applyI18n();setGame('cs2');
+document.querySelectorAll('.lbtn').forEach(b=>{
+  if(b.textContent==='TR'||b.textContent==='EN'){
+    b.classList.toggle('on',b.textContent===lang.toUpperCase());
+  }
+});
+applyI18n();setGame('cs2',true);
 // Kaydedilen FOV varsa yükle
-const _sfov=localStorage.getItem("sf_fov");if(_sfov){$('if').value=_sfov;}
+const _sfov=localStorage.getItem("sf_fov_cs2")||localStorage.getItem("sf_fov");if(_sfov){$('if').value=_sfov;}
 // Sfx butonunu başlat
 setTimeout(()=>{const el=$('sfx-btn');if(el)el.textContent=_sfxOn?"🔊":"🔇";},0);
 updPv();checkSaved();renderHistLog();
@@ -1412,9 +1549,22 @@ updPv();checkSaved();renderHistLog();
     const fine=e.shiftKey;
     const baseStep=id==='is'?(fine?(game==='val'?.005:.01):(game==='val'?.05:.1)):(fine?10:50);
     const step=baseStep*Math.max(1,Math.min(3,Math.abs(e.deltaY)/120));
-    $(id).value=(parseFloat($(id).value)+(e.deltaY<0?step:-step)).toFixed(id==='is'?3:0);
+    const curVal=parseFloat($(id).value)||0;
+    const nextVal=curVal+(e.deltaY<0?step:-step);
+    if(id==='is'){
+      const c=GC[game];
+      $(id).value=Math.max(c.sensMin,Math.min(c.sensMax,nextVal)).toFixed(3);
+    } else {
+      $(id).value=Math.max(100,Math.min(32000,Math.round(nextVal)));
+    }
     updPv();
   },{passive:false});
+});
+// Global ilk etkileşimde AudioContext uyandırma
+['click','keydown','touchstart'].forEach(evt=>{
+  window.addEventListener(evt,()=>{
+    if(_ac&&_ac.state==='suspended'){_ac.resume().catch(()=>{});}
+  },{once:true});
 });
 </script>
 </body>
