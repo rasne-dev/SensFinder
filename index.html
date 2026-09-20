@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="version" content="1.1.1">
 <title>SensFinder — CS2 & Valorant</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
@@ -169,7 +170,7 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
 <div id="hud">
   <div id="hpill">FLICK</div>
   <div class="hr"><span class="hl" id="hl-r">Round</span><span class="hv" id="hv-r">1</span></div>
-  <div class="hr"><span class="hl" id="hl-ph">Phase</span><span class="hv" id="hv-ph">1/6</span></div>
+  <div class="hr"><span class="hl" id="hl-ph">Phase</span><span class="hv" id="hv-ph">—</span></div>
   <div class="hr"><span class="hl">Sens</span><span class="hv big" id="hv-s">2.500</span></div>
   <div class="hr"><span class="hl">cm/360°</span><span class="hv" id="hv-cm">34.9</span></div>
   <div class="hr"><span class="hl" id="hl-sc">Score</span><span class="hv" id="hv-sc">0</span></div>
@@ -250,7 +251,7 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
     </div>
   </div>
   <button class="sbtn" onclick="startFresh()">▶ &nbsp;<span id="lst">START TEST</span></button>
-  <div id="est-dur" style="text-align:center;font-family:var(--mono);font-size:8px;letter-spacing:.1em;color:rgba(255,255,255,.22);margin-top:7px;">~5 dk</div>
+  <div id="est-dur" style="text-align:center;font-family:var(--mono);font-size:8px;letter-spacing:.1em;color:rgba(255,255,255,.22);margin-top:7px;">~2.3 dk</div>
   <div style="text-align:center;font-family:var(--mono);font-size:7px;letter-spacing:.08em;color:rgba(255,255,255,.15);margin-top:10px;" id="kb-hint">⌨ M ses · F tam ekran · ESC duraklat</div>
 <div id="histWrap" style="display:none;margin-top:13px;">
   <span class="slbl" id="hist-l">Recent Results</span>
@@ -276,7 +277,7 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
 <!-- ROUND RESULT -->
 <div class="menu" id="rr" style="display:none;">
   <span class="rr-eye" id="rr-ey">Round 1 Result</span>
-  <div class="rr-main" id="rr-m" title="Click to copy" style="cursor:pointer;" onclick="(function(){try{navigator.clipboard.writeText(document.getElementById('rr-m').textContent.trim());}catch(e){} const el=document.getElementById('rr-m');const orig=el.style.color;el.style.color='var(--a2)';el.style.textShadow='0 0 20px var(--a2)';setTimeout(()=>{el.style.color=orig;el.style.textShadow='';},500);})()">2.750</div>
+  <div class="rr-main" id="rr-m" title="Click to copy" style="cursor:pointer;" onclick="copyMainSens()">2.750</div>
   <div class="rr-unit" id="rr-u">CS2 SENSITIVITY</div>
   <div style="font-family:var(--mono);font-size:7px;letter-spacing:.12em;color:rgba(255,255,255,.18);text-transform:uppercase;margin-top:-10px;margin-bottom:12px;text-align:center;" id="rr-cp-hint">↑ click to copy</div>
   <div class="rr-stats">
@@ -297,8 +298,8 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
   <div style="margin-bottom:13px;"><div class="slbl" id="rh-l">History</div><div id="rh-rows"></div></div>
   <div class="ft-box">
     <span class="ft-ti" id="ft-ti">In-Game Fine Tuning</span>
-    <div class="ft-it"><span class="ft-b">↑</span><span id="ft-ov"></span></div>
-    <div class="ft-it"><span class="ft-b">↓</span><span id="ft-un"></span></div>
+    <div class="ft-it"><span class="ft-b">↓</span><span id="ft-ov"></span></div>
+    <div class="ft-it"><span class="ft-b">↑</span><span id="ft-un"></span></div>
   </div>
   <button class="sbtn" onclick="startNextRound()"><span id="ln">▶ Next Round (More Precise)</span></button>
   <button class="sbtn g" id="share-btn" onclick="shareResult()"><span id="lsh">📋 Share result</span></button>
@@ -479,9 +480,10 @@ function checkSaved(){
 }
 function resumeSession(){
   const s=load();if(!s)return;
-  setGame(s.game||'cs2');$('id').value=s.dpi||800;$('is').value=s.sens.toFixed(3);
+  const _g=s.game||'cs2';
+  setGame(_g);$('id').value=s.dpi||800;$('is').value=s.sens.toFixed(3);
   // FOV restore (localStorage'dan — setGame default'u ezmişse koru)
-  const _rfov=localStorage.getItem('sf_fov');if(_rfov)$('if').value=_rfov;
+  const _rfov=localStorage.getItem('sf_fov_'+_g)||localStorage.getItem('sf_fov');if(_rfov)$('if').value=_rfov;
   updPv();
   $('sb').style.display='none';
   hist=s.hist||[];curRound=s.round||1;
@@ -682,15 +684,19 @@ function doRender(){
   const prim=tM||(tMs[firstActiveGrid]??tMs[0]??null);
   if(tL&&prim)tL.position.copy(prim.position);
 
-  if(active&&phaseScoreActive&&cMode==='track'&&document.pointerLockElement===renderer.domElement&&tM){
+  if(active&&cMode==='track'&&document.pointerLockElement===renderer.domElement&&tM){
     rc2.setFromCamera({x:0,y:0},camera);
     const _wasOnT=onT;
     onT=rc2.intersectObject(tM).length>0;
-    _trackFrames++;_sessTrackFrames++;
+    if(phaseScoreActive){
+      _trackFrames++;_sessTrackFrames++;
+      if(onT){
+        _trackOnFrames++;_sessTrackOnFrames++;
+      }
+    }
     if(onT){
-      _trackOnFrames++;_sessTrackOnFrames++;
       if(xhEl)xhEl.classList.add('on-target');
-      if(!_wasOnT)playTrackOn();
+      if(!_wasOnT&&phaseScoreActive)playTrackOn();
     } else {
       if(xhEl)xhEl.classList.remove('on-target');
     }
@@ -698,7 +704,9 @@ function doRender(){
     const pct=_trackFrames>0?(_trackOnFrames/_trackFrames):0;
     const activeDur=typeof currentPhaseActiveDur!=='undefined'?currentPhaseActiveDur:12;
     curScore=pct*BASE_CAP.track*(activeDur/12);
-    $('hv-sc').textContent=`${Math.floor(curScore)} (${Math.round(pct*100)}%)`;
+    if(phaseScoreActive){
+      $('hv-sc').textContent=`${Math.floor(curScore)} (${Math.round(pct*100)}%)`;
+    }
   } else if(cMode==='flick'||cMode==='grid'){
     // Flick/Grid: hedef üzerindeyken crosshair yeşil
     if(active&&document.pointerLockElement===renderer.domElement){
@@ -990,6 +998,9 @@ function resumeGame(){
         document.removeEventListener('pointerlockchange',onLock);
         _lockAcquiredAt=performance.now();active=true;schedJ(cMode);if(_pauseRes){_pauseRes();_pauseRes=null;}
       }
+      if(!renderer||document.pointerLockElement!==renderer.domElement){
+        const lkOv=$('lock-ov');if(lkOv)lkOv.classList.add('on');
+      }
     },800);
   }
 }
@@ -1027,9 +1038,9 @@ function finCalib(){
 // bu sayede 3 farklı scoring sistemi birbirini ezmez.
 const MODES=['flick','grid','track'];
 const MODE_W={flick:.35,grid:.35,track:.30};   // ağırlıklar toplamı = 1.00
-const HALF_DUR=15;
-const WARMUP_DUR=2;
-const QUICK_DUR=12;
+const HALF_DUR=12;
+const WARMUP_DUR=1.5;
+const QUICK_DUR=10;
 const QUICK_WARMUP_DUR=1;
 const SESSION_ROUNDS=1; // 1 antreman = 9 faz (3 mod × 3 test)
 let _sessionTarget=1;
@@ -1040,15 +1051,15 @@ let forceQuickRound=false;
 function roundConfig(){
   const initial=!forceQuickRound&&curRound===1&&hist.length===0;
   return initial
-    ?{repeats:2,activeDur:HALF_DUR,warmupDur:WARMUP_DUR,countdown:3,name:'initial'}
+    ?{repeats:1,activeDur:HALF_DUR,warmupDur:WARMUP_DUR,countdown:2,name:'initial'}
     :{repeats:1,activeDur:QUICK_DUR,warmupDur:QUICK_WARMUP_DUR,countdown:2,name:'quick'};
 }
 function phaseTotal(cfg){return MODES.length*3*cfg.repeats;}
 function updEstDur(){
   const el=$('est-dur');if(!el)return;
-  // startFresh() her zaman "initial" config ile başlar (repeats:2, HALF_DUR+WARMUP_DUR)
-  const totalPhases=MODES.length*3*2;
-  const totalSec=totalPhases*(HALF_DUR+WARMUP_DUR);
+  const cfg=roundConfig();
+  const totalPhases=phaseTotal(cfg);
+  const totalSec=totalPhases*(cfg.activeDur+cfg.warmupDur+cfg.countdown);
   const min=Math.round(totalSec/6)/10; // dakika, 1 ondalık
   el.textContent=T('estDur',min);
 }
@@ -1105,13 +1116,8 @@ function startFresh(){
   const ac=_getAC();if(ac&&ac.state==='suspended')ac.resume();
   clearSession();hist=[];curRound=1;modLo={};modHi={};modInitRange={};lastAnalysis=null;phaseScoreActive=false;forceQuickRound=false;
   _initModRanges(gS());
-  _sessionTarget=SESSION_ROUNDS; // 1 antreman
-  // Kısa "başlatılıyor" feedback
-  const btn=document.querySelector(".sbtn:not(.g)");
-  if(btn){
-    const orig=btn.innerHTML;btn.style.opacity=".6";btn.innerHTML='<span>PREPARING...</span>';
-    setTimeout(()=>{btn.innerHTML=orig;btn.style.opacity="";startRound();},600);
-  } else startRound();
+  _sessionTarget=SESSION_ROUNDS;
+  startRound();
 }
 function startNextRound(){
   const ac=_getAC();if(ac&&ac.state==='suspended')ac.resume();
@@ -1155,14 +1161,14 @@ function startRound(){
       const sLo=(mlo1+mid1)/2;
       phIdx++;updDots(phIdx);
       const rawLo=await runH(sLo,'LOW',mode,phIdx,totalPhases,cfg);
-      const loH=hits,loM=miss;
+      if(mode!=='track'){totalH+=hits;totalM+=miss;}
       if(_endEarly)break;
 
       // ── Test 2: High Quarter ─────────────────────────────────────
       const sHi=(mid1+mhi1)/2;
       phIdx++;updDots(phIdx);
       const rawHi=await runH(sHi,'HIGH',mode,phIdx,totalPhases,cfg);
-      if(mode!=='track'){totalH+=loH+hits;totalM+=loM+miss;}
+      if(mode!=='track'){totalH+=hits;totalM+=miss;}
       if(_endEarly)break;
 
       // LOW/HIGH karşılaştır → aralık güncelle
@@ -1294,6 +1300,15 @@ function copyToClipboard(text){
       if(s)resolve();else reject(new Error('Copy failed'));
     }catch(e){reject(e);}
   });
+}
+
+function copyMainSens(){
+  const el=$('rr-m');if(!el)return;
+  const val=el.textContent.trim();
+  copyToClipboard(val).then(()=>{
+    const orig=el.style.color;el.style.color='var(--a2)';el.style.textShadow='0 0 20px var(--a2)';
+    setTimeout(()=>{el.style.color=orig;el.style.textShadow='';},500);
+  }).catch(()=>{});
 }
 
 function shareResult(){
@@ -1436,10 +1451,18 @@ function showRR(sens,h,miss_,conf,trkOn=0,trkTot=0){
   $('rr-u').textContent=T('rrU',c.name);
   $('rr-e').textContent=Math.round(sens*dpi);
   $('rr-cm').textContent=cm360(sens,dpi).toFixed(2);
-  // Accuracy: flick+grid için isabet%, tracking için — göster
-  let accTxt=h+miss_>0?Math.round(h/(h+miss_)*100)+'%':'—';
-  if(trkTot>0){const trkPct=Math.round(trkOn/trkTot*100);const trkLbl=lang==='tr'?'% hedefe':'% on-target';accTxt+=(h+miss_>0?' · ':'')+trkPct+trkLbl;}
-  $('rr-a').textContent=accTxt;
+  // Accuracy: flick+grid için isabet%, tracking için takip%
+  const accParts=[];
+  if(h+miss_>0){
+    accParts.push(Math.round(h/(h+miss_)*100)+'%');
+  }
+  if(trkTot>0){
+    const trkPct=Math.round(trkOn/trkTot*100);
+    accParts.push(trkPct+(lang==='tr'?'% takip':'% track'));
+  }
+  $('rr-a').textContent=accParts.length>0?accParts.join(' · '):'—';
+  $('is').value=sens.toFixed(game==='val'?3:2);
+  updPv();
   $('rr-al').textContent=T('rrAl');
   $('rr-cl').textContent=T('rrCl',c.opp);
   $('rr-cv').textContent=_cvVal;

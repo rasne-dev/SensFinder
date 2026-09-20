@@ -5,6 +5,7 @@
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Site-e8ff47?style=for-the-badge&labelColor=070708&color=e8ff47&logoColor=black)](https://rasne-dev.github.io/SensFinder)
 [![License: MIT](https://img.shields.io/badge/License-MIT-555?style=for-the-badge&labelColor=070708)](LICENSE)
+[![Version](https://img.shields.io/badge/version-1.1.1-e8ff47?style=for-the-badge&labelColor=070708)](https://github.com/rasne-dev/SensFinder/releases)
 [![No Dependencies](https://img.shields.io/badge/Zero%20Dependencies-Single%20File-555?style=for-the-badge&labelColor=070708)]()
 
 ---
@@ -19,24 +20,27 @@
 
 SensFinder uses a **binary search algorithm** across multiple aim scenarios to converge on the sensitivity you actually perform best at — not just one you think feels right.
 
-### One Round = 6 Phases
+### Test Structure & Disciplines
 
-Each round tests three aim disciplines back-to-back:
+Each round evaluates three core aim disciplines:
 
-| Phase | Mode | What it tests |
-|-------|------|--------------|
-| 1–2 | ⚡ **Flick** | Large, sudden target jumps |
-| 3–4 | ⊞ **Gridshot** | 6 simultaneous targets, fast switching |
-| 5–6 | ◎ **Tracking** | Smoothly moving target, cursor on-target time |
+| Mode | Discipline | What it tests |
+|------|------------|---------------|
+| ⚡ **Flick** | Reflex & Target Acquisition | Large, sudden target jumps |
+| ⊞ **Gridshot** | Speed & Multi-target Switching | 3 active targets across grid, rapid switching |
+| ◎ **Tracking** | Smoothness & Crosshair Placement | Smoothly moving target, cursor on-target time |
 
-Each mode tests a **LOW** sensitivity vs a **HIGH** sensitivity. Whichever you score better on becomes the new search range. After one full round (~3.5 min) you get a result with a **confidence score**.
+Each mode tests three phases: **LOW**, **HIGH**, and a **MID (verification)** sensitivity. Performance is normalized and weighted (Flick 35%, Gridshot 35%, Tracking 30%).
+
+- **Round 1 (Initial Setup):** 9 phases (3 modes × 3 tests, ~2.3 min) establishing an accurate initial baseline.
+- **Round 2+ (Quick Refinement):** 9 phases (3 modes × 3 tests, ~2 min) narrowing down the exact sweet spot.
 
 ### Progressive Refinement
 
 ```
-Round 1  →  Fast result, ~60–70% confidence  (~3.5 min)
-Round 2  →  Narrower range, ~80% confidence  (+3.5 min)
-Round 3  →  Precise result, ~90%+ confidence (+3.5 min)
+Round 1  →  Baseline result, ~60–75% confidence  (~2.3 min)
+Round 2  →  Narrowed range,  ~80–88% confidence  (~2 min)
+Round 3+ →  Precise result,  ~90%+ confidence    (~2 min)
 ```
 
 Run as many rounds as you want. Each one narrows the range further. Your progress is **saved automatically** — close the tab and resume later.
@@ -156,8 +160,8 @@ Zero build tools. Zero npm. One HTML file.
 ---
 
 ## 🌍 Language
-
-Full **Turkish / English** toggle in the UI. Language is not persisted — defaults to browser locale.
+ 
+Full **Turkish / English** toggle in the UI. Language preference is saved automatically to `localStorage` (defaults to browser locale).
 
 ---
 
@@ -179,25 +183,28 @@ SensFinder, mouse hassasiyetini **gerçek nişan senaryoları** üzerinden **bin
 
 ## Nasıl Çalışır?
 
-Her **tur**, sırayla üç farklı nişan modunu test eder:
+Her tur, üç temel nişan disiplinini arka arkaya test eder:
 
-| Mod | Açıklama |
-|-----|----------|
-| ⚡ **Flick** | Ani zıplayan hedefler |
-| ⊞ **Gridshot** | 6 eş zamanlı hedef, hızlı geçiş |
-| ◎ **Tracking** | Hareketli hedef, sürekli takip |
+| Mod | Disiplin | Neyi Test Eder? |
+|-----|----------|-----------------|
+| ⚡ **Flick** | Refleks & Hedef Yakalama | Ani ve geniş açılı hedef sıçramaları |
+| ⊞ **Gridshot** | Hız & Çoklu Hedef Geçişi | Grid üzerinde 3 eşzamanlı aktif hedef, hızlı geçiş |
+| ◎ **Tracking** | Pürüzsüzlük & Crosshair Kontrolü | Akıcı hareket eden hedef, crosshair'i hedefte tutma |
 
-Her mod için DÜŞÜK ve YÜKSEK iki hassasiyet test edilir. Daha iyi performans gösterilen aralık kalır, diğeri elenır. Tur bitince sonuç ve **güven yüzdesi** gösterilir.
+Her mod için **DÜŞÜK**, **YÜKSEK** ve **ORTA (doğrulama)** olmak üzere 3 test aşaması uygulanır. Skorlar modun teorik tavanına göre normalize edilir ve ağırlıklandırılır (Flick %35, Gridshot %35, Tracking %30).
+
+- **1. Tur (İlk Kurulum):** 9 aşama (3 mod × 3 test, ~2.3 dk) ile hızlı ve doğru bir temel aralık oluşturur.
+- **2+ Tur (Hızlı İnce Ayar):** 9 aşama (3 mod × 3 test, ~2 dk) ile hassasiyeti tam noktasına oturtur.
 
 ### Aşamalı İyileştirme
 
 ```
-Tur 1  →  Hızlı sonuç, ~%60–70 güven  (~3.5 dak)
-Tur 2  →  Daha hassas, ~%80 güven     (+3.5 dak)
-Tur 3  →  İdeal sonuç, ~%90+ güven    (+3.5 dak)
+Tur 1   →  Temel sonuç,   ~%60–75 güven  (~2.3 dk)
+Tur 2   →  Daraltılmış,   ~%80–88 güven  (~2 dk)
+Tur 3+  →  Kusursuz ayar, ~%90+ güven    (~2 dk)
 ```
 
-Her tur aralığı daraltır. İstediğin kadar devam edebilirsin.
+Her tur aralığı daha da daraltır. İlerlemeniz **otomatik olarak kaydedilir** — sekmeyi kapatıp dilediğinizde devam edebilirsiniz.
 
 ---
 

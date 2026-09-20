@@ -10,6 +10,7 @@ plugins: []
 # SEO
 author: rasne-dev
 lang: en
+version: 1.1.1
 
 # Exclude from build
 exclude:
