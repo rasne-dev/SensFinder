@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="version" content="1.1.1">
+<meta name="version" content="1.1.2">
 <title>SensFinder — CS2 & Valorant</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
@@ -596,13 +596,10 @@ function setupT(mode,label){
       const m=new THREE.Mesh(new THREE.SphereGeometry(.28,20,20),new THREE.MeshBasicMaterial({color:tColor}));
       m.position.set(...p);m.visible=false;scene.add(m);tMs.push(m);
     });
-    // Gerçek Gridshot: Aynı anda 3 hedef aktif olur
-    while(gridActiveIndices.size<3&&gridActiveIndices.size<tMs.length){
-      gridActiveIndices.add(Math.floor(Math.random()*tMs.length));
-    }
-    gridActiveIndices.forEach(idx=>{
-      if(tMs[idx])tMs[idx].visible=true;
-    });
+    // Tek aktif hedef: Ekranda aynı anda kalabalık oluşmasını önler; vuruldukça hemen diğer yuvaya sıçrar
+    const initialIdx=Math.floor(Math.random()*tMs.length);
+    gridActiveIndices.add(initialIdx);
+    if(tMs[initialIdx])tMs[initialIdx].visible=true;
     gridLastHitTime=Date.now();
   } else spawnS(false,label);
 }
@@ -899,13 +896,13 @@ document.addEventListener('mousedown',e=>{
         item.mesh.visible=false;
         gridActiveIndices.delete(item.idx);
 
-        // Boşta kalan noktalardan birini seçip yeni aktif hedef yap
-        const inactiveIndices=[];
+        // Farklı yuvalardan birini seçip yeni aktif hedef yap (anında yeni konuma geçiş)
+        const nextCandidates=[];
         for(let i=0;i<tMs.length;i++){
-          if(!gridActiveIndices.has(i))inactiveIndices.push(i);
+          if(i!==item.idx)nextCandidates.push(i);
         }
-        if(inactiveIndices.length>0){
-          const nextIdx=inactiveIndices[Math.floor(Math.random()*inactiveIndices.length)];
+        if(nextCandidates.length>0){
+          const nextIdx=nextCandidates[Math.floor(Math.random()*nextCandidates.length)];
           gridActiveIndices.add(nextIdx);
           if(tMs[nextIdx])tMs[nextIdx].visible=true;
         }

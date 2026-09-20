@@ -5,7 +5,7 @@
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Site-e8ff47?style=for-the-badge&labelColor=070708&color=e8ff47&logoColor=black)](https://rasne-dev.github.io/SensFinder)
 [![License: MIT](https://img.shields.io/badge/License-MIT-555?style=for-the-badge&labelColor=070708)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.1.1-e8ff47?style=for-the-badge&labelColor=070708)](https://github.com/rasne-dev/SensFinder/releases)
+[![Version](https://img.shields.io/badge/version-1.1.2-e8ff47?style=for-the-badge&labelColor=070708)](https://github.com/rasne-dev/SensFinder/releases)
 [![No Dependencies](https://img.shields.io/badge/Zero%20Dependencies-Single%20File-555?style=for-the-badge&labelColor=070708)]()
 
 ---
@@ -27,7 +27,7 @@ Each round evaluates three core aim disciplines:
 | Mode | Discipline | What it tests |
 |------|------------|---------------|
 | ⚡ **Flick** | Reflex & Target Acquisition | Large, sudden target jumps |
-| ⊞ **Gridshot** | Speed & Multi-target Switching | 3 active targets across grid, rapid switching |
+| ⊞ **Gridshot** | Speed & Dynamic Switching | Sequential dynamic targets across grid, rapid switching |
 | ◎ **Tracking** | Smoothness & Crosshair Placement | Smoothly moving target, cursor on-target time |
 
 Each mode tests three phases: **LOW**, **HIGH**, and a **MID (verification)** sensitivity. Performance is normalized and weighted (Flick 35%, Gridshot 35%, Tracking 30%).
@@ -185,10 +185,10 @@ SensFinder, mouse hassasiyetini **gerçek nişan senaryoları** üzerinden **bin
 
 Her tur, üç temel nişan disiplinini arka arkaya test eder:
 
-| Mod | Disiplin | Neyi Test Eder? |
+| Mode | Disiplin | Neyi Test Eder? |
 |-----|----------|-----------------|
 | ⚡ **Flick** | Refleks & Hedef Yakalama | Ani ve geniş açılı hedef sıçramaları |
-| ⊞ **Gridshot** | Hız & Çoklu Hedef Geçişi | Grid üzerinde 3 eşzamanlı aktif hedef, hızlı geçiş |
+| ⊞ **Gridshot** | Hız & Seri Hedef Geçişi | Grid üzerinde ardışık beliren hedefler, seri geçiş |
 | ◎ **Tracking** | Pürüzsüzlük & Crosshair Kontrolü | Akıcı hareket eden hedef, crosshair'i hedefte tutma |
 
 Her mod için **DÜŞÜK**, **YÜKSEK** ve **ORTA (doğrulama)** olmak üzere 3 test aşaması uygulanır. Skorlar modun teorik tavanına göre normalize edilir ve ağırlıklandırılır (Flick %35, Gridshot %35, Tracking %30).
