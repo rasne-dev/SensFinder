@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="version" content="1.1.3">
+<meta name="version" content="1.1.4">
 <title>SensFinder — CS2 & Valorant</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
@@ -44,6 +44,9 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
 #fb{position:fixed;top:44%;left:50%;transform:translateX(-50%);z-index:9;font-family:var(--mono);font-size:18px;font-weight:500;pointer-events:none;opacity:0;transition:opacity .12s;text-shadow:0 0 10px currentColor;}
 .menu{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:20;background:linear-gradient(135deg,rgba(7,7,8,.98) 0%,rgba(12,12,16,.97) 100%);border:1px solid rgba(255,255,255,.1);padding:28px 28px 24px;width:500px;max-width:96vw;max-height:94vh;overflow-y:auto;backdrop-filter:blur(24px);scrollbar-width:thin;scrollbar-color:var(--b) transparent;box-shadow:0 0 0 1px rgba(0,0,0,.5),0 32px 80px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.06);}
 .menu::-webkit-scrollbar{width:3px;}.menu::-webkit-scrollbar-thumb{background:var(--b);}
+.hud-timer-badge{display:inline-block;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--tb);background:rgba(255,255,255,.05);padding:2px 8px;border:1px solid var(--b);margin-left:auto;}
+.btn-micro-active:active{transform:scale(0.98);}
+
 /* Ana menü header */
 .menu-header-wrap{position:relative;margin-bottom:22px;padding-bottom:20px;border-bottom:1px solid rgba(255,255,255,.07);}
 .menu-logo-row{display:flex;justify-content:space-between;align-items:flex-start;}
@@ -168,7 +171,10 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
 <div id="fb"></div>
 
 <div id="hud">
-  <div id="hpill">FLICK</div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+    <div id="hpill" style="margin-bottom:0;">FLICK</div>
+    <div id="hud-timer" class="hud-timer-badge">12.0s</div>
+  </div>
   <div class="hr"><span class="hl" id="hl-r">Round</span><span class="hv" id="hv-r">1</span></div>
   <div class="hr"><span class="hl" id="hl-ph">Phase</span><span class="hv" id="hv-ph">—</span></div>
   <div class="hr"><span class="hl">Sens</span><span class="hv big" id="hv-s">2.500</span></div>
@@ -222,10 +228,11 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
   <div class="g2">
     <div class="fg"><label class="flbl" id="ld">Mouse DPI</label><input class="fi" type="number" id="id" value="800" min="100" max="32000" step="50" oninput="updPv()" onfocus="this.select()">
       <div style="display:flex;gap:4px;margin-top:5px;">
-        <button type="button" class="lbtn" style="flex:1;padding:4px 2px;" onclick="$('id').value=400;updPv();">400</button>
-        <button type="button" class="lbtn" style="flex:1;padding:4px 2px;" onclick="$('id').value=800;updPv();">800</button>
-        <button type="button" class="lbtn" style="flex:1;padding:4px 2px;" onclick="$('id').value=1600;updPv();">1600</button>
-        <button type="button" class="lbtn" style="flex:1;padding:4px 2px;" onclick="$('id').value=3200;updPv();">3200</button>
+        <button type="button" class="lbtn" style="flex:1;padding:4px 1px;" onclick="$('id').value=400;updPv();">400</button>
+        <button type="button" class="lbtn" style="flex:1;padding:4px 1px;" onclick="$('id').value=800;updPv();">800</button>
+        <button type="button" class="lbtn" style="flex:1;padding:4px 1px;" onclick="$('id').value=1200;updPv();">1200</button>
+        <button type="button" class="lbtn" style="flex:1;padding:4px 1px;" onclick="$('id').value=1600;updPv();">1600</button>
+        <button type="button" class="lbtn" style="flex:1;padding:4px 1px;" onclick="$('id').value=3200;updPv();">3200</button>
       </div>
     </div>
     <div class="fg"><label class="flbl" id="lf">FOV</label><input class="fi" type="number" id="if" value="90" min="60" max="120" oninput="updateCameraFov();localStorage.setItem('sf_fov_'+game,this.value);"></div>
@@ -442,7 +449,12 @@ const SK='sf_v3';
 const HK='sf_hist_log'; // Çoklu-oturum ilerleme geçmişi (resume/save mekanizmasından bağımsız, sadece görüntüleme amaçlı)
 function save(d){try{localStorage.setItem(SK,JSON.stringify(d));}catch(e){}}
 function load(){try{const d=localStorage.getItem(SK);return d?JSON.parse(d):null;}catch(e){return null;}}
-function clearSession(){localStorage.removeItem(SK);$('sb').style.display='none';}
+function clearSession(){
+  if(confirm(lang==='tr'?'Kayıtlı oturumunuzu silmek istediğinize emin misiniz?':'Are you sure you want to clear your saved session?')){
+    localStorage.removeItem(SK);
+    $('sb').style.display='none';
+  }
+}
 function loadHistLog(){try{const d=localStorage.getItem(HK);return d?JSON.parse(d):[];}catch(e){return [];}}
 function pushHistLog(entry){
   try{
@@ -1114,7 +1126,7 @@ function _initModRanges(centerSens){
 
 function startFresh(){
   const ac=_getAC();if(ac&&ac.state==='suspended')ac.resume();
-  clearSession();hist=[];curRound=1;modLo={};modHi={};modInitRange={};lastAnalysis=null;phaseScoreActive=false;forceQuickRound=false;
+  localStorage.removeItem(SK);$('sb').style.display='none';hist=[];curRound=1;modLo={};modHi={};modInitRange={};lastAnalysis=null;phaseScoreActive=false;forceQuickRound=false;
   _initModRanges(gS());
   _sessionTarget=SESSION_ROUNDS;
   startRound();
@@ -1307,6 +1319,13 @@ function copyMainSens(){
   const val=el.textContent.trim();
   copyToClipboard(val).then(()=>{
     const orig=el.style.color;el.style.color='var(--a2)';el.style.textShadow='0 0 20px var(--a2)';
+    const hint=$('rr-cp-hint');
+    if(hint){
+      const origHint=hint.textContent;
+      hint.textContent=T('shared');
+      hint.style.color='var(--a2)';
+      setTimeout(()=>{hint.textContent=origHint;hint.style.color='';},1000);
+    }
     setTimeout(()=>{el.style.color=orig;el.style.textShadow='';},500);
   }).catch(()=>{});
 }
@@ -1348,6 +1367,8 @@ function runH(sens,label,mode,phIdx,totalPhases,cfg){
       window._hudTimer=null;
       $('hv-s').textContent=sens.toFixed(3);
       $('hv-cm').textContent=cm360(sens,gD()).toFixed(1);$('hv-sc').textContent='0';
+      const timerEl=$('hud-timer');
+      if(timerEl){timerEl.textContent=((cfg.activeDur+cfg.warmupDur)).toFixed(1)+'s';timerEl.style.color='var(--tb)';}
       $('bbar').textContent=`${label==='LOW'?T('eyLow'):label==='HIGH'?T('eyHigh'):T('eyMid')} · ESC pause`;
 
       const start=performance.now(),dur=(cfg.activeDur+cfg.warmupDur)*1000,warm=cfg.warmupDur*1000;
@@ -1367,6 +1388,14 @@ function runH(sens,label,mode,phIdx,totalPhases,cfg){
         const scoredElapsed=Math.max(0,el-warm);
         const pct=Math.min(100,scoredElapsed/(cfg.activeDur*1000)*100);
         $('pb').style.width=pct+'%';
+        
+        const remSec=Math.max(0,(dur-el)/1000);
+        const timerEl=$('hud-timer');
+        if(timerEl){
+          timerEl.textContent=remSec.toFixed(1)+'s';
+          timerEl.style.color=remSec<=3?'#ff4455':'var(--tb)';
+        }
+
         if(!phaseScoreActive)$('bbar').textContent=(lang==='tr'?'Isinma':'Warmup')+` ${Math.ceil((warm-el)/1000)}s`;
         else $('bbar').textContent=`${label==='LOW'?T('eyLow'):label==='HIGH'?T('eyHigh'):T('eyMid')} · ESC pause`;
         
