@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="version" content="1.1.4">
+<meta name="version" content="1.1.5">
 <title>SensFinder — CS2 & Valorant</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
@@ -261,7 +261,10 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
   <div id="est-dur" style="text-align:center;font-family:var(--mono);font-size:8px;letter-spacing:.1em;color:rgba(255,255,255,.22);margin-top:7px;">~2.3 dk</div>
   <div style="text-align:center;font-family:var(--mono);font-size:7px;letter-spacing:.08em;color:rgba(255,255,255,.15);margin-top:10px;" id="kb-hint">⌨ M ses · F tam ekran · ESC duraklat</div>
 <div id="histWrap" style="display:none;margin-top:13px;">
-  <span class="slbl" id="hist-l">Recent Results</span>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+    <span class="slbl" id="hist-l" style="margin-bottom:0;">Recent Results</span>
+    <button class="sb-btn" id="hist-clr" onclick="clearHistLog()" style="padding:2px 8px;font-size:7px;">Clear</button>
+  </div>
   <div id="histRows"></div>
 </div>
 </div>
@@ -343,7 +346,9 @@ const L={
     shareBtn:'📋 Sonucu paylaş',
     shared:'✓ Kopyalandı!',
     lockTi:'TIKLA VE OYNA',
-    lockSu:'Nişan alabilmek ve fareyi kilitlemek için tıkla',},
+    lockSu:'Nişan alabilmek ve fareyi kilitlemek için tıkla',
+    warmup:'Isınma',
+    clearHist:'Geçmişi Temizle',},
   en:{sub:'Sensitivity Finder · CS2 & Valorant',game:'Game',dpi:'Mouse DPI',fov:'FOV',sens:'Current Sensitivity',
     calib:'Calibrate via 360° mousepad movement',start:'START TEST',
     rLbl:'Round',phLbl:'Phase',scLbl:'Score',piLbl:'Progress',
@@ -370,7 +375,9 @@ const L={
     shareBtn:'📋 Share result',
     shared:'✓ Copied!',
     lockTi:'CLICK TO PLAY',
-    lockSu:'Click anywhere to lock mouse and aim',}
+    lockSu:'Click anywhere to lock mouse and aim',
+    warmup:'Warmup',
+    clearHist:'Clear History',}
 };
 let lang=localStorage.getItem('sf_lang')||(navigator.language.startsWith('tr')?'tr':'en');
 const $=id=>document.getElementById(id);
@@ -390,6 +397,7 @@ function applyI18n(){
   $('ft-ov').textContent=T('ftOv');$('ft-un').textContent=T('ftUn');
   const _cpHintEl=$('rr-cp-hint');if(_cpHintEl)_cpHintEl.textContent=T('cpHint');
   const _histLEl=$('hist-l');if(_histLEl)_histLEl.textContent=T('histTi');
+  const _histClrEl=$('hist-clr');if(_histClrEl)_histClrEl.textContent=T('clearHist');
   renderHistLog();
   const _kbEl=$('kb-hint');if(_kbEl)_kbEl.textContent=T('kbHint');
   updEstDur();
@@ -456,6 +464,12 @@ function clearSession(){
   }
 }
 function loadHistLog(){try{const d=localStorage.getItem(HK);return d?JSON.parse(d):[];}catch(e){return [];}}
+function clearHistLog(){
+  if(confirm(lang==='tr'?'Tüm geçmiş sonuç kayıtlarını silmek istediğinize emin misiniz?':'Are you sure you want to clear all result history?')){
+    localStorage.removeItem(HK);
+    renderHistLog();
+  }
+}
 function pushHistLog(entry){
   try{
     const arr=loadHistLog();
@@ -1018,6 +1032,8 @@ function resumeGame(){
 }
 function endEarly(){
   isPaused=false;_endEarly=true;active=false;phaseScoreActive=false;clearTimeout(_jt);
+  if(window._sovCd){clearInterval(window._sovCd);window._sovCd=null;}
+  const sovEl=$('sov');if(sovEl)sovEl.classList.remove('on');
   if(_pauseRes){_pauseRes();_pauseRes=null;}
   if(_resT){_resT(Math.floor(curScore));_resT=null;}
 }
@@ -1396,7 +1412,7 @@ function runH(sens,label,mode,phIdx,totalPhases,cfg){
           timerEl.style.color=remSec<=3?'#ff4455':'var(--tb)';
         }
 
-        if(!phaseScoreActive)$('bbar').textContent=(lang==='tr'?'Isinma':'Warmup')+` ${Math.ceil((warm-el)/1000)}s`;
+        if(!phaseScoreActive)$('bbar').textContent=T('warmup')+` ${Math.ceil((warm-el)/1000)}s`;
         else $('bbar').textContent=`${label==='LOW'?T('eyLow'):label==='HIGH'?T('eyHigh'):T('eyMid')} · ESC pause`;
         
         if(el>=dur){phaseScoreActive=false;_resT=null;resolve(Math.floor(curScore));}
@@ -1436,11 +1452,17 @@ function showSOv(sens,label,mode,phIdx,totalPhases,cfg,cb){
   let n=cfg.countdown;$('sw-cd').textContent=n;
   const _flashCd=()=>{const el=$('sw-cd');el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash');};
   _flashCd();playCountdown(n); // İlk rakam için de ses çal
-  const cd=setInterval(()=>{
+  if(window._sovCd){clearInterval(window._sovCd);window._sovCd=null;}
+  window._sovCd=setInterval(()=>{
+    if(_endEarly){
+      clearInterval(window._sovCd);window._sovCd=null;
+      $('sov').classList.remove('on');
+      return;
+    }
     n--;
     if(n>0){$('sw-cd').textContent=n;_flashCd();playCountdown(n);}
     else{
-      clearInterval(cd);
+      clearInterval(window._sovCd);window._sovCd=null;
       $('sov').classList.remove('on');
       playCountdown(0);
       if(renderer&&document.pointerLockElement!==renderer.domElement){
