@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="version" content="1.1.5">
+<meta name="version" content="1.1.6">
 <title>SensFinder — CS2 & Valorant</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
@@ -259,7 +259,7 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
   </div>
   <button class="sbtn" onclick="startFresh()">▶ &nbsp;<span id="lst">START TEST</span></button>
   <div id="est-dur" style="text-align:center;font-family:var(--mono);font-size:8px;letter-spacing:.1em;color:rgba(255,255,255,.22);margin-top:7px;">~2.3 dk</div>
-  <div style="text-align:center;font-family:var(--mono);font-size:7px;letter-spacing:.08em;color:rgba(255,255,255,.15);margin-top:10px;" id="kb-hint">⌨ M ses · F tam ekran · ESC duraklat</div>
+  <div style="text-align:center;font-family:var(--mono);font-size:7px;letter-spacing:.08em;color:rgba(255,255,255,.15);margin-top:10px;" id="kb-hint">⌨ Boşluk başlat · M ses · F tam ekran · ESC duraklat</div>
 <div id="histWrap" style="display:none;margin-top:13px;">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
     <span class="slbl" id="hist-l" style="margin-bottom:0;">Recent Results</span>
@@ -281,7 +281,7 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
   <div style="display:flex;gap:5px;margin-bottom:8px;"><button class="sb-btn" onclick="setLang('tr')" style="flex:1">TR</button><button class="sb-btn" onclick="setLang('en')" style="flex:1">EN</button><button class="sb-btn" id="pm-sfx" onclick="toggleSfx()" style="flex:1;font-size:14px;" title="Sound (M)">🔊</button></div>
   <button class="sbtn" onclick="resumeGame()"><span id="lr">▶ Resume</span></button>
   <button class="sbtn g" onclick="endEarly()"><span id="le">✓ End &amp; Show Results</span></button>
-  <button class="sbtn g" onclick="location.reload()"><span id="lq">✕ Quit</span></button>
+  <button class="sbtn g" onclick="quitToMenu()"><span id="lq">✕ Quit</span></button>
 </div>
 
 <!-- ROUND RESULT -->
@@ -340,7 +340,7 @@ const L={
     msEq:`Aralık daralmıyor — bu sens etrafındaki değerler senin için fark etmiyor olabilir.`,
     cpHint:'↑ kopyalamak için tıkla',
     histTi:'Son Sonuçların',
-    kbHint:'⌨ M ses · F tam ekran · ESC duraklat',
+    kbHint:'⌨ Boşluk başlat · M ses · F tam ekran · ESC duraklat',
     estDur:(m)=>`~${m} dk sürer (3 mod × isabet/hız testi)`,
     shareTxt:(g,s,cm,c,og,os,d)=>`🎯 SensFinder Sonucu:\n🎮 ${g}: ${s} (${d} DPI · ${cm} cm/360°)\n🔄 ${og} Eşdeğeri: ${os}\n⭐ Güven: %${c}\nhttps://rasne-dev.github.io/SensFinder`,
     shareBtn:'📋 Sonucu paylaş',
@@ -369,7 +369,7 @@ const L={
     msEq:`Range isn't narrowing — values around this sens may feel equally good to you.`,
     cpHint:'↑ click to copy',
     histTi:'Recent Results',
-    kbHint:'⌨ M sound · F fullscreen · ESC pause',
+    kbHint:'⌨ Space start · M sound · F fullscreen · ESC pause',
     estDur:(m)=>`~${m} min (3 modes × accuracy/speed tests)`,
     shareTxt:(g,s,cm,c,og,os,d)=>`🎯 SensFinder Result:\n🎮 ${g}: ${s} (${d} DPI · ${cm} cm/360°)\n🔄 ${og} Equivalent: ${os}\n⭐ Confidence: ${c}%\nhttps://rasne-dev.github.io/SensFinder`,
     shareBtn:'📋 Share result',
@@ -901,7 +901,7 @@ document.addEventListener('mousemove',e=>{
 document.addEventListener('mousedown',e=>{
   if(e.button!==0||isCalib)return;
   if(!active||!renderer||document.pointerLockElement!==renderer.domElement)return;
-  if(cMode==='track')return;
+  if(cMode==='track'||isPaused||_endEarly||_quitEarly)return;
   rc2.setFromCamera({x:0,y:0},camera);
 
   if(cMode==='grid'){
@@ -970,19 +970,34 @@ document.addEventListener('mousedown',e=>{
 });
 
 window.addEventListener('keydown',e=>{
-  if(e.key==='m'||e.key==='M'){toggleSfx(e.shiftKey);return;}
+  const isInput=document.activeElement?.tagName==='INPUT';
+  if((e.key==='m'||e.key==='M')&&!isInput){toggleSfx(e.shiftKey);return;}
   if(e.key==='Escape'){
     if(isCalib){return;} // browser lock'u zaten bırakır → pointerlockchange → finCalib
-    // Browser ESC'de lock'u otomatik bırakır; pauseG bunu pointerlockchange'den yakalar.
-    // isPaused ise resume yap (lock yoktur, requestPointerLock gerekir).
-    if(isPaused)resumeGame();
+    if(isPaused){resumeGame();return;}
+    if($('rr').style.display==='block'){
+      showMenu('mm');checkSaved();applyI18n();renderHistLog();
+      return;
+    }
+  }
+  if((e.code==='Space'||e.key===' ')&&!isInput){
+    if($('mm').style.display==='block'&&!active&&!isPaused&&!isCalib){
+      e.preventDefault();
+      startFresh();
+      return;
+    }
+    if($('rr').style.display==='block'){
+      e.preventDefault();
+      startNextRound();
+      return;
+    }
   }
 });
 let _fbT;
 function showFB(t,g){const el=$('fb');el.textContent=t;el.style.color=g?'var(--a)':'#ff4455';el.style.opacity='1';clearTimeout(_fbT);_fbT=setTimeout(()=>el.style.opacity='0',280);}
 
 // ─── PAUSE ───
-let _pauseRes=null,_endEarly=false;
+let _pauseRes=null,_endEarly=false,_quitEarly=false;
 
 function pauseG(){
   isPaused=true;active=false;clearTimeout(_jt);
@@ -1036,6 +1051,31 @@ function endEarly(){
   const sovEl=$('sov');if(sovEl)sovEl.classList.remove('on');
   if(_pauseRes){_pauseRes();_pauseRes=null;}
   if(_resT){_resT(Math.floor(curScore));_resT=null;}
+}
+function quitToMenu(){
+  _quitEarly=true;
+  isPaused=false;active=false;_endEarly=true;phaseScoreActive=false;
+  clearTimeout(_jt);
+  if(window._sovCd){clearInterval(window._sovCd);window._sovCd=null;}
+  if(window._cuTimer){clearInterval(window._cuTimer);window._cuTimer=null;}
+  if(window._hudTimer){clearInterval(window._hudTimer);window._hudTimer=null;}
+  if(_pauseRes){_pauseRes();_pauseRes=null;}
+  if(_resT){_resT(0);_resT=null;}
+  if(document.pointerLockElement)document.exitPointerLock();
+  clrT();
+  yaw=0;pitch=0;
+  if(camera)camera.quaternion.setFromEuler(new THREE.Euler(0,0,0,'YXZ'));
+  $('hud').style.display='none';
+  $('pi').style.display='none';
+  $('bbar').style.display='none';
+  $('pb').style.width='0%';
+  const sovEl=$('sov');if(sovEl)sovEl.classList.remove('on');
+  const lkOv=$('lock-ov');if(lkOv)lkOv.classList.remove('on');
+  const covEl=$('cov');if(covEl)covEl.classList.remove('on');
+  showMenu('mm');
+  checkSaved();
+  applyI18n();
+  renderHistLog();
 }
 function waitResume(){return new Promise(r=>{_pauseRes=r;});}
 
@@ -1157,7 +1197,7 @@ function startNextRound(){
 }
 
 function startRound(){
-  hideAll();_endEarly=false;
+  hideAll();_endEarly=false;_quitEarly=false;
   if(!renderer)initThree();
   const cfg=roundConfig();
   forceQuickRound=false;
@@ -1180,7 +1220,7 @@ function startRound(){
 
     for(let rep=0;rep<cfg.repeats;rep++){
     for(const mode of MODES){
-      if(_endEarly)break;
+      if(_endEarly||_quitEarly)break;
       cMode=mode;
 
       // ── Test 1: Low Quarter ──────────────────────────────────────
@@ -1190,14 +1230,14 @@ function startRound(){
       phIdx++;updDots(phIdx);
       const rawLo=await runH(sLo,'LOW',mode,phIdx,totalPhases,cfg);
       if(mode!=='track'){totalH+=hits;totalM+=miss;}
-      if(_endEarly)break;
+      if(_endEarly||_quitEarly)break;
 
       // ── Test 2: High Quarter ─────────────────────────────────────
       const sHi=(mid1+mhi1)/2;
       phIdx++;updDots(phIdx);
       const rawHi=await runH(sHi,'HIGH',mode,phIdx,totalPhases,cfg);
       if(mode!=='track'){totalH+=hits;totalM+=miss;}
-      if(_endEarly)break;
+      if(_endEarly||_quitEarly)break;
 
       // LOW/HIGH karşılaştır → aralık güncelle
       const nLo=normScore(rawLo,mode,cfg.activeDur),nHi=normScore(rawHi,mode,cfg.activeDur);
@@ -1227,7 +1267,7 @@ function startRound(){
       phIdx++;updDots(phIdx);
       const rawMid=await runH(sMid,'MID',mode,phIdx,totalPhases,cfg);
       if(mode!=='track'){totalH+=hits;totalM+=miss;}
-      if(_endEarly)break;
+      if(_endEarly||_quitEarly)break;
 
       // Test3 skoru: low/high ile karşılaştır, kazananı ağırlıklı ortalama ile blend et
       const nMid=normScore(rawMid,mode,cfg.activeDur);
@@ -1259,7 +1299,14 @@ function startRound(){
 
       totalSc+=rawLo+rawHi+rawMid;
     }
-    if(_endEarly)break;
+    if(_endEarly||_quitEarly)break;
+    }
+
+    if(_quitEarly){
+      active=false;clearTimeout(_jt);
+      if(document.pointerLockElement)document.exitPointerLock();
+      $('hud').style.display='none';$('pi').style.display='none';$('bbar').style.display='none';
+      return;
     }
 
     // Ağırlıklı ensemble — modLo/modHi her zaman geçerli (endEarly dahil)
@@ -1391,7 +1438,7 @@ function runH(sens,label,mode,phIdx,totalPhases,cfg){
       let _pausedAt=0,_totalPaused=0;
 
       const _tick=()=>{
-        if(_endEarly){phaseScoreActive=false;_resT=null;resolve(Math.floor(curScore));return;}
+        if(_endEarly||_quitEarly){phaseScoreActive=false;_resT=null;resolve(Math.floor(curScore));return;}
         if(isPaused){
           if(!_pausedAt)_pausedAt=performance.now();
           requestAnimationFrame(_tick);
@@ -1454,7 +1501,7 @@ function showSOv(sens,label,mode,phIdx,totalPhases,cfg,cb){
   _flashCd();playCountdown(n); // İlk rakam için de ses çal
   if(window._sovCd){clearInterval(window._sovCd);window._sovCd=null;}
   window._sovCd=setInterval(()=>{
-    if(_endEarly){
+    if(_endEarly||_quitEarly){
       clearInterval(window._sovCd);window._sovCd=null;
       $('sov').classList.remove('on');
       return;
@@ -1464,6 +1511,7 @@ function showSOv(sens,label,mode,phIdx,totalPhases,cfg,cb){
     else{
       clearInterval(window._sovCd);window._sovCd=null;
       $('sov').classList.remove('on');
+      if(_quitEarly)return;
       playCountdown(0);
       if(renderer&&document.pointerLockElement!==renderer.domElement){
         function _sovLock(){
@@ -1602,7 +1650,7 @@ document.addEventListener("fullscreenchange",()=>{
   if(btn)btn.textContent=document.fullscreenElement?"✕fs":"⛶";
 });
 window.addEventListener("keydown",e=>{
-  if((e.key==="f"||e.key==="F")&&!active&&!document.pointerLockElement)toggleFS();
+  if((e.key==="f"||e.key==="F")&&!active&&!document.pointerLockElement&&document.activeElement?.tagName!=='INPUT')toggleFS();
 });
 
 // ─── INIT ───
