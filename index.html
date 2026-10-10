@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="version" content="1.1.6">
+<meta name="version" content="1.1.7">
 <title>SensFinder — CS2 & Valorant</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
@@ -27,6 +27,11 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
 .xh-v{position:absolute!important;width:2px!important;height:26px!important;background:#ffffff!important;left:-1px!important;top:-13px!important;outline:1px solid #000!important;box-shadow:0 0 3px #000!important;}
 .xh-dot{position:absolute!important;width:4px!important;height:4px!important;background:#ffffff!important;border-radius:50%!important;top:-2px!important;left:-2px!important;outline:1px solid #000!important;}
 #xh.on-target .xh-h,#xh.on-target .xh-v,#xh.on-target .xh-dot{background:#00ff88!important;outline-color:#006633!important;}
+#xh.style-dot .xh-h,#xh.style-dot .xh-v{display:none!important;}
+#xh.style-dot .xh-dot{width:6px!important;height:6px!important;top:-3px!important;left:-3px!important;}
+#xh.style-compact .xh-h{width:14px!important;left:-7px!important;}
+#xh.style-compact .xh-v{height:14px!important;top:-7px!important;}
+#xh.style-compact .xh-dot{width:3px!important;height:3px!important;top:-1.5px!important;left:-1.5px!important;}
 #pw{position:fixed;bottom:0;left:0;right:0;z-index:8;height:2px;background:rgba(255,255,255,.04);}
 #pb{height:100%;background:var(--a);width:0;box-shadow:0 0 8px var(--ag);transition:background .3s;}
 #hud{position:fixed;top:18px;left:18px;z-index:8;background:rgba(7,7,8,.9);border:1px solid var(--b);padding:12px 16px;min-width:178px;display:none;backdrop-filter:blur(12px);}
@@ -235,7 +240,13 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
         <button type="button" class="lbtn" style="flex:1;padding:4px 1px;" onclick="$('id').value=3200;updPv();">3200</button>
       </div>
     </div>
-    <div class="fg"><label class="flbl" id="lf">FOV</label><input class="fi" type="number" id="if" value="90" min="60" max="120" oninput="updateCameraFov();localStorage.setItem('sf_fov_'+game,this.value);"></div>
+    <div class="fg">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <label class="flbl" id="lf" style="margin-bottom:0;">FOV</label>
+        <button type="button" class="lbtn" style="padding:1px 5px;font-size:7px;" onclick="openResModal()" id="btn-res-guide">4:3 / 16:9 ℹ️</button>
+      </div>
+      <input class="fi" type="number" id="if" value="90" min="60" max="120" style="margin-top:5px;" oninput="updateCameraFov();localStorage.setItem('sf_fov_'+game,this.value);">
+    </div>
   </div>
   <div class="sg">
     <label class="flbl" id="ls">Current Sensitivity</label>
@@ -244,6 +255,25 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
       <div class="spv"><span class="spvl">eDPI</span><span class="spvv" id="pv-e">2000</span></div>
       <div class="spv"><span class="spvl">cm/360°</span><span class="spvv" id="pv-c">34.9</span></div>
       <div class="spv"><span class="spvl" id="pv-cl">VAL eq.</span><span class="spvv" id="pv-cv">0.786</span></div>
+    </div>
+  </div>
+  <div class="sg" style="margin-bottom:13px;padding:10px 12px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;">
+      <span class="slbl" id="l-opt-ti" style="margin-bottom:0;">Preferences</span>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:4px;">
+        <span class="flbl" style="margin-bottom:0;font-size:7px;" id="l-xh-ti">Crosshair:</span>
+        <button type="button" class="lbtn on" id="btn-xh-cross" onclick="setXhStyle('cross')">✚ Plus</button>
+        <button type="button" class="lbtn" id="btn-xh-dot" onclick="setXhStyle('dot')">• Dot</button>
+        <button type="button" class="lbtn" id="btn-xh-compact" onclick="setXhStyle('compact')">✛ Mini</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:4px;">
+        <span class="flbl" style="margin-bottom:0;font-size:7px;" id="l-snd-ti">Sound:</span>
+        <button type="button" class="lbtn on" id="btn-snd-laser" onclick="setHitSound('laser')">Beep</button>
+        <button type="button" class="lbtn" id="btn-snd-pop" onclick="setHitSound('pop')">Pop</button>
+        <button type="button" class="lbtn" id="btn-snd-bell" onclick="setHitSound('bell')">Bell</button>
+      </div>
     </div>
   </div>
   <button class="cbtn" onclick="startCalib()"><em>📐</em><span id="lca">Calibrate via 360° mousepad movement</span></button>
@@ -290,10 +320,11 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
   <div class="rr-main" id="rr-m" title="Click to copy" style="cursor:pointer;" onclick="copyMainSens()">2.750</div>
   <div class="rr-unit" id="rr-u">CS2 SENSITIVITY</div>
   <div style="font-family:var(--mono);font-size:7px;letter-spacing:.12em;color:rgba(255,255,255,.18);text-transform:uppercase;margin-top:-10px;margin-bottom:12px;text-align:center;" id="rr-cp-hint">↑ click to copy</div>
-  <div class="rr-stats">
+  <div class="rr-stats" style="grid-template-columns:repeat(4,1fr);">
     <div class="rs"><span class="rs-l">eDPI</span><span class="rs-v" id="rr-e">—</span></div>
     <div class="rs"><span class="rs-l">cm/360°</span><span class="rs-v" id="rr-cm">—</span></div>
     <div class="rs"><span class="rs-l" id="rr-al">Accuracy</span><span class="rs-v" id="rr-a">—</span></div>
+    <div class="rs"><span class="rs-l" id="rr-rl">Reflex</span><span class="rs-v" id="rr-r">—</span></div>
   </div>
   <div class="rr-cv" style="cursor:pointer;" title="Click to copy equivalent sensitivity" onclick="copyEquivalent()"><span class="rc-l" id="rr-cl">Equivalent</span><div class="rc-v" id="rr-cv">—</div></div>
   <div class="confrow">
@@ -314,6 +345,33 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
   <button class="sbtn" onclick="startNextRound()"><span id="ln">▶ Next Round (More Precise)</span></button>
   <button class="sbtn g" id="share-btn" onclick="shareResult()"><span id="lsh">📋 Share result</span></button>
   <button class="sbtn g" onclick="showMenu('mm');checkSaved();applyI18n();renderHistLog();"><span id="ld2">✓ Done</span></button>
+</div>
+
+<!-- RESOLUTION & ASPECT RATIO MODAL -->
+<div id="res-modal" style="display:none;position:fixed;inset:0;z-index:40;background:rgba(7,7,8,.88);backdrop-filter:blur(10px);align-items:center;justify-content:center;">
+  <div style="background:linear-gradient(135deg,rgba(10,10,14,.98),rgba(16,16,22,.98));border:1px solid rgba(255,255,255,.12);border-radius:2px;max-width:480px;width:92vw;padding:24px;box-shadow:0 24px 60px rgba(0,0,0,.8);">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;border-bottom:1px solid rgba(255,255,255,.08);padding-bottom:12px;">
+      <div>
+        <div style="font-size:16px;font-weight:900;color:var(--tb);font-family:var(--sans);" id="res-m-ti">En-Boy Oranı &amp; Çözünürlük Rehberi</div>
+        <div style="font-family:var(--mono);font-size:8px;color:var(--a);letter-spacing:.12em;text-transform:uppercase;margin-top:2px;" id="res-m-su">4:3 Stretched vs 16:9 &amp; FOV</div>
+      </div>
+      <button class="sb-btn" onclick="closeResModal()" style="padding:4px 8px;font-size:12px;line-height:1;">✕</button>
+    </div>
+    <div style="font-size:11px;line-height:1.6;color:rgba(255,255,255,.75);display:flex;flex-direction:column;gap:12px;" id="res-m-body">
+      <div>
+        <strong style="color:var(--a);" id="res-m-cs-t">🎮 CS2 (4:3 Stretched):</strong>
+        <p style="margin-top:2px;" id="res-m-cs-d">4:3 genişletilmiş görüntüde hedefler yatayda genişler ve yatay görsel algı hızı yaklaşık %33 artar. Ancak 3D dünyadaki gerçek açısal dönüş mesafeniz (cm/360°) kesinlikle değişmez. Eğer oyun içinde m_yaw 0.0165 kullanıyorsanız, buradaki standart hassasiyetinizi 1.333 ile çarpmanız gerekir.</p>
+      </div>
+      <div>
+        <strong style="color:var(--a);" id="res-m-val-t">⚡ Valorant (16:9 Kilitli FOV):</strong>
+        <p style="margin-top:2px;" id="res-m-val-d">Valorant oyun motoru 3D dünyayı her zaman 103° FOV (16:9) olarak kilitli işler. 4:3 veya 5:4 çözünürlük seçseniz dahi 3D açı ve hassasiyet (cm/360°) birebir aynı kalır; yalnızca arayüz ve nişangah esner.</p>
+      </div>
+      <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);padding:8px 10px;font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.5);" id="res-m-note">
+        💡 SensFinder'da bulduğunuz cm/360° değeri her iki oyunda da tüm çözünürlüklerde kas hafızanızı korumanızı sağlar.
+      </div>
+    </div>
+    <button class="sbtn g" onclick="closeResModal()" style="margin-top:16px;padding:8px;" id="res-m-close">Kapat</button>
+  </div>
 </div>
 
 <script>
@@ -348,7 +406,20 @@ const L={
     lockTi:'TIKLA VE OYNA',
     lockSu:'Nişan alabilmek ve fareyi kilitlemek için tıkla',
     warmup:'Isınma',
-    clearHist:'Geçmişi Temizle',},
+    clearHist:'Geçmişi Temizle',
+    rrRl:'Tepki',
+    optTi:'Tercihler',
+    xhTi:'Nişangah:',
+    sndTi:'Ses:',
+    resTi:'En-Boy Oranı & Çözünürlük Rehberi',
+    resSu:'4:3 Stretched vs 16:9 & FOV',
+    resCsT:'🎮 CS2 (4:3 Stretched):',
+    resCsD:'4:3 genişletilmiş görüntüde hedefler yatayda genişler ve yatay görsel algı hızı yaklaşık %33 artar. Ancak 3D dünyadaki gerçek açısal dönüş mesafeniz (cm/360°) kesinlikle değişmez. Eğer oyun içinde m_yaw 0.0165 kullanıyorsanız, buradaki standart hassasiyetinizi 1.333 ile çarpmanız gerekir.',
+    resValT:'⚡ Valorant (16:9 Kilitli FOV):',
+    resValD:'Valorant oyun motoru 3D dünyayı her zaman 103° FOV (16:9) olarak kilitli işler. 4:3 veya 5:4 çözünürlük seçseniz dahi 3D açı ve hassasiyet (cm/360°) birebir aynı kalır; yalnızca arayüz ve nişangah esner.',
+    resNote:'💡 SensFinder\'da bulduğunuz cm/360° değeri her iki oyunda da tüm çözünürlüklerde kas hafızanızı korumanızı sağlar.',
+    resClose:'Kapat',
+    shareTxt:(g,s,cm,c,og,os,d,r)=>`🎯 SensFinder Sonucu:\n🎮 ${g}: ${s} (${d} DPI · ${cm} cm/360°)\n🔄 ${og} Eşdeğeri: ${os}\n⭐ Güven: %${c}${r?`\n⚡ Ortalama Tepki: ${r}ms`:''}\nhttps://rasne-dev.github.io/SensFinder`,},
   en:{sub:'Sensitivity Finder · CS2 & Valorant',game:'Game',dpi:'Mouse DPI',fov:'FOV',sens:'Current Sensitivity',
     calib:'Calibrate via 360° mousepad movement',start:'START TEST',
     rLbl:'Round',phLbl:'Phase',scLbl:'Score',piLbl:'Progress',
@@ -371,13 +442,25 @@ const L={
     histTi:'Recent Results',
     kbHint:'⌨ Space start · M sound · F fullscreen · ESC pause',
     estDur:(m)=>`~${m} min (3 modes × accuracy/speed tests)`,
-    shareTxt:(g,s,cm,c,og,os,d)=>`🎯 SensFinder Result:\n🎮 ${g}: ${s} (${d} DPI · ${cm} cm/360°)\n🔄 ${og} Equivalent: ${os}\n⭐ Confidence: ${c}%\nhttps://rasne-dev.github.io/SensFinder`,
+    shareTxt:(g,s,cm,c,og,os,d,r)=>`🎯 SensFinder Result:\n🎮 ${g}: ${s} (${d} DPI · ${cm} cm/360°)\n🔄 ${og} Equivalent: ${os}\n⭐ Confidence: ${c}%${r?`\n⚡ Avg Reflex: ${r}ms`:''}\nhttps://rasne-dev.github.io/SensFinder`,
     shareBtn:'📋 Share result',
     shared:'✓ Copied!',
     lockTi:'CLICK TO PLAY',
     lockSu:'Click anywhere to lock mouse and aim',
     warmup:'Warmup',
-    clearHist:'Clear History',}
+    clearHist:'Clear History',
+    rrRl:'Reflex',
+    optTi:'Preferences',
+    xhTi:'Crosshair:',
+    sndTi:'Sound:',
+    resTi:'Aspect Ratio & Sensitivity Guide',
+    resSu:'4:3 Stretched vs 16:9 & FOV',
+    resCsT:'🎮 CS2 (4:3 Stretched):',
+    resCsD:'In 4:3 stretched, targets appear wider and horizontal visual speed feels ~33% faster. However, your actual 3D angular rotation distance (cm/360°) remains 100% identical. If you use m_yaw 0.0165 in-game, multiply your standard sensitivity by 1.333.',
+    resValT:'⚡ Valorant (16:9 Locked FOV):',
+    resValD:'Valorant always locks the 3D game world to 103° horizontal FOV. Even on 4:3 or 5:4 resolutions, 3D sensitivity and cm/360° stay strictly unchanged; only UI and crosshair stretch.',
+    resNote:'💡 The cm/360° value you find in SensFinder preserves your muscle memory across all resolutions in both games.',
+    resClose:'Close',}
 };
 let lang=localStorage.getItem('sf_lang')||(navigator.language.startsWith('tr')?'tr':'en');
 const $=id=>document.getElementById(id);
@@ -393,6 +476,18 @@ function applyI18n(){
   $('hl-sc').textContent=T('scLbl');$('pi-l').textContent=T('piLbl');
   $('cal-ti').textContent=T('calTi');$('cal-de').innerHTML=T('calDe');
   $('rr-al').textContent=T('rrAl');$('conf-l').textContent=T('confL');
+  const _rrRl=$('rr-rl');if(_rrRl)_rrRl.textContent=T('rrRl');
+  const _optTi=$('l-opt-ti');if(_optTi)_optTi.textContent=T('optTi');
+  const _xhTi=$('l-xh-ti');if(_xhTi)_xhTi.textContent=T('xhTi');
+  const _sndTi=$('l-snd-ti');if(_sndTi)_sndTi.textContent=T('sndTi');
+  const _resTi=$('res-m-ti');if(_resTi)_resTi.textContent=T('resTi');
+  const _resSu=$('res-m-su');if(_resSu)_resSu.textContent=T('resSu');
+  const _resCsT=$('res-m-cs-t');if(_resCsT)_resCsT.textContent=T('resCsT');
+  const _resCsD=$('res-m-cs-d');if(_resCsD)_resCsD.textContent=T('resCsD');
+  const _resValT=$('res-m-val-t');if(_resValT)_resValT.textContent=T('resValT');
+  const _resValD=$('res-m-val-d');if(_resValD)_resValD.textContent=T('resValD');
+  const _resNote=$('res-m-note');if(_resNote)_resNote.textContent=T('resNote');
+  const _resClose=$('res-m-close');if(_resClose)_resClose.textContent=T('resClose');
   $('rh-l').textContent=T('rhL');$('mb-l').textContent=T('perMode');$('ft-ti').textContent=T('ftTi');
   $('ft-ov').textContent=T('ftOv');$('ft-un').textContent=T('ftUn');
   const _cpHintEl=$('rr-cp-hint');if(_cpHintEl)_cpHintEl.textContent=T('cpHint');
@@ -661,8 +756,10 @@ function spawnS(jump,label){
   const ang=Math.random()*Math.PI*2;
   tVX=Math.cos(ang)*spBase;tVY=Math.sin(ang)*spBase*.7;
   tM.position.set(tX,tY,tZ);scene.add(tM);
+  if(cMode==='flick') _flickSpawnTime=performance.now();
 }
 let _jt=null;
+let _flickSpawnTime=0,_hitTimes=[];
 function schedJ(mode,label){
   // Track ve grid modlarında schedJ gerekmez
   clearTimeout(_jt);if(mode==='track'||mode==='grid')return;
@@ -774,6 +871,36 @@ function toggleSfx(half=false){
 }
 
 let _masterGain=null;
+let _hitSoundPreset=localStorage.getItem('sf_hitsound')||'laser';
+let _xhStyle=localStorage.getItem('sf_xh_style')||'cross';
+
+function setHitSound(preset){
+  _hitSoundPreset=preset;
+  try{localStorage.setItem('sf_hitsound',preset);}catch(e){}
+  ['laser','pop','bell'].forEach(p=>{
+    const btn=$('btn-snd-'+p);
+    if(btn)btn.classList.toggle('on',p===preset);
+  });
+  playHit();
+}
+
+function setXhStyle(style){
+  _xhStyle=style;
+  try{localStorage.setItem('sf_xh_style',style);}catch(e){}
+  const xh=$('xh');
+  if(xh){
+    xh.classList.remove('style-cross','style-dot','style-compact');
+    xh.classList.add('style-'+style);
+  }
+  ['cross','dot','compact'].forEach(s=>{
+    const btn=$('btn-xh-'+s);
+    if(btn)btn.classList.toggle('on',s===style);
+  });
+}
+
+function openResModal(){const m=$('res-modal');if(m)m.style.display='flex';}
+function closeResModal(){const m=$('res-modal');if(m)m.style.display='none';}
+
 function _getAC(){
   if(!_ac){try{
     _ac=new(window.AudioContext||window.webkitAudioContext)();
@@ -788,13 +915,37 @@ function _dest(){const ac=_getAC();return _masterGain||(ac&&ac.destination)||nul
 function playHit(){
   if(!_sfxOn)return;
   const ac=_getAC();if(!ac)return;
-  const o=ac.createOscillator(),g=ac.createGain();
-  o.connect(g);g.connect(_dest()||ac.destination);
-  o.frequency.setValueAtTime(1800,ac.currentTime);
-  o.frequency.exponentialRampToValueAtTime(900,ac.currentTime+0.04);
-  g.gain.setValueAtTime(0.18,ac.currentTime);
-  g.gain.exponentialRampToValueAtTime(0.0001,ac.currentTime+0.06);
-  o.start(ac.currentTime);o.stop(ac.currentTime+0.07);
+  const dest=_dest()||ac.destination;
+  if(_hitSoundPreset==='pop'){
+    const o=ac.createOscillator(),g=ac.createGain();
+    o.type='triangle';
+    o.connect(g);g.connect(dest);
+    o.frequency.setValueAtTime(680,ac.currentTime);
+    o.frequency.exponentialRampToValueAtTime(180,ac.currentTime+0.05);
+    g.gain.setValueAtTime(0.25,ac.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001,ac.currentTime+0.07);
+    o.start(ac.currentTime);o.stop(ac.currentTime+0.08);
+  } else if(_hitSoundPreset==='bell'){
+    const o1=ac.createOscillator(),o2=ac.createOscillator(),g=ac.createGain();
+    o1.type='sine';o2.type='sine';
+    o1.connect(g);o2.connect(g);g.connect(dest);
+    o1.frequency.setValueAtTime(2400,ac.currentTime);
+    o1.frequency.exponentialRampToValueAtTime(1600,ac.currentTime+0.09);
+    o2.frequency.setValueAtTime(3600,ac.currentTime);
+    o2.frequency.exponentialRampToValueAtTime(2400,ac.currentTime+0.07);
+    g.gain.setValueAtTime(0.14,ac.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001,ac.currentTime+0.1);
+    o1.start(ac.currentTime);o1.stop(ac.currentTime+0.11);
+    o2.start(ac.currentTime);o2.stop(ac.currentTime+0.11);
+  } else {
+    const o=ac.createOscillator(),g=ac.createGain();
+    o.connect(g);g.connect(dest);
+    o.frequency.setValueAtTime(1800,ac.currentTime);
+    o.frequency.exponentialRampToValueAtTime(900,ac.currentTime+0.04);
+    g.gain.setValueAtTime(0.18,ac.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001,ac.currentTime+0.06);
+    o.start(ac.currentTime);o.stop(ac.currentTime+0.07);
+  }
 }
 function playMiss(){
   if(!_sfxOn)return;
@@ -917,6 +1068,7 @@ document.addEventListener('mousedown',e=>{
         const speedBonus=Math.max(50,Math.round(500*Math.exp(-elapsed/1200)));
         if(phaseScoreActive){
           curScore+=speedBonus;hits++;
+          if(elapsed>50&&elapsed<2000)_hitTimes.push(elapsed);
         }
         playHit();showFB('+',true);
         gridLastHitTime=Date.now();
@@ -954,6 +1106,8 @@ document.addEventListener('mousedown',e=>{
     if(rc2.intersectObject(m).length>0){
       if(phaseScoreActive){
         curScore+=500;hits++;
+        const elFlick=Math.round(performance.now()-_flickSpawnTime);
+        if(elFlick>50&&elFlick<2500)_hitTimes.push(elFlick);
       }
       h=true;playHit();showFB('+',true);
       spawnS(true,curLabel);schedJ(cMode,curLabel);
@@ -974,6 +1128,7 @@ window.addEventListener('keydown',e=>{
   if((e.key==='m'||e.key==='M')&&!isInput){toggleSfx(e.shiftKey);return;}
   if(e.key==='Escape'){
     if(isCalib){return;} // browser lock'u zaten bırakır → pointerlockchange → finCalib
+    if($('res-modal')?.style.display==='flex'){closeResModal();return;}
     if(isPaused){resumeGame();return;}
     if($('rr').style.display==='block'){
       showMenu('mm');checkSaved();applyI18n();renderHistLog();
@@ -1183,6 +1338,7 @@ function _initModRanges(centerSens){
 function startFresh(){
   const ac=_getAC();if(ac&&ac.state==='suspended')ac.resume();
   localStorage.removeItem(SK);$('sb').style.display='none';hist=[];curRound=1;modLo={};modHi={};modInitRange={};lastAnalysis=null;phaseScoreActive=false;forceQuickRound=false;
+  _hitTimes=[];
   _initModRanges(gS());
   _sessionTarget=SESSION_ROUNDS;
   startRound();
@@ -1197,7 +1353,7 @@ function startNextRound(){
 }
 
 function startRound(){
-  hideAll();_endEarly=false;_quitEarly=false;
+  hideAll();_endEarly=false;_quitEarly=false;_hitTimes=[];
   if(!renderer)initThree();
   const cfg=roundConfig();
   forceQuickRound=false;
@@ -1395,7 +1551,7 @@ function copyMainSens(){
 
 function shareResult(){
   if(!_lastResult)return;
-  const txt=T('shareTxt',_lastResult.game,_lastResult.sens.toFixed(3),_lastResult.cm.toFixed(1),Math.round(_lastResult.conf),_lastResult.oppGame,_lastResult.oppSens,_lastResult.dpi);
+  const txt=T('shareTxt',_lastResult.game,_lastResult.sens.toFixed(3),_lastResult.cm.toFixed(1),Math.round(_lastResult.conf),_lastResult.oppGame,_lastResult.oppSens,_lastResult.dpi,_lastResult.reflex);
   copyToClipboard(txt).then(()=>{
     const el=$('lsh');if(!el)return;
     const orig=el.textContent;el.textContent=T('shared');
@@ -1542,7 +1698,8 @@ function updDots(act){const dots=document.querySelectorAll('#idots .idot');dots.
 function showRR(sens,h,miss_,conf,trkOn=0,trkTot=0){
   const c=GC[game];const dpi=gD();
   const _cvVal=(sens*c.convF).toFixed(3);
-  _lastResult={sens,cm:cm360(sens,dpi),conf,game:c.name,oppGame:c.opp,oppSens:_cvVal,dpi};
+  const avgReflex=_hitTimes.length>0?Math.round(_hitTimes.reduce((a,b)=>a+b,0)/_hitTimes.length):null;
+  _lastResult={sens,cm:cm360(sens,dpi),conf,game:c.name,oppGame:c.opp,oppSens:_cvVal,dpi,reflex:avgReflex};
   $('rr-ey').textContent=T('rrEy',curRound);
   if(window._cuTimer)clearInterval(window._cuTimer);
   window._cuTimer=null;
@@ -1560,6 +1717,7 @@ function showRR(sens,h,miss_,conf,trkOn=0,trkTot=0){
     accParts.push(trkPct+(lang==='tr'?'% takip':'% track'));
   }
   $('rr-a').textContent=accParts.length>0?accParts.join(' · '):'—';
+  const rrREl=$('rr-r');if(rrREl)rrREl.textContent=avgReflex?avgReflex+' ms':'—';
   $('is').value=sens.toFixed(game==='val'?3:2);
   updPv();
   $('rr-al').textContent=T('rrAl');
@@ -1662,8 +1820,12 @@ document.querySelectorAll('.lbtn').forEach(b=>{
 applyI18n();setGame('cs2',true);
 // Kaydedilen FOV varsa yükle
 const _sfov=localStorage.getItem("sf_fov_cs2")||localStorage.getItem("sf_fov");if(_sfov){$('if').value=_sfov;}
-// Sfx butonunu başlat
-setTimeout(()=>{const el=$('sfx-btn');if(el)el.textContent=_sfxOn?"🔊":"🔇";},0);
+// Sfx butonunu ve tercihleri başlat
+setTimeout(()=>{
+  const el=$('sfx-btn');if(el)el.textContent=_sfxOn?"🔊":"🔇";
+  setXhStyle(_xhStyle);
+  ['laser','pop','bell'].forEach(p=>{const b=$('btn-snd-'+p);if(b)b.classList.toggle('on',p===_hitSoundPreset);});
+},0);
 updPv();checkSaved();renderHistLog();
 ['is','id'].forEach(id=>{
   $(id).addEventListener('wheel',e=>{

@@ -5,7 +5,7 @@
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Site-e8ff47?style=for-the-badge&labelColor=070708&color=e8ff47&logoColor=black)](https://rasne-dev.github.io/SensFinder)
 [![License: MIT](https://img.shields.io/badge/License-MIT-555?style=for-the-badge&labelColor=070708)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.1.6-e8ff47?style=for-the-badge&labelColor=070708)](https://github.com/rasne-dev/SensFinder/releases)
+[![Version](https://img.shields.io/badge/version-1.1.7-e8ff47?style=for-the-badge&labelColor=070708)](https://github.com/rasne-dev/SensFinder/releases)
 [![No Dependencies](https://img.shields.io/badge/Zero%20Dependencies-Single%20File-555?style=for-the-badge&labelColor=070708)]()
 
 ---
