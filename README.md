@@ -5,7 +5,7 @@
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Site-e8ff47?style=for-the-badge&labelColor=070708&color=e8ff47&logoColor=black)](https://rasne-dev.github.io/SensFinder)
 [![License: MIT](https://img.shields.io/badge/License-MIT-555?style=for-the-badge&labelColor=070708)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.2.0-e8ff47?style=for-the-badge&labelColor=070708)](https://github.com/rasne-dev/SensFinder/releases)
+[![Version](https://img.shields.io/badge/version-1.2.1-e8ff47?style=for-the-badge&labelColor=070708)](https://github.com/rasne-dev/SensFinder/releases)
 [![No Dependencies](https://img.shields.io/badge/Zero%20Dependencies-Single%20File-555?style=for-the-badge&labelColor=070708)]()
 
 ---
@@ -85,6 +85,15 @@ Don't know your current sensitivity? Use the built-in **mousepad calibration**:
 | **ESC (pause menu)** | End early or quit |
 
 Pausing mid-test saves your progress. "End & Show Results" shows the best estimate from completed phases.
+
+---
+
+## 🔗 Quick Calculator & Link Parameters
+
+- **cm/360° → sens:** type a target cm/360° under the sensitivity field and the sensitivity is calculated for your DPI and game.
+- **Remembered settings:** game, DPI and sensitivity (per game) are restored the next time you open the page.
+- **Prefill via URL:** `?game=cs2|val&dpi=800&sens=0.4&fov=103` — invalid values are ignored.
+  Example: `https://rasne-dev.github.io/SensFinder/?game=val&dpi=1600&sens=0.35`
 
 ---
 
@@ -220,6 +229,15 @@ Her tur aralığı daha da daraltır. İlerlemeniz **otomatik olarak kaydedilir*
 | **Fare Hareketi** | Nişan al (pointer lock) |
 | **ESC** | Duraklat / devam et |
 | **ESC (pause menüsü)** | Erken bitir veya çık |
+
+---
+
+## Hızlı Hesaplayıcı & Bağlantı Parametreleri
+
+- **cm/360° → sens:** Hassasiyet alanının altına hedef cm/360° değerini yaz; DPI ve oyuna göre hassasiyet hesaplanır.
+- **Hatırlanan ayarlar:** Oyun, DPI ve (oyun başına) hassasiyet bir sonraki açılışta geri yüklenir.
+- **URL ile ön-doldurma:** `?game=cs2|val&dpi=800&sens=0.4&fov=103` — geçersiz değerler yok sayılır.
+  Örnek: `https://rasne-dev.github.io/SensFinder/?game=val&dpi=1600&sens=0.35`
 
 ---
 

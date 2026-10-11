@@ -3,11 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="version" content="1.2.0">
+<meta name="version" content="1.2.1">
 <title>SensFinder — CS2 & Valorant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Barlow:wght@400;600;700;800;900&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" crossorigin="anonymous"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Barlow:wght@400;600;700;800;900&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
   --a:#e8ff47;--a2:#47ffb8;--ag:rgba(232,255,71,.15);
@@ -180,6 +182,30 @@ button:active{transform:scale(0.98);}
 .sw-cd{font-family:var(--mono);font-size:32px;color:rgba(255,255,255,.12);margin-top:18px;}
 @keyframes cdFlash{0%{transform:scale(1.6);opacity:.9;}100%{transform:scale(1);opacity:.12;}}
 .sw-cd.flash{animation:cdFlash .35s cubic-bezier(.16,1,.3,1) both;}
+/* ── v1.2.1: erişilebilirlik, mobil uyum, hareket azaltma (eklemeli geçersiz kılmalar) ── */
+:root{--td:#8a8aa6;}                       /* eski #3a3a52 koyu zeminde okunamıyordu (kontrast ~1.8:1) */
+.menu:focus{outline:none;}
+.hist-item:focus-visible,.lbtn:focus-visible,.sb-btn:focus-visible,.tab:focus-visible,.sbtn:focus-visible,.cbtn:focus-visible,.clr-dot:focus-visible,#lock-ov:focus-visible{outline:2px solid var(--a);outline-offset:2px;}
+/* en küçük etiketler: okunabilir boyut + en az ~4.5:1 kontrast */
+.slbl,.flbl,.spvl,.rs-l,.rc-l,.conf-lbl,.sb-l,.sb-s,.pm-sl,.rr-eye,.ft-ti,.mt-sub{font-size:10px!important;}
+.slbl,.spvl,.rs-l,.rc-l,.conf-lbl,.sb-l,.sb-s,.pm-sl,.rh-n,.mb-tag,.mb-conf,.mt-sub,#kb-hint,#est-dur,#rr-cp-hint{color:rgba(255,255,255,.55)!important;}
+.pm-su,.rr-unit,.hl{font-size:10px;}
+.lbtn{font-size:10px;}
+.sb-btn{font-size:9px;}
+#kb-hint,#est-dur,#rr-cp-hint{font-size:9px!important;}
+@media (max-width:480px){
+  .menu{padding:18px 14px 16px;}
+  .mt{font-size:32px;}
+  .rr-main{font-size:48px;}
+  .rr-stats{grid-template-columns:repeat(2,1fr)!important;}
+  #hud{top:8px;left:8px;padding:8px 10px;min-width:140px;}
+  #pi{top:8px;right:8px;padding:8px 10px;}
+  .lbtn{padding:6px 10px;}
+}
+@media (max-height:640px){.menu{padding-top:16px;padding-bottom:14px;}}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important;}
+}
 </style>
 </head>
 <body>
@@ -220,17 +246,18 @@ button:active{transform:scale(0.98);}
   <div class="cal-ti" id="cal-ti">Calibration</div>
   <div style="font-size:24px;margin:12px 0;">🖱️ ↔️</div>
   <div class="cal-de" id="cal-de">...</div>
-  <div id="cal-live" style="font-family:var(--mono);font-size:12px;color:var(--a);margin-top:16px;font-weight:500;min-height:18px;"></div>
+  <div id="cal-live" aria-live="polite" style="font-family:var(--mono);font-size:12px;color:var(--a);margin-top:16px;font-weight:500;min-height:18px;"></div>
 </div></div>
 
-<div id="lock-ov" onclick="requestGameLock()"><div style="padding:24px 36px;border:1px solid var(--a);background:rgba(7,7,8,.9);box-shadow:0 0 40px rgba(0,0,0,.7);text-align:center;">
+<div id="lock-ov" role="button" tabindex="0" onclick="requestGameLock()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();requestGameLock();}"><div style="padding:24px 36px;border:1px solid var(--a);background:rgba(7,7,8,.9);box-shadow:0 0 40px rgba(0,0,0,.7);text-align:center;">
   <div style="font-size:20px;font-weight:900;color:var(--a);letter-spacing:.12em;text-transform:uppercase;font-family:var(--sans);" id="lock-ti">CLICK TO PLAY</div>
   <div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.5);margin-top:8px;" id="lock-su">Click anywhere to lock mouse and aim</div>
 </div></div>
 
 <!-- MAIN MENU -->
 <div class="menu" id="mm">
-  <div id="webgl-err" style="display:none;background:rgba(255,68,85,.12);border:1px solid #ff4455;color:#ff8899;font-family:var(--mono);font-size:9px;padding:8px 10px;margin-bottom:12px;line-height:1.5;"></div>
+  <div id="nomouse" role="status" style="display:none;background:rgba(255,200,0,.1);border:1px solid #ffc800;color:#ffe08a;font-family:var(--mono);font-size:10px;padding:8px 10px;margin-bottom:12px;line-height:1.5;"></div>
+  <div id="webgl-err" role="alert" style="display:none;background:rgba(255,68,85,.12);border:1px solid #ff4455;color:#ff8899;font-family:var(--mono);font-size:9px;padding:8px 10px;margin-bottom:12px;line-height:1.5;"></div>
   <div class="menu-header-wrap">
     <div class="menu-logo-row">
       <div class="menu-logo">
@@ -259,7 +286,7 @@ button:active{transform:scale(0.98);}
         <label class="flbl" id="lf" for="if" style="margin-bottom:0;">FOV</label>
         <button type="button" class="lbtn" style="padding:1px 5px;font-size:7px;" onclick="openResModal()" id="btn-res-guide">4:3 / 16:9 ℹ️</button>
       </div>
-      <input class="fi" type="number" id="if" value="90" min="60" max="120" style="margin-top:5px;" oninput="updateCameraFov();localStorage.setItem('sf_fov_'+game,this.value);">
+      <input class="fi" type="number" id="if" value="90" min="60" max="120" style="margin-top:5px;" oninput="updateCameraFov();LS.set('sf_fov_'+game,this.value);">
     </div>
   </div>
   <div class="sg">
@@ -278,11 +305,16 @@ button:active{transform:scale(0.98);}
       <button type="button" class="lbtn" id="btn-gr-opt" style="display:none;padding:2px 6px;font-size:7px;border-color:var(--a);color:var(--a);" onclick="applyGripOptSens()"></button>
     </div>
     <input class="fi" type="number" id="is" value="2.5" min="0.01" max="20" step="0.01" oninput="updPv()" onfocus="this.select()">
-    <div id="gr-status" style="font-family:var(--mono);font-size:8px;margin-top:6px;line-height:1.4;color:rgba(255,255,255,.42);"></div>
+    <div id="gr-status" aria-live="polite" style="font-family:var(--mono);font-size:8px;margin-top:6px;line-height:1.4;color:rgba(255,255,255,.42);"></div>
     <div class="sprev">
       <div class="spv"><span class="spvl">eDPI</span><span class="spvv" id="pv-e">2000</span></div>
       <div class="spv"><span class="spvl">cm/360°</span><span class="spvv" id="pv-c">34.9</span></div>
       <div class="spv"><span class="spvl" id="pv-cl">VAL eq.</span><span class="spvv" id="pv-cv">0.786</span></div>
+    </div>
+    <div id="inp-warn" role="alert" style="display:none;font-family:var(--mono);font-size:10px;line-height:1.5;color:#ff8899;margin-top:7px;"></div>
+    <div style="display:flex;gap:8px;align-items:center;margin-top:9px;">
+      <label class="flbl" id="l-cm-in" for="cm-in" style="margin-bottom:0;white-space:nowrap;">cm/360° → sens</label>
+      <input class="fi" type="number" id="cm-in" min="1" max="500" step="0.5" placeholder="30" oninput="applyCmInput()" onfocus="this.select()" style="padding:6px 10px;font-size:13px;">
     </div>
   </div>
   <div class="sg" style="margin-bottom:13px;padding:10px 12px;">
@@ -437,9 +469,19 @@ button:active{transform:scale(0.98);}
 
 <script>
 'use strict';
+// ─── SAFE STORAGE (çerezler/depolama engelliyse uygulama yine de çalışsın) ───
+const LS={
+  get(k){try{return localStorage.getItem(k);}catch(e){return null;}},
+  set(k,v){try{localStorage.setItem(k,v);}catch(e){}},
+  del(k){try{localStorage.removeItem(k);}catch(e){}}
+};
+let _uiRestored=false; // kullanıcı arayüz tercihlerinin (DPI/oyun/sens) kalıcılığı için
 // ─── i18n ───
 const L={
-  tr:{sub:'Hassasiyet Bulucusu · CS2 & Valorant',game:'Oyun',dpi:'Mouse DPI',fov:'FOV',sens:'Mevcut Hassasiyet',
+  tr:{noMouse:'⚠️ Bu test fare (pointer lock) gerektirir; dokunmatik cihazlarda çalışmayabilir. Bir bilgisayarda aç.',
+    warnSens:(mn,mx,u)=>`Hassasiyet ${mn}–${mx} aralığında olmalı (kullanılan: ${u})`,warnDpi:'DPI 100–32000 aralığında olmalı',warnFov:'FOV 60–120 aralığında olmalı',
+    cmLbl:'cm/360° → sens',
+    sub:'Hassasiyet Bulucusu · CS2 & Valorant',game:'Oyun',dpi:'Mouse DPI',fov:'FOV',sens:'Mevcut Hassasiyet',
     calib:'360° mousepad hareketi ile kalibre et',start:'TESTİ BAŞLAT',
     rLbl:'Tur',phLbl:'Aşama',scLbl:'Puan',piLbl:'İlerleme',
     calTi:'KALİBRASYON',calDe:'Seçenek A: Mousepad\'in bir kenarından diğerine kaydır (fiziksel mesafe eşleme).<br>Seçenek B: Tam 360° dönene kadar kaydır (hassasiyet ölçümü).<br>Bitirmek için <strong>ESC</strong> tuşuna bas.',
@@ -505,7 +547,10 @@ const L={
     resNote:'💡 SensFinder\'da bulduğunuz cm/360° değeri her iki oyunda da tüm çözünürlüklerde kas hafızanızı korumanızı sağlar.',
     resClose:'Kapat',
     shareTxt:(g,s,cm,c,og,os,d,r)=>`🎯 SensFinder Sonucu:\n🎮 ${g}: ${s} (${d} DPI · ${cm} cm/360°)\n🔄 ${og} Eşdeğeri: ${os}\n⭐ Güven: %${c}${r?`\n⚡ Ortalama Tepki: ${r}ms`:''}\nhttps://rasne-dev.github.io/SensFinder`,},
-  en:{sub:'Sensitivity Finder · CS2 & Valorant',game:'Game',dpi:'Mouse DPI',fov:'FOV',sens:'Current Sensitivity',
+  en:{noMouse:'⚠️ This test needs a mouse (pointer lock) and may not work on touch devices. Open it on a computer.',
+    warnSens:(mn,mx,u)=>`Sensitivity must be between ${mn} and ${mx} (using: ${u})`,warnDpi:'DPI must be between 100 and 32000',warnFov:'FOV must be between 60 and 120',
+    cmLbl:'cm/360° → sens',
+    sub:'Sensitivity Finder · CS2 & Valorant',game:'Game',dpi:'Mouse DPI',fov:'FOV',sens:'Current Sensitivity',
     calib:'Calibrate via 360° mousepad movement',start:'START TEST',
     rLbl:'Round',phLbl:'Phase',scLbl:'Score',piLbl:'Progress',
     calTi:'CALIBRATION',calDe:'Option A: Drag from one edge of your mousepad to the other (distance mapping).<br>Option B: Drag until you complete a full 360° turn (measure current sens).<br>Press <strong>ESC</strong> to finish.',
@@ -572,16 +617,16 @@ const L={
     resNote:'💡 The cm/360° value you find in SensFinder preserves your muscle memory across all resolutions in both games.',
     resClose:'Close',}
 };
-let lang=localStorage.getItem('sf_lang')||(navigator.language.startsWith('tr')?'tr':'en');
+let lang=LS.get('sf_lang')||(navigator.language.startsWith('tr')?'tr':'en');
 const $=id=>document.getElementById(id);
 function T(k,...a){const v=L[lang][k];return typeof v==='function'?v(...a):(v??k);}
 function setLang(l){
   lang=l;
   document.documentElement.lang=l;
-  try{localStorage.setItem('sf_lang',l);}catch(e){}
+  try{LS.set('sf_lang',l);}catch(e){}
   document.querySelectorAll('.lbtn,.sb-btn').forEach(b=>{
     if(b.textContent==='TR'||b.textContent==='EN'){
-      b.classList.toggle('on',b.textContent===l.toUpperCase());
+      b.classList.toggle('on',b.textContent===l.toUpperCase());b.setAttribute('aria-pressed',String(b.textContent===l.toUpperCase()));
     }
   });
   applyI18n();
@@ -637,6 +682,8 @@ function applyI18n(){
   $('pml-r').textContent=T('pmR');$('pml-b').textContent=T('pmB');
   $('lr').textContent=T('resume');$('le').textContent=T('early');$('lq').textContent=T('quit');
   $('sbl').textContent=T('sbL');$('sbr').textContent=T('sbR');$('sbc').textContent=T('sbC');
+  const _nm=$('nomouse');if(_nm)_nm.textContent=T('noMouse');
+  const _cml=$('l-cm-in');if(_cml)_cml.textContent=T('cmLbl');
   updPv();
 }
 
@@ -653,7 +700,7 @@ const GRIP_CFG={
   hybrid:{cmMin:25,cmOpt:35,cmMax:46,w:{flick:.35,grid:.35,track:.30},spreadMul:1.0},
   unknown:{cmMin:12,cmOpt:34,cmMax:75,w:{flick:.35,grid:.35,track:.30},spreadMul:1.0,unbounded:true}
 };
-let gripStyle=localStorage.getItem('sf_grip')||'hybrid';
+let gripStyle=LS.get('sf_grip')||'hybrid';
 if(!GRIP_CFG[gripStyle])gripStyle='hybrid';
 
 let game='cs2';
@@ -661,11 +708,11 @@ function setGame(g, force=false){
   if(game===g && !force)return;
   const prevGame=game;
   game=g;const c=GC[g];
-  $('gCS2').classList.toggle('on',g==='cs2');$('gVAL').classList.toggle('on',g==='val');
+  $('gCS2').classList.toggle('on',g==='cs2');$('gVAL').classList.toggle('on',g==='val');$('gCS2').setAttribute('aria-pressed',String(g==='cs2'));$('gVAL').setAttribute('aria-pressed',String(g==='val'));
   document.body.className=g==='val'?'val':'';
   const r=document.documentElement.style;
   r.setProperty('--a',c.a);r.setProperty('--a2',c.a2);r.setProperty('--ag',c.ag);
-  $('if').value=localStorage.getItem('sf_fov_'+g)||localStorage.getItem('sf_fov')||c.fovD;
+  $('if').value=LS.get('sf_fov_'+g)||LS.get('sf_fov')||c.fovD;
   const si=$('is');si.max=c.sensMax;si.step=g==='val'?.01:.05;
   if(!force && prevGame && prevGame!==g){
     const curSens=parseFloat(si.value);
@@ -693,7 +740,7 @@ function detectGripByCm(cm){return cm<28?'wrist':cm>43?'arm':'hybrid';}
 function setGripStyle(g, userClick=false){
   if(!GRIP_CFG[g])g='hybrid';
   gripStyle=g;
-  try{localStorage.setItem('sf_grip',g);}catch(e){}
+  try{LS.set('sf_grip',g);}catch(e){}
   ['wrist','arm','hybrid','unknown'].forEach(k=>{
     const b=$('btn-gr-'+k);if(b)b.classList.toggle('on',k===g);
   });
@@ -721,6 +768,13 @@ function updPv(){
   $('is')?.classList.toggle('warn',isNaN(rawS)||rawS<c.sensMin||rawS>c.sensMax);
   $('id')?.classList.toggle('warn',isNaN(rawD)||rawD<100||rawD>32000);
   $('if')?.classList.toggle('warn',isNaN(rawF)||rawF<60||rawF>120);
+  // Geçersiz değer girildiğinde sessizce kırpmak yerine nedenini göster
+  const _wm=[];
+  if(isNaN(rawS)||rawS<c.sensMin||rawS>c.sensMax)_wm.push(T('warnSens',c.sensMin,c.sensMax,s.toFixed(3)));
+  if(isNaN(rawD)||rawD<100||rawD>32000)_wm.push(T('warnDpi'));
+  if(isNaN(rawF)||rawF<60||rawF>120)_wm.push(T('warnFov'));
+  const _we=$('inp-warn');if(_we){_we.textContent=_wm.join(' · ');_we.style.display=_wm.length?'block':'none';}
+  ['is','id','if'].forEach(i=>{const el=$(i);if(el)el.setAttribute('aria-invalid',el.classList.contains('warn')?'true':'false');});
   const cm=cm360(s,d);
   $('pv-e').textContent=Math.round(s*d);
   $('pv-c').textContent=cm.toFixed(1);
@@ -753,23 +807,67 @@ function updPv(){
       if(optBtn){optBtn.textContent=T('grOptBtn',optS);optBtn.style.display='inline-block';}
     }
   }
+  if(_uiRestored)persistUI();
+}
+
+// ─── KULLANICI TERCİHLERİ: DPI / oyun / oyun başına sens kalıcılığı ───
+function _readUI(){try{const o=JSON.parse(LS.get('sf_ui')||'{}');return(o&&typeof o==='object')?o:{};}catch(e){return {};}}
+function persistUI(){
+  const st=_readUI();
+  const d=parseInt($('id').value,10),sv=parseFloat($('is').value);
+  st.g=game;
+  if(d>=100&&d<=32000)st.dpi=d;
+  if(!st.s||typeof st.s!=='object')st.s={};
+  if(sv>0)st.s[game]=sv;
+  LS.set('sf_ui',JSON.stringify(st));
+}
+function restoreUI(){
+  const st=_readUI();
+  const g=(st.g==='val'||st.g==='cs2')?st.g:'cs2';
+  if(g!==game)setGame(g,true);
+  const d=Number(st.dpi);
+  if(d>=100&&d<=32000)$('id').value=Math.round(d);
+  const c=GC[game],sv=Number(st.s&&st.s[game]);
+  if(sv>=c.sensMin&&sv<=c.sensMax)$('is').value=String(Math.round(sv*1000)/1000);
+}
+// ?game=val&dpi=800&sens=0.4&fov=103 gibi bağlantı parametreleriyle ön-doldurma
+function applyURLParams(){
+  let p;try{p=new URLSearchParams(location.search);}catch(e){return;}
+  const g=(p.get('game')||'').toLowerCase();
+  const gg=g==='cs2'?'cs2':(g==='val'||g==='valorant')?'val':null;
+  if(gg&&gg!==game)setGame(gg,true);
+  const d=parseInt(p.get('dpi'),10);if(d>=100&&d<=32000)$('id').value=d;
+  const c=GC[game],sv=parseFloat(p.get('sens'));
+  if(sv>=c.sensMin&&sv<=c.sensMax)$('is').value=String(Math.round(sv*1000)/1000);
+  const f=parseInt(p.get('fov'),10);if(f>=60&&f<=120){$('if').value=f;LS.set('sf_fov_'+game,String(f));}
+}
+// Hedef cm/360° girip hassasiyeti buradan hesapla (sens → cm/360° yönünün tersi)
+function applyCmInput(){
+  const el=$('cm-in');const cm=parseFloat(el.value);
+  if(!(cm>0))return;
+  const c=GC[game];
+  const raw=sensFromCm(cm,gD());
+  const sv=Math.max(c.sensMin,Math.min(c.sensMax,raw));
+  $('is').value=sv.toFixed(3);
+  el.classList.toggle('warn',sv!==raw); // aralık dışına çıktıysa kırpıldı
+  updPv();
 }
 
 // ─── STORAGE ───
 const SK='sf_v3';
 const HK='sf_hist_log'; // Çoklu-oturum ilerleme geçmişi (resume/save mekanizmasından bağımsız, sadece görüntüleme amaçlı)
-function save(d){try{localStorage.setItem(SK,JSON.stringify(d));}catch(e){}}
-function load(){try{const d=localStorage.getItem(SK);return d?JSON.parse(d):null;}catch(e){return null;}}
+function save(d){try{LS.set(SK,JSON.stringify(d));}catch(e){}}
+function load(){try{const d=LS.get(SK);return d?JSON.parse(d):null;}catch(e){return null;}}
 function clearSession(){
   if(confirm(lang==='tr'?'Kayıtlı oturumunuzu silmek istediğinize emin misiniz?':'Are you sure you want to clear your saved session?')){
-    localStorage.removeItem(SK);
+    LS.del(SK);
     $('sb').style.display='none';
   }
 }
-function loadHistLog(){try{const d=localStorage.getItem(HK);return d?JSON.parse(d):[];}catch(e){return [];}}
+function loadHistLog(){try{const d=LS.get(HK);return d?JSON.parse(d):[];}catch(e){return [];}}
 function clearHistLog(){
   if(confirm(lang==='tr'?'Tüm geçmiş sonuç kayıtlarını silmek istediğinize emin misiniz?':'Are you sure you want to clear all result history?')){
-    localStorage.removeItem(HK);
+    LS.del(HK);
     renderHistLog();
   }
 }
@@ -778,7 +876,7 @@ function pushHistLog(entry){
     const arr=loadHistLog();
     arr.push(entry);
     while(arr.length>20)arr.shift(); // son 20 kayıt yeterli, localStorage şişmesin
-    localStorage.setItem(HK,JSON.stringify(arr));
+    LS.set(HK,JSON.stringify(arr));
   }catch(e){}
 }
 function applyHistSens(g,s){
@@ -800,37 +898,43 @@ function renderHistLog(){
   let html='';
   recent.forEach(e=>{
     const d=new Date(e.date);
-    const dstr=d.toLocaleDateString(lang==='tr'?'tr-TR':'en-US',{month:'short',day:'numeric'});
+    const dstr=isNaN(d.getTime())?'—':d.toLocaleDateString(lang==='tr'?'tr-TR':'en-US',{month:'short',day:'numeric'});
     const gKey=e.game==='val'?'val':'cs2';
     const gName=(GC[gKey]?GC[gKey].name:e.game)||'?';
-    const sVal=Number(e.sens||0);
-    html+=`<div class="hist-item" title="${T('histLoadHint')}" onclick="applyHistSens('${gKey}',${sVal})">
+    // localStorage'dan gelen değerler innerHTML'e girmeden önce sayıya zorlanır (bozuk/kurcalanmış kayıtlara karşı)
+    const sVal=Number(e.sens)||0;
+    const rNum=parseInt(e.round,10)||1;
+    const cNum=(e.conf!==null&&e.conf!==''&&Number.isFinite(Number(e.conf)))?Math.round(Number(e.conf)):null;
+    html+=`<div class="hist-item" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" title="${T('histLoadHint')}" onclick="applyHistSens('${gKey}',${sVal})">
       <span style="color:rgba(255,255,255,.3);min-width:44px;">${dstr}</span>
-      <span style="color:rgba(255,255,255,.35);flex:1;text-align:center;">${gName} · R${e.round||1}</span>
-      <span style="color:var(--a);font-weight:500;">${sVal.toFixed(3)} · ${e.conf??'—'}%</span>
+      <span style="color:rgba(255,255,255,.35);flex:1;text-align:center;">${gName} · R${rNum}</span>
+      <span style="color:var(--a);font-weight:500;">${sVal.toFixed(3)} · ${cNum===null?'—':cNum}%</span>
     </div>`;
   });
   $('histRows').innerHTML=html;
 }
 function checkSaved(){
-  const s=load();if(!s||!s.sens)return;
+  const s=load();
+  const sv=s?Number(s.sens):NaN;
+  if(!s||!(sv>0))return; // bozuk/eski kayıt artık init'i çökertmez
   $('sb').style.display='block';
-  $('sbv').textContent=s.sens.toFixed(3);
-  const g=s.game||'cs2';
-  $('sbs').textContent=`${GC[g].name} · Round ${s.round||1} · ${((360/(GC[g].yaw*s.sens))/(s.dpi||800)*2.54).toFixed(1)} cm/360°`;
+  $('sbv').textContent=sv.toFixed(3);
+  const g=GC[s.game]?s.game:'cs2';
+  $('sbs').textContent=`${GC[g].name} · Round ${s.round||1} · ${((360/(GC[g].yaw*sv))/(s.dpi||800)*2.54).toFixed(1)} cm/360°`;
 }
 function resumeSession(){
   const s=load();if(!s)return;
-  const _g=s.game||'cs2';
-  setGame(_g);$('id').value=s.dpi||800;$('is').value=s.sens.toFixed(3);
+  const _sv=Number(s.sens);if(!(_sv>0))return;
+  const _g=GC[s.game]?s.game:'cs2';
+  setGame(_g);$('id').value=s.dpi||800;$('is').value=_sv.toFixed(3);
   if(s.grip)setGripStyle(s.grip);
   // FOV restore (localStorage'dan — setGame default'u ezmişse koru)
-  const _rfov=localStorage.getItem('sf_fov_'+_g)||localStorage.getItem('sf_fov');if(_rfov)$('if').value=_rfov;
+  const _rfov=LS.get('sf_fov_'+_g)||LS.get('sf_fov');if(_rfov)$('if').value=_rfov;
   updPv();
   $('sb').style.display='none';
-  hist=s.hist||[];curRound=s.round||1;
+  hist=Array.isArray(s.hist)?s.hist:[];curRound=parseInt(s.round,10)||1;
   // Per-mod state restore (yeni format) ya da eski format'tan reconstruct
-  if(s.modLo&&s.modHi){
+  if(s.modLo&&s.modHi&&MODES.every(m=>isFinite(s.modLo[m])&&isFinite(s.modHi[m]))){
     modLo=s.modLo;modHi=s.modHi;
     if(s.modInitRange){
       modInitRange=s.modInitRange;
@@ -840,7 +944,7 @@ function resumeSession(){
     lo=MODES.reduce((a,m)=>a+modLo[m]*(MODE_W[m]||1/3),0);
     hi=MODES.reduce((a,m)=>a+modHi[m]*(MODE_W[m]||1/3),0);
   } else {
-    lo=s.lo||s.sens*.45;hi=s.hi||s.sens*2.1;
+    lo=s.lo||_sv*.45;hi=s.hi||_sv*2.1;
     _initModRanges((lo+hi)/2);
   }
   forceQuickRound=true;
@@ -865,7 +969,7 @@ function updateCameraFov(){
 function initThree(){
   if(renderer)return true; // prevent double init
   if(typeof THREE==='undefined'){
-    const errEl=$('webgl-err');if(errEl){errEl.textContent=T('webglErr');errEl.style.display='block';}
+    const errEl=$('webgl-err');if(errEl){errEl.textContent=T('webglErr');errEl.style.display='block';try{errEl.scrollIntoView({block:'nearest'});}catch(_){}}
     return false;
   }
   try{
@@ -899,12 +1003,12 @@ function initThree(){
     });
     return true;
   }catch(e){
-    const errEl=$('webgl-err');if(errEl){errEl.textContent=T('webglErr');errEl.style.display='block';}
+    const errEl=$('webgl-err');if(errEl){errEl.textContent=T('webglErr');errEl.style.display='block';try{errEl.scrollIntoView({block:'nearest'});}catch(_){}}
     return false;
   }
 }
 
-let _targetColor=localStorage.getItem('sf_tcolor')||'#ff2020';
+let _targetColor=LS.get('sf_tcolor')||'#ff2020';
 function _targetColorHex(){return parseInt(_targetColor.replace('#',''),16)||0xff2020;}
 
 function mkSph(r=.3){
@@ -1012,7 +1116,8 @@ let _swipeLengthsCm=[],_swipeArcs=[],_curSwipeX=0,_curSwipeAbsY=0,_curSwipeDir=0
 // hedefe varmadan durup aynı yönde düzeltme gerektiyse → undershoot (sens düşük sinyali).
 const _mkAim=()=>({over:0,under:0,clean:0,n:0});
 let _aimTraj=[],_aimStats=_mkAim(),_sessAim=_mkAim(),_sessAimMid=_mkAim();
-const _aimQ=new THREE.Quaternion(),_aimE=new THREE.Euler(0,0,0,'YXZ'),_aimV=new THREE.Vector3();
+const _hasTHREE=typeof THREE!=='undefined'; // CDN yüklenemediyse script burada çökmesin; initThree() kullanıcıya hata gösterir
+const _aimQ=_hasTHREE?new THREE.Quaternion():null,_aimE=_hasTHREE?new THREE.Euler(0,0,0,'YXZ'):null,_aimV=_hasTHREE?new THREE.Vector3():null;
 function _aimReset(){_aimTraj=[{t:performance.now(),yaw,pitch}];}
 function _aimOffset(P,yw,pt){
   _aimE.set(pt,yw,0,'YXZ');_aimQ.setFromEuler(_aimE).invert();
@@ -1083,7 +1188,7 @@ function schedJ(mode,label){
   const d=1500+Math.random()*1100;
   _jt=setTimeout(()=>{if(!active)return;spawnS(true,label);schedJ(mode,label);},d);
 }
-const rc2=new THREE.Raycaster();let curScore=0,onT=false;
+const rc2=_hasTHREE?new THREE.Raycaster():null;let curScore=0,onT=false;
 let cMode='flick';
 // Track on-target yüzdesi
 let _trackFrames=0,_trackOnFrames=0;
@@ -1116,7 +1221,10 @@ function doRender(){
     if(Math.random()<.025*dt60){tVX+=(Math.random()-.5)*.018*dt60;tVY+=(Math.random()-.5)*.012*dt60;}
     const sp=Math.hypot(tVX,tVY);
     if(sp>.052){tVX=tVX/sp*.052;tVY=tVY/sp*.052;}
-    if(sp<.018){tVX=tVX/sp*.018;tVY=tVY/sp*.018;}
+    if(sp<.018){
+      if(sp>1e-6){tVX=tVX/sp*.018;tVY=tVY/sp*.018;}
+      else{const _a=Math.random()*Math.PI*2;tVX=Math.cos(_a)*.018;tVY=Math.sin(_a)*.018;} // sp==0 → NaN pozisyon (hedef kaybolurdu)
+    }
     tZ+=(Math.random()-.5)*.003*dt60;tZ=Math.max(-9,Math.min(-7.5,tZ));
     tM.position.set(tX,tY,tZ);
   }
@@ -1170,32 +1278,32 @@ function doRender(){
 
 // ─── AUDIO ───
 let _ac=null;
-let _sfxOn=localStorage.getItem("sf_sfx")!=="0";
+let _sfxOn=LS.get("sf_sfx")!=="0";
 function toggleSfx(half=false){
   // Tüm sfx butonlarını sync et (mm + pm)
   const _syncSfx=(txt)=>{["sfx-btn","pm-sfx"].forEach(id=>{const e=$(id);if(e)e.textContent=txt;});};
   if(half&&_sfxOn){
     // Shift+M: 100%→50%→100% döngüsü
-    const cur=parseFloat(localStorage.getItem('sf_vol')||'0.7');
+    const cur=parseFloat(LS.get('sf_vol')||'0.7');
     const nv=cur>0.4?0.3:0.7;
-    localStorage.setItem('sf_vol',nv);
+    LS.set('sf_vol',nv);
     const _mg=_masterGain||(_getAC()&&_masterGain);if(_mg)_mg.gain.value=nv;
     _syncSfx(nv<0.5?"🔉":"🔊");
     return;
   }
-  _sfxOn=!_sfxOn;localStorage.setItem("sf_sfx",_sfxOn?"1":"0");
+  _sfxOn=!_sfxOn;LS.set("sf_sfx",_sfxOn?"1":"0");
   _syncSfx(_sfxOn?"🔊":"🔇");
 }
 
 let _masterGain=null;
-let _hitSoundPreset=localStorage.getItem('sf_hitsound')||'laser';
-let _xhStyle=localStorage.getItem('sf_xh_style')||'cross';
-let _xhColor=localStorage.getItem('sf_xh_color')||'#ffffff';
+let _hitSoundPreset=LS.get('sf_hitsound')||'laser';
+let _xhStyle=LS.get('sf_xh_style')||'cross';
+let _xhColor=LS.get('sf_xh_color')||'#ffffff';
 let isPractice=false;
 
 function setHitSound(preset){
   _hitSoundPreset=preset;
-  try{localStorage.setItem('sf_hitsound',preset);}catch(e){}
+  try{LS.set('sf_hitsound',preset);}catch(e){}
   ['laser','pop','bell'].forEach(p=>{
     const btn=$('btn-snd-'+p);
     if(btn)btn.classList.toggle('on',p===preset);
@@ -1205,7 +1313,7 @@ function setHitSound(preset){
 
 function setXhStyle(style){
   _xhStyle=style;
-  try{localStorage.setItem('sf_xh_style',style);}catch(e){}
+  try{LS.set('sf_xh_style',style);}catch(e){}
   ['xh','xh-prev'].forEach(id=>{
     const el=$(id);
     if(el){
@@ -1221,7 +1329,7 @@ function setXhStyle(style){
 
 function setXhColor(col){
   _xhColor=col;
-  try{localStorage.setItem('sf_xh_color',col);}catch(e){}
+  try{LS.set('sf_xh_color',col);}catch(e){}
   document.documentElement.style.setProperty('--xh-c',col);
   ['ffffff','00ff88','00e5ff','e8ff47','ff3366'].forEach(hex=>{
     const btn=$('btn-xhc-'+hex);
@@ -1231,7 +1339,7 @@ function setXhColor(col){
 
 function setTargetColor(col){
   _targetColor=col;
-  try{localStorage.setItem('sf_tcolor',col);}catch(e){}
+  try{LS.set('sf_tcolor',col);}catch(e){}
   document.documentElement.style.setProperty('--tc-c',col);
   ['ff2020','ffe600','ff2a85','00e5ff'].forEach(hex=>{
     const btn=$('btn-tc-'+hex);
@@ -1247,7 +1355,7 @@ function _getAC(){
   if(!_ac){try{
     _ac=new(window.AudioContext||window.webkitAudioContext)();
     _masterGain=_ac.createGain();
-    _masterGain.gain.value=parseFloat(localStorage.getItem('sf_vol')||'0.7');
+    _masterGain.gain.value=parseFloat(LS.get('sf_vol')||'0.7');
     _masterGain.connect(_ac.destination);
   }catch(e){}}
   if(_ac&&_ac.state==='suspended'){_ac.resume().catch(()=>{});}
@@ -1332,9 +1440,13 @@ let currentPhaseActiveDur=12;
 function safeRequestPointerLock(el){
   if(!el)return;
   if(el.requestPointerLock){
-    el.requestPointerLock({unadjustedMovement:true}).catch(()=>{
-      el.requestPointerLock();
-    });
+    // Firefox/Safari gibi bazı tarayıcılarda requestPointerLock Promise döndürmez → .catch() TypeError verirdi
+    let _p;
+    try{_p=el.requestPointerLock({unadjustedMovement:true});}
+    catch(e){_p=null;try{el.requestPointerLock();}catch(_){}}
+    if(_p&&typeof _p.catch==='function'){
+      _p.catch(()=>{try{el.requestPointerLock();}catch(_){}});
+    }
   }
 }
 
@@ -1544,8 +1656,11 @@ window.addEventListener('keydown',e=>{
       return;
     }
   }
-  if((e.code==='Space'||e.key===' ')&&!isInput){
-    if($('mm').style.display==='block'&&!active&&!isPaused&&!isCalib){
+  // Klavyeyle odaklanmış butona/role=button öğesine basılan Space o öğeyi etkinleştirmeli, testi başlatmamalı
+  const _ae=document.activeElement;
+  const _onBtn=!!(_ae&&(_ae.tagName==='BUTTON'||(_ae.getAttribute&&_ae.getAttribute('role')==='button')));
+  if((e.code==='Space'||e.key===' ')&&!isInput&&!_onBtn){
+    if($('mm').style.display!=='none'&&!active&&!isPaused&&!isCalib){
       e.preventDefault();
       startFresh();
       return;
@@ -1724,11 +1839,11 @@ const FAST_DUR=8;
 const FAST_WARMUP_DUR=1;
 const SESSION_ROUNDS=1; // 1 antreman = 9 faz (3 mod × 3 test)
 let _sessionTarget=1;
-let _testSpeed=localStorage.getItem('sf_speed')||'std';
+let _testSpeed=LS.get('sf_speed')||'std';
 
 function setTestSpeed(sp){
   _testSpeed=sp==='fast'?'fast':'std';
-  try{localStorage.setItem('sf_speed',_testSpeed);}catch(e){}
+  try{LS.set('sf_speed',_testSpeed);}catch(e){}
   ['std','fast'].forEach(k=>{
     const b=$('btn-dur-'+k);if(b)b.classList.toggle('on',k===_testSpeed);
   });
@@ -1822,7 +1937,7 @@ function _initModRanges(centerSens){
 function startFresh(){
   const ac=_getAC();if(ac&&ac.state==='suspended')ac.resume();
   if(!renderer&&!initThree())return;
-  localStorage.removeItem(SK);$('sb').style.display='none';hist=[];curRound=1;modLo={};modHi={};modInitRange={};lastAnalysis=null;phaseScoreActive=false;forceQuickRound=false;
+  LS.del(SK);$('sb').style.display='none';hist=[];curRound=1;modLo={};modHi={};modInitRange={};lastAnalysis=null;phaseScoreActive=false;forceQuickRound=false;
   _hitTimes=[];_streak=0;
   _initModRanges(gS());
   _sessionTarget=SESSION_ROUNDS;
@@ -1858,7 +1973,7 @@ function startRound(){
     _sessTrackFrames=0;_sessTrackOnFrames=0; // her yeni session/round başında sıfırla
     _sessAim=_mkAim();_sessAimMid=_mkAim();
     (async()=>{
-    let totalH=0,totalM=0,totalSc=0;let phIdx=0;
+    let totalH=0,totalM=0,totalSc=0;let phIdx=0;let _phasesDone=0;
     const _startRound=curRound;
     // LOW/HIGH sırası her modda değişir, başlangıcı rastgeledir: ikinci testteki ısınma/öğrenme
     // avantajı sistematik olarak hep aynı tarafa (eskiden HIGH) yazılmaz
@@ -1878,6 +1993,7 @@ function startRound(){
       for(const which of order){
         phIdx++;updDots(phIdx);
         const raw=await runH(which==='LOW'?sLo:sHi,which,mode,phIdx,totalPhases,cfg);
+        if(!(_endEarly||_quitEarly))_phasesDone++;
         if(mode!=='track'){totalH+=hits;totalM+=miss;}
         if(which==='LOW'){rawLo=raw;aimLo={..._aimStats};}else{rawHi=raw;aimHi={..._aimStats};}
         if(_endEarly||_quitEarly)break;
@@ -1923,6 +2039,7 @@ function startRound(){
       const sMid=(modLo[mode]+modHi[mode])/2;
       phIdx++;updDots(phIdx);
       const rawMid=await runH(sMid,'MID',mode,phIdx,totalPhases,cfg);
+      if(!(_endEarly||_quitEarly))_phasesDone++;
       if(mode!=='track'){totalH+=hits;totalM+=miss;}
       const aimMid={..._aimStats};
       if(_endEarly||_quitEarly)break;
@@ -1999,7 +2116,7 @@ function startRound(){
     hist.push({round:curRound,sens:finalS,totalSc,lo,hi,conf,modeMids:lastAnalysis.mids,agreement:lastAnalysis.agreement,stability:lastAnalysis.stability});
     if(hist.length>12)hist=hist.slice(-12);
     save({game,dpi:gD(),sens:finalS,round:_endEarly?curRound:curRound+1,lo,hi,hist,modLo,modHi,modInitRange,grip:gripStyle});
-    pushHistLog({date:Date.now(),game,sens:finalS,conf,round:curRound});
+    if(_phasesDone>0)pushHistLog({date:Date.now(),game,sens:finalS,conf,round:curRound}); // hiç faz bitmediyse ölçüm yok → kalıcı geçmişe yazma
 
     active=false;clearTimeout(_jt);document.exitPointerLock();
     $('hud').style.display='none';$('pi').style.display='none';$('bbar').style.display='none';
@@ -2270,7 +2387,7 @@ function showRR(sens,h,miss_,conf,trkOn=0,trkTot=0){
   // Milestone rehberlik mesajı — confidence seviyesine göre
   let _msEl=$('conf-ms');
   if(!_msEl){
-    _msEl=document.createElement('div');_msEl.id='conf-ms';
+    _msEl=document.createElement('div');_msEl.id='conf-ms';_msEl.setAttribute('role','status');
     _msEl.style.cssText='font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.32);margin-top:6px;line-height:1.6;';
     $('conf-f').closest('.confrow').appendChild(_msEl);
   }
@@ -2374,7 +2491,11 @@ function showRR(sens,h,miss_,conf,trkOn=0,trkTot=0){
 // ─── MENU HELPERS ───
 const MENUS=['mm','pm','rr'];
 function hideAll(){MENUS.forEach(id=>$(id).style.display='none');}
-function showMenu(id){hideAll();$(id).style.display='block';}
+function showMenu(id){
+  hideAll();const m=$(id);m.style.display='block';
+  // Klavye/ekran okuyucu: duraklat ve sonuç ekranlarında odağı menüye taşı
+  if(id==='pm'||id==='rr'){m.setAttribute('tabindex','-1');try{m.focus({preventScroll:true});}catch(e){}}
+}
 
 // ─── FULLSCREEN ───
 function toggleFS(){
@@ -2383,21 +2504,26 @@ function toggleFS(){
 }
 document.addEventListener("fullscreenchange",()=>{
   const btn=document.querySelector('[title="Fullscreen (F)"]');
-  if(btn)btn.textContent=document.fullscreenElement?"✕fs":"⛶";
+  if(btn)btn.textContent=document.fullscreenElement?"✕":"⛶";
 });
 window.addEventListener("keydown",e=>{
   if((e.key==="f"||e.key==="F")&&!active&&!document.pointerLockElement&&document.activeElement?.tagName!=='INPUT')toggleFS();
 });
 
+// Fare ile tıklanan butondan odağı bırak (klavye ile aktive edilenlerde e.detail===0, odak korunur)
+document.addEventListener('click',e=>{
+  const b=e.target&&e.target.closest?e.target.closest('button'):null;
+  if(b&&e.detail>0)b.blur();
+});
 // ─── INIT ───
 document.querySelectorAll('.lbtn,.sb-btn').forEach(b=>{
   if(b.textContent==='TR'||b.textContent==='EN'){
-    b.classList.toggle('on',b.textContent===lang.toUpperCase());
+    b.classList.toggle('on',b.textContent===lang.toUpperCase());b.setAttribute('aria-pressed',String(b.textContent===lang.toUpperCase()));
   }
 });
 applyI18n();setGame('cs2',true);
 // Kaydedilen FOV varsa yükle
-const _sfov=localStorage.getItem("sf_fov_cs2")||localStorage.getItem("sf_fov");if(_sfov){$('if').value=_sfov;}
+const _sfov=LS.get("sf_fov_cs2")||LS.get("sf_fov");if(_sfov){$('if').value=_sfov;}
 // Sfx butonunu ve tercihleri başlat
 setTimeout(()=>{
   const el=$('sfx-btn');if(el)el.textContent=_sfxOn?"🔊":"🔇";
@@ -2408,6 +2534,13 @@ setTimeout(()=>{
   setTestSpeed(_testSpeed);
   ['laser','pop','bell'].forEach(p=>{const b=$('btn-snd-'+p);if(b)b.classList.toggle('on',p===_hitSoundPreset);});
 },0);
+restoreUI();applyURLParams();_uiRestored=true;
+// Fare/pointer lock olmayan cihazlar için erken uyarı
+try{
+  const _coarse=window.matchMedia&&matchMedia('(pointer:coarse)').matches&&!matchMedia('(any-pointer:fine)').matches;
+  const _noLock=!(window.Element&&Element.prototype.requestPointerLock);
+  const _nmEl=$('nomouse');if(_nmEl&&(_coarse||_noLock))_nmEl.style.display='block';
+}catch(e){}
 updPv();checkSaved();renderHistLog();
 ['is','id'].forEach(id=>{
   $(id).addEventListener('wheel',e=>{
