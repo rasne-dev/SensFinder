@@ -5,7 +5,7 @@
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Site-e8ff47?style=for-the-badge&labelColor=070708&color=e8ff47&logoColor=black)](https://rasne-dev.github.io/SensFinder)
 [![License: MIT](https://img.shields.io/badge/License-MIT-555?style=for-the-badge&labelColor=070708)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.1.9-e8ff47?style=for-the-badge&labelColor=070708)](https://github.com/rasne-dev/SensFinder/releases)
+[![Version](https://img.shields.io/badge/version-1.2.0-e8ff47?style=for-the-badge&labelColor=070708)](https://github.com/rasne-dev/SensFinder/releases)
 [![No Dependencies](https://img.shields.io/badge/Zero%20Dependencies-Single%20File-555?style=for-the-badge&labelColor=070708)]()
 
 ---
@@ -30,7 +30,11 @@ Each round evaluates three core aim disciplines:
 | ⊞ **Gridshot** | Speed & Multi-target Switching | 3 active targets across grid, rapid switching |
 | ◎ **Tracking** | Smoothness & Crosshair Placement | Smoothly moving target, cursor on-target time |
 
-Each mode tests three phases: **LOW**, **HIGH**, and a **MID (verification)** sensitivity. Performance is normalized and weighted (Flick 35%, Gridshot 35%, Tracking 30%).
+Each mode tests three phases: **LOW**, **HIGH**, and a **MID (verification)** sensitivity. Performance is weighted (Flick 35%, Gridshot 35%, Tracking 30%).
+
+- **Balanced test order:** LOW/HIGH order alternates per mode with a random start, so warm-up advantage never favors one side.
+- **Noise-aware decisions:** Score differences below ~8% are treated as noise instead of forcing the range in a random direction.
+- **Overshoot / undershoot analysis:** Every Flick and Gridshot hit is checked: did your first movement fly past the target or stop short? This acts as a second signal next to the score and is shown on the result screen.
 
 - **Round 1 (Initial Setup):** 9 phases (3 modes × 3 tests, ~2.3 min) establishing an accurate initial baseline.
 - **Round 2+ (Quick Refinement):** 9 phases (3 modes × 3 tests, ~2 min) narrowing down the exact sweet spot.

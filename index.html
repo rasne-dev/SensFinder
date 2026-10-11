@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="version" content="1.1.9">
+<meta name="version" content="1.2.0">
 <title>SensFinder — CS2 & Valorant</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" crossorigin="anonymous"></script>
 <style>
@@ -395,6 +395,7 @@ button:active{transform:scale(0.98);}
   <div class="ft-box">
     <span class="ft-ti" id="ft-ti">In-Game Fine Tuning</span>
     <div class="ft-it"><span class="ft-b">◎</span><span id="ft-gr"></span></div>
+    <div class="ft-it"><span class="ft-b">⇄</span><span id="ft-aim"></span></div>
     <div class="ft-it"><span class="ft-b">↓</span><span id="ft-ov"></span></div>
     <div class="ft-it"><span class="ft-b">↑</span><span id="ft-un"></span></div>
   </div>
@@ -999,10 +1000,67 @@ function spawnS(jump,label){
   tVX=Math.cos(ang)*spBase;tVY=Math.sin(ang)*spBase*.7;
   tM.position.set(tX,tY,tZ);scene.add(tM);
   if(cMode==='flick') _flickSpawnTime=performance.now();
+  _aimReset();
 }
 let _jt=null;
 let _flickSpawnTime=0,_hitTimes=[],_streak=0;
 let _swipeLengthsCm=[],_swipeArcs=[],_curSwipeX=0,_curSwipeAbsY=0,_curSwipeDir=0,_lastMoveT=0;
+
+// ─── HEDEFE YAKLAŞIM ANALİZİ (Overshoot / Undershoot) ───
+// Her isabetli vuruşta, önceki vuruştan/hedef doğuşundan bu yana kamera yörüngesi incelenir.
+// Birincil (balistik) hamle hedefi geçtiyse → overshoot (sens yüksek sinyali),
+// hedefe varmadan durup aynı yönde düzeltme gerektiyse → undershoot (sens düşük sinyali).
+const _mkAim=()=>({over:0,under:0,clean:0,n:0});
+let _aimTraj=[],_aimStats=_mkAim(),_sessAim=_mkAim(),_sessAimMid=_mkAim();
+const _aimQ=new THREE.Quaternion(),_aimE=new THREE.Euler(0,0,0,'YXZ'),_aimV=new THREE.Vector3();
+function _aimReset(){_aimTraj=[{t:performance.now(),yaw,pitch}];}
+function _aimOffset(P,yw,pt){
+  _aimE.set(pt,yw,0,'YXZ');_aimQ.setFromEuler(_aimE).invert();
+  _aimV.copy(P).sub(camera.position).applyQuaternion(_aimQ);
+  return [Math.atan2(_aimV.x,-_aimV.z),Math.atan2(_aimV.y,-_aimV.z)];
+}
+function _aimEvalHit(mesh){
+  if(!camera||!mesh||_aimTraj.length<3)return null;
+  const P=mesh.position;
+  const r0=mesh.geometry?.parameters?.radius||0.3;
+  const rAng=Math.atan(r0/Math.max(0.1,P.distanceTo(camera.position)));
+  const o0=_aimOffset(P,_aimTraj[0].yaw,_aimTraj[0].pitch);
+  const d0=Math.hypot(o0[0],o0[1]);
+  if(d0<rAng*3)return null; // hedef zaten çok yakındı: anlamlı bir yaklaşım hamlesi yok
+  const ux=o0[0]/d0,uy=o0[1]/d0,n=_aimTraj.length,s=new Array(n);
+  // s[i]: hedefe kalan açısal mesafe (ilk hamle ekseninde). 0 = merkez, negatif = hedefi geçti
+  for(let i=0;i<n;i++){const o=_aimOffset(P,_aimTraj[i].yaw,_aimTraj[i].pitch);s[i]=o[0]*ux+o[1]*uy;}
+  // Birincil hamlenin sonu: tepe hızdan sonra hızın %15'in altına düştüğü veya 45ms+ duraksanan ilk an
+  let peak=0,end=n-1,j=0;
+  for(let i=1;i<n;i++){
+    const gap=_aimTraj[i].t-_aimTraj[i-1].t;
+    const prog=(d0-s[i-1])/d0;
+    if(gap>45){
+      if(peak>0&&prog>0.3){end=i-1;break;}
+      peak=0;j=i;continue; // hamle öncesi bekleme / küçük kıpırdanma: yeniden başla
+    }
+    while(j<i-1&&_aimTraj[i].t-_aimTraj[j+1].t>=20)j++;
+    const v=(s[j]-s[i])/Math.max(1,_aimTraj[i].t-_aimTraj[j].t);
+    if(v>peak)peak=v;
+    else if(peak>0&&v<peak*0.15&&(d0-s[i])/d0>0.3){end=i;break;}
+  }
+  let minS=Infinity;for(let i=0;i<=end;i++)if(s[i]<minS)minS=s[i];
+  if(minS<-rAng*0.9)return 'over';
+  if(s[end]>rAng*1.2)return 'under';
+  return 'clean';
+}
+function _aimRecord(kind){
+  if(!kind)return;
+  [_aimStats,_sessAim].concat(curLabel==='MID'?[_sessAimMid]:[]).forEach(o=>{o[kind]++;o.n++;});
+}
+// Hamle analizinden yön kararı: +1 = sens artır, -1 = sens azalt, 0 = belirsiz
+function aimBiasDir(...stats){
+  let over=0,under=0,n=0;
+  stats.forEach(a=>{if(a){over+=a.over;under+=a.under;n+=a.n;}});
+  if(n<6)return 0;
+  const bias=(over-under)/n;
+  return bias>0.2?-1:bias<-0.2?1:0;
+}
 function analyzeKinematics(resCm){
   if(_swipeLengthsCm.length<4){
     return {style:detectGripByCm(resCm),p90Cm:null,arc:null};
@@ -1349,6 +1407,10 @@ document.addEventListener('mousemove',e=>{
   pitch-=dy*scale;
   pitch=Math.max(-Math.PI/2.1,Math.min(Math.PI/2.1,pitch));
   camera.quaternion.setFromEuler(new THREE.Euler(pitch,yaw,0,'YXZ'));
+  if(phaseScoreActive&&cMode!=='track'){
+    _aimTraj.push({t:performance.now(),yaw,pitch});
+    if(_aimTraj.length>1500)_aimTraj.shift();
+  }
 });
 document.addEventListener('mousedown',e=>{
   if(e.button!==0||isCalib)return;
@@ -1378,7 +1440,9 @@ document.addEventListener('mousedown',e=>{
         if(phaseScoreActive){
           curScore+=speedBonus;hits++;_streak++;
           if(elapsed>50&&elapsed<2000)_hitTimes.push(elapsed);
+          _aimRecord(_aimEvalHit(item.mesh));
         }
+        _aimReset();
         playHit();showFB(_streak>=3?`+ 🔥${_streak}x`:'+',true);
         gridLastHitTime=Date.now();
 
@@ -1427,6 +1491,7 @@ document.addEventListener('mousedown',e=>{
         curScore+=500;hits++;_streak++;
         const elFlick=Math.round(performance.now()-_flickSpawnTime);
         if(elFlick>50&&elFlick<2500)_hitTimes.push(elFlick);
+        _aimRecord(_aimEvalHit(m));
       }
       h=true;playHit();showFB(_streak>=3?`+ 🔥${_streak}x`:'+',true);
       spawnS(true,curLabel);schedJ(cMode,curLabel);
@@ -1649,6 +1714,8 @@ function finCalib(){
 // Her mod bağımsız binary search tutar; sonuçlar ağırlıklı ortalama ile birleşir.
 const MODES=['flick','grid','track'];
 const MODE_W={flick:.35,grid:.35,track:.30};   // ağırlıklar toplamı = 1.00
+// LOW/HIGH skor farkı bu oranın altındaysa (≈ ±%8) ölçüm gürültüsü sayılır, aralık o yöne daraltılmaz
+const NOISE_MARGIN=0.08;
 const HALF_DUR=12;
 const WARMUP_DUR=1.5;
 const QUICK_DUR=10;
@@ -1789,43 +1856,58 @@ function startRound(){
   const _runLoop=()=>{
     _lockAcquiredAt=performance.now();active=true;
     _sessTrackFrames=0;_sessTrackOnFrames=0; // her yeni session/round başında sıfırla
+    _sessAim=_mkAim();_sessAimMid=_mkAim();
     (async()=>{
     let totalH=0,totalM=0,totalSc=0;let phIdx=0;
     const _startRound=curRound;
+    // LOW/HIGH sırası her modda değişir, başlangıcı rastgeledir: ikinci testteki ısınma/öğrenme
+    // avantajı sistematik olarak hep aynı tarafa (eskiden HIGH) yazılmaz
+    let _ordCtr=Math.random()<0.5?0:1;
 
     for(let rep=0;rep<cfg.repeats;rep++){
     for(const mode of MODES){
       if(_endEarly||_quitEarly)break;
       cMode=mode;
 
-      // ── Test 1: Low Quarter ──────────────────────────────────────
+      // ── Test 1 & 2: Düşük / Yüksek çeyrek (dengelenmiş sıra) ────
       const mlo1=modLo[mode],mhi1=modHi[mode];
       const mid1=(mlo1+mhi1)/2;
-      const sLo=(mlo1+mid1)/2;
-      phIdx++;updDots(phIdx);
-      const rawLo=await runH(sLo,'LOW',mode,phIdx,totalPhases,cfg);
-      if(mode!=='track'){totalH+=hits;totalM+=miss;}
-      if(_endEarly||_quitEarly)break;
-
-      // ── Test 2: High Quarter ─────────────────────────────────────
-      const sHi=(mid1+mhi1)/2;
-      phIdx++;updDots(phIdx);
-      const rawHi=await runH(sHi,'HIGH',mode,phIdx,totalPhases,cfg);
-      if(mode!=='track'){totalH+=hits;totalM+=miss;}
+      const sLo=(mlo1+mid1)/2,sHi=(mid1+mhi1)/2;
+      const order=(_ordCtr++%2)===1?['HIGH','LOW']:['LOW','HIGH'];
+      let rawLo=0,rawHi=0,aimLo=null,aimHi=null;
+      for(const which of order){
+        phIdx++;updDots(phIdx);
+        const raw=await runH(which==='LOW'?sLo:sHi,which,mode,phIdx,totalPhases,cfg);
+        if(mode!=='track'){totalH+=hits;totalM+=miss;}
+        if(which==='LOW'){rawLo=raw;aimLo={..._aimStats};}else{rawHi=raw;aimHi={..._aimStats};}
+        if(_endEarly||_quitEarly)break;
+      }
       if(_endEarly||_quitEarly)break;
 
       // LOW/HIGH karşılaştır → aralık güncelle
-      const nLo=normScore(rawLo,mode,cfg.activeDur),nHi=normScore(rawHi,mode,cfg.activeDur);
-      const total=nLo+nHi;
-      if(total>0.001){
-        const hiRatio=nHi/total;
-        const margin=Math.abs(hiRatio-0.5)*2;
-        const span=modHi[mode]-modLo[mode];
-        const step=span*(0.25+margin*0.50);
-        if(hiRatio>0.5) modLo[mode]=Math.min(modLo[mode]+step,modHi[mode]-span*0.03);
-        else            modHi[mode]=Math.max(modHi[mode]-step,modLo[mode]+span*0.03);
+      // Tavansız ham skor kullanılır (iki test de tavana vurursa bilgi kaybolmasın).
+      // Fark NOISE_MARGIN altındaysa skor "kararsız" sayılır; yön hamle analizinden gelir.
+      const span=modHi[mode]-modLo[mode];
+      const total=rawLo+rawHi;
+      const hiRatio=total>0.001?rawHi/total:0.5;
+      const margin=Math.abs(hiRatio-0.5)*2;
+      const scoreDir=(total>0.001&&margin>=NOISE_MARGIN)?(hiRatio>0.5?1:-1):0;
+      const aimDir=aimBiasDir(aimLo,aimHi); // overshoot ağırlıklı → -1, undershoot ağırlıklı → +1
+      let dir=0,stepF=0;
+      if(scoreDir!==0){
+        dir=scoreDir;
+        stepF=Math.min(0.5,0.2+margin*0.6);
+        if(aimDir!==0&&aimDir!==scoreDir)stepF*=0.5;          // sinyaller çelişiyor → temkinli adım
+        else if(aimDir===scoreDir)stepF=Math.min(0.55,stepF+0.08); // sinyaller uyumlu → biraz daha cesur
+      } else if(aimDir!==0){
+        dir=aimDir;stepF=0.18;
+      } else if(total>0.001){
+        // İki sinyal de kararsız: optimum bu bölgede ama yön belirsiz → iki uçtan hafifçe daralt
+        modLo[mode]+=span*0.08;modHi[mode]-=span*0.08;
       }
       // total≈0: kullanıcı tıklamadı / hiç puan yapamadı → range bilgisizce değiştirme
+      if(dir>0)      modLo[mode]=Math.min(modLo[mode]+span*stepF,modHi[mode]-span*0.03);
+      else if(dir<0) modHi[mode]=Math.max(modHi[mode]-span*stepF,modLo[mode]+span*0.03);
       modLo[mode]=Math.max(modLo[mode],GC[game].sensMin);
       modHi[mode]=Math.min(modHi[mode],GC[game].sensMax);
       const minS=GC[game].minSpan||0.02;
@@ -1842,25 +1924,31 @@ function startRound(){
       phIdx++;updDots(phIdx);
       const rawMid=await runH(sMid,'MID',mode,phIdx,totalPhases,cfg);
       if(mode!=='track'){totalH+=hits;totalM+=miss;}
+      const aimMid={..._aimStats};
       if(_endEarly||_quitEarly)break;
 
-      // Test3 skoru: low/high ile karşılaştır, kazananı ağırlıklı ortalama ile blend et
-      const nMid=normScore(rawMid,mode,cfg.activeDur);
-      const best=Math.max(nLo,nHi,nMid);
-      // Hangi test kazandıysa o yönde küçük ek adım
+      // Test3: ham skorlar %6 tolerans ile karşılaştırılır (küçük farklar gürültü sayılır)
+      const best=Math.max(rawLo,rawHi,rawMid);
+      const tol=best*0.06;
       const span2=modHi[mode]-modLo[mode];
-      if(best===nMid){
-        // Mid en iyiydi — aralığı mid etrafında simetrik sıkıştır
-        const shrink=span2*0.2;
-        modLo[mode]=Math.max(modLo[mode]+shrink,GC[game].sensMin);
-        modHi[mode]=Math.min(modHi[mode]-shrink,GC[game].sensMax);
-      } else if(best===nLo){
-        // Low bölgesi daha iyi — hi'yi biraz daha aşağı çek
+      const midDir=aimBiasDir(aimMid);
+      if(best<=0.001){
+        // Hiç puan yok → aralığa dokunma
+      } else if(best-rawMid<=tol){
+        // Mid en iyi (veya en iyiyle eşit) → aralığı mid etrafında daralt;
+        // hamle analizi net bir sapma gösteriyorsa daraltmayı o yöne kaydır
+        const loCut=span2*(midDir>0?0.28:midDir<0?0.12:0.2);
+        const hiCut=span2*(midDir<0?0.28:midDir>0?0.12:0.2);
+        modLo[mode]=Math.max(modLo[mode]+loCut,GC[game].sensMin);
+        modHi[mode]=Math.min(modHi[mode]-hiCut,GC[game].sensMax);
+      } else if(rawLo>=rawHi&&rawLo-rawHi>tol){
+        // Low bölgesi açıkça daha iyi — hi'yi biraz daha aşağı çek
         modHi[mode]=Math.max(modHi[mode]-span2*0.15,modLo[mode]+span2*0.03);
-      } else {
-        // High bölgesi daha iyi — lo'yu biraz daha yukarı çek
+      } else if(rawHi>rawLo&&rawHi-rawLo>tol){
+        // High bölgesi açıkça daha iyi — lo'yu biraz daha yukarı çek
         modLo[mode]=Math.min(modLo[mode]+span2*0.15,modHi[mode]-span2*0.03);
       }
+      // Low ve High eşit, Mid ikisinden de kötü → tek ölçümle yön çıkarılamaz, aralık korunur
       modLo[mode]=Math.max(modLo[mode],GC[game].sensMin);
       modHi[mode]=Math.min(modHi[mode],GC[game].sensMax);
       const minS2=GC[game].minSpan||0.02;
@@ -2012,7 +2100,7 @@ function runH(sens,label,mode,phIdx,totalPhases,cfg){
     _resT=resolve;
     showSOv(sens,label,mode,phIdx,totalPhases,cfg,()=>{
       curTS=sens;curScore=0;hits=0;miss=0;onT=false;phaseScoreActive=false;_streak=0;
-      _trackFrames=0;_trackOnFrames=0;
+      _trackFrames=0;_trackOnFrames=0;_aimStats=_mkAim();
       currentPhaseActiveDur=cfg.activeDur;
       // Her faz başında kamerayı merkeze hizala (önceki fazdan kalan açı sapmasını sıfırla)
       yaw=0;pitch=0;
@@ -2051,6 +2139,7 @@ function runH(sens,label,mode,phIdx,totalPhases,cfg){
         if(!wasScored&&phaseScoreActive){
           gridLastHitTime=Date.now();
           _flickSpawnTime=performance.now();
+          _aimReset();
         }
         const scoredElapsed=Math.max(0,el-warm);
         const pct=Math.min(100,scoredElapsed/(cfg.activeDur*1000)*100);
@@ -2240,6 +2329,31 @@ function showRR(sens,h,miss_,conf,trkOn=0,trkTot=0){
     }
   }
   $('ft-ov').textContent=T('ftOv');$('ft-un').textContent=T('ftUn');
+
+  // Hedefe yaklaşım analizi: önerilen sense en yakın olan doğrulama (MID) testleri öncelikli
+  const ftAimEl=$('ft-aim');
+  if(ftAimEl){
+    const A=_sessAimMid.n>=5?_sessAimMid:_sessAim;
+    if(A.n<5){
+      ftAimEl.textContent=lang==='tr'
+        ?'Hedefe yaklaşım: yeterli isabet verisi yok (Flick/Gridshot\'ta daha fazla vuruş gerekli).'
+        :'Target approach: not enough hit data (more Flick/Gridshot hits needed).';
+    } else {
+      const po=Math.round(A.over/A.n*100),pu=Math.round(A.under/A.n*100),pc=Math.max(0,100-po-pu);
+      const bias=(A.over-A.under)/A.n;
+      const verdict=bias>0.15
+        ?(lang==='tr'?'hedefi sık geçiyorsun, oyunda ~%5 düşürmeyi dene.':'you often overshoot, try ~5% lower in-game.')
+        :bias<-0.15
+        ?(lang==='tr'?'hedefe sık kısa kalıyorsun, oyunda ~%5 artırmayı dene.':'you often fall short, try ~5% higher in-game.')
+        :(lang==='tr'?'dengeli, bu sens hamle kontrolüne uygun.':'balanced, this sens fits your motor control.');
+      ftAimEl.textContent=(lang==='tr'
+        ?`Hedefe yaklaşım: %${po} geçti · %${pu} kısa kaldı · %${pc} temiz → `
+        :`Target approach: ${po}% overshoot · ${pu}% undershoot · ${pc}% clean → `)+verdict;
+    }
+    ftAimEl.title=lang==='tr'
+      ?'Bu sonuç ±%10 doğrulukta bir başlangıç noktasıdır. Oyunda 2-3 gün kullanıp sonra ince ayar yap.'
+      :'This result is a starting point (about ±10%). Use it in-game for 2-3 days, then fine-tune.';
+  }
 
   const maxSc=Math.max(...hist.map(r=>r.totalSc),1);
   let html='';
