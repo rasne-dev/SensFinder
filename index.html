@@ -3,16 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="version" content="1.1.8">
+<meta name="version" content="1.1.9">
 <title>SensFinder — CS2 & Valorant</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" crossorigin="anonymous"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Barlow:wght@400;600;700;800;900&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
   --a:#e8ff47;--a2:#47ffb8;--ag:rgba(232,255,71,.15);
   --bg:#070708;--p:rgba(9,9,11,.97);--b:rgba(255,255,255,.08);--b2:rgba(255,255,255,.14);
-  --t:#8888a0;--td:#3a3a52;--tb:#eeeef8;--xh-c:#ffffff;
+  --t:#8888a0;--td:#3a3a52;--tb:#eeeef8;--xh-c:#ffffff;--tc-c:#ff2020;
   --mono:'DM Mono',monospace;--sans:'Barlow',sans-serif;
 }
 body.val{--a:#c084fc;--a2:#818cf8;--ag:rgba(192,132,252,.15);}
@@ -21,17 +21,21 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
   background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E");opacity:.35;}
 #rc{position:fixed;inset:0;z-index:0;}
 #rc canvas{display:block;width:100%!important;height:100%!important;}
-#xh{display:none;position:fixed!important;top:50%!important;left:50%!important;transform:translate(-50%,-50%)!important;pointer-events:none!important;z-index:99999!important;width:0!important;height:0!important;}
+#xh{display:none;position:fixed!important;top:50%!important;left:50%!important;transform:translate(-50%,-50%)!important;pointer-events:none!important;z-index:99999!important;width:0!important;height:0!important;transition:transform .08s ease-out;}
 #xh.active{display:block;}
+#xh.hit-pop{transform:translate(-50%,-50%) scale(1.32)!important;}
 .xh-h{position:absolute!important;width:26px!important;height:2px!important;background:var(--xh-c,#ffffff)!important;top:-1px!important;left:-13px!important;outline:1px solid #000!important;box-shadow:0 0 3px #000!important;}
 .xh-v{position:absolute!important;width:2px!important;height:26px!important;background:var(--xh-c,#ffffff)!important;left:-1px!important;top:-13px!important;outline:1px solid #000!important;box-shadow:0 0 3px #000!important;}
 .xh-dot{position:absolute!important;width:4px!important;height:4px!important;background:var(--xh-c,#ffffff)!important;border-radius:50%!important;top:-2px!important;left:-2px!important;outline:1px solid #000!important;}
 #xh.on-target .xh-h,#xh.on-target .xh-v,#xh.on-target .xh-dot{background:#00ff88!important;outline-color:#006633!important;box-shadow:0 0 6px #00ff88!important;}
-#xh.style-dot .xh-h,#xh.style-dot .xh-v{display:none!important;}
-#xh.style-dot .xh-dot{width:6px!important;height:6px!important;top:-3px!important;left:-3px!important;}
-#xh.style-compact .xh-h{width:14px!important;left:-7px!important;}
-#xh.style-compact .xh-v{height:14px!important;top:-7px!important;}
-#xh.style-compact .xh-dot{width:3px!important;height:3px!important;top:-1.5px!important;left:-1.5px!important;}
+#xh.style-dot .xh-h,#xh.style-dot .xh-v,#xh-prev.style-dot .xh-h,#xh-prev.style-dot .xh-v{display:none!important;}
+#xh.style-dot .xh-dot,#xh-prev.style-dot .xh-dot{width:6px!important;height:6px!important;top:-3px!important;left:-3px!important;}
+#xh.style-compact .xh-h,#xh-prev.style-compact .xh-h{width:14px!important;left:-7px!important;}
+#xh.style-compact .xh-v,#xh-prev.style-compact .xh-v{height:14px!important;top:-7px!important;}
+#xh.style-compact .xh-dot,#xh-prev.style-compact .xh-dot{width:3px!important;height:3px!important;top:-1.5px!important;left:-1.5px!important;}
+#xh-prev-box{width:46px;height:34px;background:radial-gradient(circle at 50% 50%,var(--tc-c,#ff2020) 0%,var(--tc-c,#ff2020) 7px,rgba(0,0,0,.65) 8px);border:1px solid rgba(255,255,255,.12);position:relative;flex-shrink:0;border-radius:2px;}
+#xh-prev{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:0;height:0;pointer-events:none;}
+.fi.warn{border-color:#ff4455!important;box-shadow:0 0 0 1px rgba(255,68,85,.3)!important;}
 .clr-dot{width:14px;height:14px;border-radius:50%;border:1px solid rgba(255,255,255,.25);cursor:pointer;transition:transform .15s,border-color .15s;padding:0;}
 .clr-dot:hover{transform:scale(1.18);}
 .clr-dot.on{border:2px solid #fff;box-shadow:0 0 6px currentColor;transform:scale(1.15);}
@@ -212,7 +216,7 @@ button:active{transform:scale(0.98);}
   <div class="sw-cd" id="sw-cd">3</div>
 </div></div>
 
-<div id="cov"><div class="cal-box">
+<div id="cov" role="dialog" aria-modal="true" aria-labelledby="cal-ti"><div class="cal-box">
   <div class="cal-ti" id="cal-ti">Calibration</div>
   <div style="font-size:24px;margin:12px 0;">🖱️ ↔️</div>
   <div class="cal-de" id="cal-de">...</div>
@@ -226,6 +230,7 @@ button:active{transform:scale(0.98);}
 
 <!-- MAIN MENU -->
 <div class="menu" id="mm">
+  <div id="webgl-err" style="display:none;background:rgba(255,68,85,.12);border:1px solid #ff4455;color:#ff8899;font-family:var(--mono);font-size:9px;padding:8px 10px;margin-bottom:12px;line-height:1.5;"></div>
   <div class="menu-header-wrap">
     <div class="menu-logo-row">
       <div class="menu-logo">
@@ -233,14 +238,14 @@ button:active{transform:scale(0.98);}
         <div class="mt-sub" id="ms">CS2 &amp; VALORANT</div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
-        <div class="lbtns"><button class="lbtn on" onclick="setLang('tr')">TR</button><button class="lbtn" onclick="setLang('en')">EN</button><button class="lbtn" id="sfx-btn" onclick="toggleSfx()" style="min-width:28px;" title="Sound (M)">🔊</button><button class="lbtn" onclick="toggleFS()" title="Fullscreen (F)" style="min-width:28px;">⛶</button></div>
+        <div class="lbtns"><button class="lbtn on" onclick="setLang('tr')" aria-label="Türkçe">TR</button><button class="lbtn" onclick="setLang('en')" aria-label="English">EN</button><button class="lbtn" id="sfx-btn" onclick="toggleSfx()" style="min-width:28px;" title="Sound (M)" aria-label="Toggle Sound">🔊</button><button class="lbtn" onclick="toggleFS()" title="Fullscreen (F)" aria-label="Toggle Fullscreen" style="min-width:28px;">⛶</button></div>
       </div>
     </div>
   </div>
   <span class="slbl" id="lg">Game</span>
   <div class="t2"><button class="tab on" id="gCS2" onclick="setGame('cs2')">CS2</button><button class="tab" id="gVAL" onclick="setGame('val')">VALORANT</button></div>
   <div class="g2">
-    <div class="fg"><label class="flbl" id="ld">Mouse DPI</label><input class="fi" type="number" id="id" value="800" min="100" max="32000" step="50" oninput="updPv()" onfocus="this.select()">
+    <div class="fg"><label class="flbl" id="ld" for="id">Mouse DPI</label><input class="fi" type="number" id="id" value="800" min="100" max="32000" step="50" oninput="updPv()" onfocus="this.select()">
       <div style="display:flex;gap:4px;margin-top:5px;">
         <button type="button" class="lbtn" data-dpi="400" style="flex:1;padding:4px 1px;" onclick="$('id').value=400;updPv();">400</button>
         <button type="button" class="lbtn on" data-dpi="800" style="flex:1;padding:4px 1px;" onclick="$('id').value=800;updPv();">800</button>
@@ -251,15 +256,29 @@ button:active{transform:scale(0.98);}
     </div>
     <div class="fg">
       <div style="display:flex;justify-content:space-between;align-items:center;">
-        <label class="flbl" id="lf" style="margin-bottom:0;">FOV</label>
+        <label class="flbl" id="lf" for="if" style="margin-bottom:0;">FOV</label>
         <button type="button" class="lbtn" style="padding:1px 5px;font-size:7px;" onclick="openResModal()" id="btn-res-guide">4:3 / 16:9 ℹ️</button>
       </div>
       <input class="fi" type="number" id="if" value="90" min="60" max="120" style="margin-top:5px;" oninput="updateCameraFov();localStorage.setItem('sf_fov_'+game,this.value);">
     </div>
   </div>
   <div class="sg">
-    <label class="flbl" id="ls">Current Sensitivity</label>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+      <label class="flbl" id="l-gr-ti" style="margin-bottom:0;">Aiming Style</label>
+      <span id="gr-w-lbl" style="font-family:var(--mono);font-size:7px;color:rgba(255,255,255,.32);letter-spacing:.06em;">F:35% · G:35% · T:30%</span>
+    </div>
+    <div style="display:flex;gap:4px;margin-bottom:10px;">
+      <button type="button" class="lbtn" style="flex:1;padding:6px 2px;" id="btn-gr-wrist" onclick="setGripStyle('wrist',true)" title="Wrist Aim (14–31 cm/360°)">🖐️ Bilek</button>
+      <button type="button" class="lbtn" style="flex:1;padding:6px 2px;" id="btn-gr-arm" onclick="setGripStyle('arm',true)" title="Arm Aim (38–72 cm/360°)">💪 Kol</button>
+      <button type="button" class="lbtn on" style="flex:1;padding:6px 2px;" id="btn-gr-hybrid" onclick="setGripStyle('hybrid',true)" title="Hybrid: Arm + Wrist (25–46 cm/360°)">🤝 Hibrit</button>
+      <button type="button" class="lbtn" style="flex:1;padding:6px 2px;" id="btn-gr-unknown" onclick="setGripStyle('unknown',true)">❓ Bilmiyorum</button>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+      <label class="flbl" id="ls" for="is" style="margin-bottom:0;">Current Sensitivity</label>
+      <button type="button" class="lbtn" id="btn-gr-opt" style="display:none;padding:2px 6px;font-size:7px;border-color:var(--a);color:var(--a);" onclick="applyGripOptSens()"></button>
+    </div>
     <input class="fi" type="number" id="is" value="2.5" min="0.01" max="20" step="0.01" oninput="updPv()" onfocus="this.select()">
+    <div id="gr-status" style="font-family:var(--mono);font-size:8px;margin-top:6px;line-height:1.4;color:rgba(255,255,255,.42);"></div>
     <div class="sprev">
       <div class="spv"><span class="spvl">eDPI</span><span class="spvv" id="pv-e">2000</span></div>
       <div class="spv"><span class="spvl">cm/360°</span><span class="spvv" id="pv-c">34.9</span></div>
@@ -269,6 +288,7 @@ button:active{transform:scale(0.98);}
   <div class="sg" style="margin-bottom:13px;padding:10px 12px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;">
       <span class="slbl" id="l-opt-ti" style="margin-bottom:0;">Preferences</span>
+      <div id="xh-prev-box" title="Live Crosshair &amp; Target Preview"><div id="xh-prev" class="style-cross"><div class="xh-h"></div><div class="xh-v"></div><div class="xh-dot"></div></div></div>
     </div>
     <div style="display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap;">
       <div style="display:flex;align-items:center;gap:4px;">
@@ -284,13 +304,22 @@ button:active{transform:scale(0.98);}
         <button type="button" class="lbtn" id="btn-snd-bell" onclick="setHitSound('bell')">Bell</button>
       </div>
     </div>
-    <div style="display:flex;align-items:center;gap:7px;margin-top:8px;padding-top:7px;border-top:1px solid rgba(255,255,255,.05);">
-      <span class="flbl" style="margin-bottom:0;font-size:7px;" id="l-xhc-ti">Color:</span>
-      <button type="button" class="clr-dot on" id="btn-xhc-ffffff" style="background:#ffffff;" onclick="setXhColor('#ffffff')" aria-label="White"></button>
-      <button type="button" class="clr-dot" id="btn-xhc-00ff88" style="background:#00ff88;" onclick="setXhColor('#00ff88')" aria-label="Green"></button>
-      <button type="button" class="clr-dot" id="btn-xhc-00e5ff" style="background:#00e5ff;" onclick="setXhColor('#00e5ff')" aria-label="Cyan"></button>
-      <button type="button" class="clr-dot" id="btn-xhc-e8ff47" style="background:#e8ff47;" onclick="setXhColor('#e8ff47')" aria-label="Yellow"></button>
-      <button type="button" class="clr-dot" id="btn-xhc-ff3366" style="background:#ff3366;" onclick="setXhColor('#ff3366')" aria-label="Pink"></button>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;padding-top:7px;border-top:1px solid rgba(255,255,255,.05);flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span class="flbl" style="margin-bottom:0;font-size:7px;" id="l-xhc-ti">Color:</span>
+        <button type="button" class="clr-dot on" id="btn-xhc-ffffff" style="background:#ffffff;" onclick="setXhColor('#ffffff')" aria-label="White"></button>
+        <button type="button" class="clr-dot" id="btn-xhc-00ff88" style="background:#00ff88;" onclick="setXhColor('#00ff88')" aria-label="Green"></button>
+        <button type="button" class="clr-dot" id="btn-xhc-00e5ff" style="background:#00e5ff;" onclick="setXhColor('#00e5ff')" aria-label="Cyan"></button>
+        <button type="button" class="clr-dot" id="btn-xhc-e8ff47" style="background:#e8ff47;" onclick="setXhColor('#e8ff47')" aria-label="Yellow"></button>
+        <button type="button" class="clr-dot" id="btn-xhc-ff3366" style="background:#ff3366;" onclick="setXhColor('#ff3366')" aria-label="Pink"></button>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span class="flbl" style="margin-bottom:0;font-size:7px;" id="l-tc-ti">Target:</span>
+        <button type="button" class="clr-dot on" id="btn-tc-ff2020" style="background:#ff2020;" onclick="setTargetColor('#ff2020')" aria-label="Red Target"></button>
+        <button type="button" class="clr-dot" id="btn-tc-ffe600" style="background:#ffe600;" onclick="setTargetColor('#ffe600')" aria-label="Yellow Target (Colorblind Friendly)"></button>
+        <button type="button" class="clr-dot" id="btn-tc-ff2a85" style="background:#ff2a85;" onclick="setTargetColor('#ff2a85')" aria-label="Magenta Target"></button>
+        <button type="button" class="clr-dot" id="btn-tc-00e5ff" style="background:#00e5ff;" onclick="setTargetColor('#00e5ff')" aria-label="Cyan Target"></button>
+      </div>
     </div>
   </div>
   <button class="cbtn" onclick="startCalib()"><em>📐</em><span id="lca">Calibrate via 360° mousepad movement</span></button>
@@ -303,6 +332,10 @@ button:active{transform:scale(0.98);}
       <button class="sb-btn p" onclick="resumeSession()" id="sbr">Resume</button>
       <button class="sb-btn" onclick="clearSession()" id="sbc">Clear</button>
     </div>
+  </div>
+  <div style="display:flex;gap:5px;margin-bottom:4px;">
+    <button type="button" class="lbtn on" style="flex:1;padding:5px 4px;" id="btn-dur-std" onclick="setTestSpeed('std')">⏱️ Standart (12s/faz)</button>
+    <button type="button" class="lbtn" style="flex:1;padding:5px 4px;" id="btn-dur-fast" onclick="setTestSpeed('fast')">⚡ Hızlı Mod (8s/faz)</button>
   </div>
   <button class="sbtn" onclick="startFresh()">▶ &nbsp;<span id="lst">START TEST</span></button>
   <div style="display:flex;gap:5px;margin-top:6px;">
@@ -322,7 +355,7 @@ button:active{transform:scale(0.98);}
 </div>
 
 <!-- PAUSE MENU -->
-<div class="menu" id="pm" style="display:none;">
+<div class="menu" id="pm" role="dialog" aria-modal="true" aria-labelledby="pm-ti" style="display:none;">
   <div class="pm-ti" id="pm-ti">Paused</div>
   <div class="pm-su" id="pm-su">Test suspended</div>
   <div class="pm-st"><span class="pm-sl" id="pml-r">Round</span><span class="pm-sv" id="pmv-r">—</span></div>
@@ -330,7 +363,7 @@ button:active{transform:scale(0.98);}
   <div class="pm-st"><span class="pm-sl">cm/360°</span><span class="pm-sv" id="pmv-cm">—</span></div>
   <div class="pm-st"><span class="pm-sl" id="pml-ph">Phase</span><span class="pm-sv" id="pmv-ph">—</span></div>
   <hr class="sep">
-  <div style="display:flex;gap:5px;margin-bottom:8px;"><button class="sb-btn" onclick="setLang('tr')" style="flex:1">TR</button><button class="sb-btn" onclick="setLang('en')" style="flex:1">EN</button><button class="sb-btn" id="pm-sfx" onclick="toggleSfx()" style="flex:1;font-size:14px;" title="Sound (M)">🔊</button></div>
+  <div style="display:flex;gap:5px;margin-bottom:8px;"><button class="sb-btn" onclick="setLang('tr')" style="flex:1">TR</button><button class="sb-btn" onclick="setLang('en')" style="flex:1">EN</button><button class="sb-btn" id="pm-sfx" onclick="toggleSfx()" style="flex:1;font-size:14px;" title="Sound (M)" aria-label="Toggle Sound">🔊</button></div>
   <button class="sbtn" onclick="resumeGame()"><span id="lr">▶ Resume</span></button>
   <button class="sbtn g" onclick="endEarly()"><span id="le">✓ End &amp; Show Results</span></button>
   <button class="sbtn g" onclick="quitToMenu()"><span id="lq">✕ Quit</span></button>
@@ -361,6 +394,7 @@ button:active{transform:scale(0.98);}
   <div style="margin-bottom:13px;"><div class="slbl" id="rh-l">History</div><div id="rh-rows"></div></div>
   <div class="ft-box">
     <span class="ft-ti" id="ft-ti">In-Game Fine Tuning</span>
+    <div class="ft-it"><span class="ft-b">◎</span><span id="ft-gr"></span></div>
     <div class="ft-it"><span class="ft-b">↓</span><span id="ft-ov"></span></div>
     <div class="ft-it"><span class="ft-b">↑</span><span id="ft-un"></span></div>
   </div>
@@ -369,18 +403,19 @@ button:active{transform:scale(0.98);}
     <button class="sbtn g" style="margin-top:0;flex:1;" id="share-btn" onclick="shareResult()"><span id="lsh">📋 Share result</span></button>
     <button class="sbtn g" style="margin-top:0;flex:1;" id="cmd-btn" onclick="copyConsoleCmd()"><span id="lcmd">💻 Console Cmd</span></button>
   </div>
+  <button class="sbtn g" onclick="testResultInPractice()"><span id="l-try-prac">🎯 Try This Sens in Free Warmup</span></button>
   <button class="sbtn g" onclick="showMenu('mm');checkSaved();applyI18n();renderHistLog();"><span id="ld2">✓ Done</span></button>
 </div>
 
 <!-- RESOLUTION & ASPECT RATIO MODAL -->
-<div id="res-modal" onclick="if(event.target===this)closeResModal()" style="display:none;position:fixed;inset:0;z-index:40;background:rgba(7,7,8,.88);backdrop-filter:blur(10px);align-items:center;justify-content:center;">
+<div id="res-modal" role="dialog" aria-modal="true" aria-labelledby="res-m-ti" onclick="if(event.target===this)closeResModal()" style="display:none;position:fixed;inset:0;z-index:40;background:rgba(7,7,8,.88);backdrop-filter:blur(10px);align-items:center;justify-content:center;">
   <div style="background:linear-gradient(135deg,rgba(10,10,14,.98),rgba(16,16,22,.98));border:1px solid rgba(255,255,255,.12);border-radius:2px;max-width:480px;width:92vw;padding:24px;box-shadow:0 24px 60px rgba(0,0,0,.8);">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;border-bottom:1px solid rgba(255,255,255,.08);padding-bottom:12px;">
       <div>
         <div style="font-size:16px;font-weight:900;color:var(--tb);font-family:var(--sans);" id="res-m-ti">En-Boy Oranı &amp; Çözünürlük Rehberi</div>
         <div style="font-family:var(--mono);font-size:8px;color:var(--a);letter-spacing:.12em;text-transform:uppercase;margin-top:2px;" id="res-m-su">4:3 Stretched vs 16:9 &amp; FOV</div>
       </div>
-      <button class="sb-btn" onclick="closeResModal()" style="padding:4px 8px;font-size:12px;line-height:1;">✕</button>
+      <button class="sb-btn" onclick="closeResModal()" aria-label="Close" style="padding:4px 8px;font-size:12px;line-height:1;">✕</button>
     </div>
     <div style="font-size:11px;line-height:1.6;color:rgba(255,255,255,.75);display:flex;flex-direction:column;gap:12px;" id="res-m-body">
       <div>
@@ -437,11 +472,29 @@ const L={
     xhTi:'Nişangah:',
     sndTi:'Ses:',
     xhcTi:'Renk:',
+    tcTi:'Hedef:',
+    durStd:'⏱️ Standart (12s/faz)',
+    durFast:'⚡ Hızlı Mod (8s/faz)',
+    tryPrac:'🎯 Bu Sens ile Serbest Isınmada Dene',
+    webglErr:'⚠️ 3D motoru (Three.js / WebGL) yüklenemedi. İnternet bağlantınızı ve tarayıcı donanım hızlandırma ayarınızı kontrol edin.',
     pracF:'🎯 Flick Isınma',
     pracG:'⚡ Grid Isınma',
     pracT:'🔄 Takip Isınma',
     pracBar:'Serbest Isınma · [ / ] Hassasiyet ± · 1/2/3 Mod · ESC Çık',
     histLoadHint:'Bu hassasiyeti yüklemek için tıkla',
+    grTi:'Nişan Stili (Aim Style)',
+    grWrist:'🖐️ Bilek',
+    grArm:'💪 Kol',
+    grHybrid:'🤝 Hibrit',
+    grUnknown:'❓ Bilmiyorum',
+    grOptBtn:(s)=>`⚡ Önerilen: ${s}`,
+    grMatch:(gn,lo,hi)=>`✓ ${gn} stiliyle uyumlu (İdeal: ${lo}–${hi} cm/360°)`,
+    grSlow:(gn,cm)=>`⚠️ ${cm} cm/360° ${gn} stili için yavaş kalabilir (dönüşlerde zorlanma)`,
+    grFast:(gn,cm)=>`⚠️ ${cm} cm/360° ${gn} stili için hızlı kalabilir (mikro-nişan kaybı)`,
+    grUnkInfo:(cm,dn)=>`💡 Mevcut ${cm} cm/360° → ${dn} aralığında · Test sonunda doğal stilin tespit edilir`,
+    ftGrOk:(gn,cm)=>`${gn} stili (${cm} cm/360°) fiziksel hareket açıklığınla tam uyumlu`,
+    ftGrDiff:(sn,dn,cm)=>`Seçilen: ${sn} · Bulunan ${cm} cm/360° fiziksel olarak ${dn} stiline daha yatkın`,
+    ftGrDet:(dn,cm)=>`Tespit Edilen Stil: Performansın (${cm} cm/360°) doğal olarak ${dn} kullanımına yatkın`,
     resTi:'En-Boy Oranı & Çözünürlük Rehberi',
     resSu:'4:3 Stretched vs 16:9 & FOV',
     resCsT:'🎮 CS2 (4:3 Stretched):',
@@ -486,11 +539,29 @@ const L={
     xhTi:'Crosshair:',
     sndTi:'Sound:',
     xhcTi:'Color:',
+    tcTi:'Target:',
+    durStd:'⏱️ Standard (12s/phase)',
+    durFast:'⚡ Fast Mode (8s/phase)',
+    tryPrac:'🎯 Try This Sens in Free Warmup',
+    webglErr:'⚠️ 3D engine (Three.js / WebGL) failed to load. Check your internet connection and browser hardware acceleration.',
     pracF:'🎯 Flick Warmup',
     pracG:'⚡ Grid Warmup',
     pracT:'🔄 Track Warmup',
     pracBar:'Free Warmup · [ / ] Sensitivity ± · 1/2/3 Mode · ESC Exit',
     histLoadHint:'Click to load this sensitivity',
+    grTi:'Aiming Style',
+    grWrist:'🖐️ Wrist',
+    grArm:'💪 Arm',
+    grHybrid:'🤝 Hybrid',
+    grUnknown:'❓ Not Sure',
+    grOptBtn:(s)=>`⚡ Suggested: ${s}`,
+    grMatch:(gn,lo,hi)=>`✓ Matches ${gn} style (Ideal: ${lo}–${hi} cm/360°)`,
+    grSlow:(gn,cm)=>`⚠️ ${cm} cm/360° may feel too slow for ${gn} aim`,
+    grFast:(gn,cm)=>`⚠️ ${cm} cm/360° may feel too fast for ${gn} aim`,
+    grUnkInfo:(cm,dn)=>`💡 Current ${cm} cm/360° → ${dn} range · Your natural style will be detected after testing`,
+    ftGrOk:(gn,cm)=>`${gn} style (${cm} cm/360°) matches your physical range of motion`,
+    ftGrDiff:(sn,dn,cm)=>`Selected: ${sn} · Found ${cm} cm/360° physically leans toward ${dn} aim`,
+    ftGrDet:(dn,cm)=>`Detected Style: Your performance (${cm} cm/360°) naturally fits ${dn} aim`,
     resTi:'Aspect Ratio & Sensitivity Guide',
     resSu:'4:3 Stretched vs 16:9 & FOV',
     resCsT:'🎮 CS2 (4:3 Stretched):',
@@ -518,6 +589,11 @@ function applyI18n(){
   document.documentElement.lang=lang;
   $('lg').textContent=T('game');
   $('ld').textContent=T('dpi');$('lf').textContent=T('fov');$('ls').textContent=T('sens');
+  const _grTi=$('l-gr-ti');if(_grTi)_grTi.textContent=T('grTi');
+  const _gw=$('btn-gr-wrist');if(_gw)_gw.textContent=T('grWrist');
+  const _ga=$('btn-gr-arm');if(_ga)_ga.textContent=T('grArm');
+  const _gh=$('btn-gr-hybrid');if(_gh)_gh.textContent=T('grHybrid');
+  const _gu=$('btn-gr-unknown');if(_gu)_gu.textContent=T('grUnknown');
   $('lca').textContent=T('calib');$('lst').textContent=T('start');
   $('hl-r').textContent=T('rLbl');$('hl-ph').textContent=T('phLbl');
   $('hl-sc').textContent=T('scLbl');$('pi-l').textContent=T('piLbl');
@@ -528,6 +604,10 @@ function applyI18n(){
   const _xhTi=$('l-xh-ti');if(_xhTi)_xhTi.textContent=T('xhTi');
   const _sndTi=$('l-snd-ti');if(_sndTi)_sndTi.textContent=T('sndTi');
   const _xhcTi=$('l-xhc-ti');if(_xhcTi)_xhcTi.textContent=T('xhcTi');
+  const _tcTi=$('l-tc-ti');if(_tcTi)_tcTi.textContent=T('tcTi');
+  const _dStd=$('btn-dur-std');if(_dStd)_dStd.textContent=T('durStd');
+  const _dFast=$('btn-dur-fast');if(_dFast)_dFast.textContent=T('durFast');
+  const _tryP=$('l-try-prac');if(_tryP)_tryP.textContent=T('tryPrac');
   const _pf=$('btn-prac-f');if(_pf)_pf.textContent=T('pracF');
   const _pg=$('btn-prac-g');if(_pg)_pg.textContent=T('pracG');
   const _pt=$('btn-prac-t');if(_pt)_pt.textContent=T('pracT');
@@ -559,13 +639,22 @@ function applyI18n(){
   updPv();
 }
 
-// ─── GAME CFG ───
+// ─── GAME & GRIP CFG ───
 const GC={
   cs2:{name:'CS2',opp:'Valorant',yaw:.022,sensMin:.1,sensMax:10,sensD:2.5,fovD:90,convF:.022/.07,minSpan:0.05,
        a:'#e8ff47',a2:'#47ffb8',ag:'rgba(232,255,71,.15)',tc:0xff2233,te:0x550008,ti:.6,lc:0xff1122,gc:0x111111},
   val:{name:'Valorant',opp:'CS2',yaw:.07,sensMin:.1,sensMax:2,sensD:.4,fovD:103,convF:.07/.022,minSpan:0.015,
        a:'#c084fc',a2:'#818cf8',ag:'rgba(192,132,252,.15)',tc:0xff2233,te:0x550008,ti:.6,lc:0xff1122,gc:0x111122}
 };
+const GRIP_CFG={
+  wrist:{cmMin:14,cmOpt:23,cmMax:31,w:{flick:.40,grid:.35,track:.25},spreadMul:.85},
+  arm:{cmMin:38,cmOpt:50,cmMax:72,w:{flick:.35,grid:.30,track:.35},spreadMul:1.15},
+  hybrid:{cmMin:25,cmOpt:35,cmMax:46,w:{flick:.35,grid:.35,track:.30},spreadMul:1.0},
+  unknown:{cmMin:12,cmOpt:34,cmMax:75,w:{flick:.35,grid:.35,track:.30},spreadMul:1.0,unbounded:true}
+};
+let gripStyle=localStorage.getItem('sf_grip')||'hybrid';
+if(!GRIP_CFG[gripStyle])gripStyle='hybrid';
+
 let game='cs2';
 function setGame(g, force=false){
   if(game===g && !force)return;
@@ -591,15 +680,78 @@ function setGame(g, force=false){
 function gS(){const v=parseFloat($('is').value)||GC[game].sensD;const c=GC[game];return Math.max(c.sensMin,Math.min(c.sensMax,v));}
 function gD(){return Math.max(100,parseInt($('id').value)||800);}
 function cm360(s,dpi){return(360/(GC[game].yaw*s))/dpi*2.54;}
+function sensFromCm(cm,dpi){return(360/((cm/2.54)*dpi))/GC[game].yaw;}
+function gripLabel(g){
+  if(g==='wrist')return T('grWrist').replace(/^[^\s]+\s/,'');
+  if(g==='arm')return T('grArm').replace(/^[^\s]+\s/,'');
+  if(g==='unknown')return T('grUnknown').replace(/^[^\s]+\s/,'');
+  return T('grHybrid').replace(/^[^\s]+\s/,'');
+}
+function detectGripByCm(cm){return cm<28?'wrist':cm>43?'arm':'hybrid';}
+
+function setGripStyle(g, userClick=false){
+  if(!GRIP_CFG[g])g='hybrid';
+  gripStyle=g;
+  try{localStorage.setItem('sf_grip',g);}catch(e){}
+  ['wrist','arm','hybrid','unknown'].forEach(k=>{
+    const b=$('btn-gr-'+k);if(b)b.classList.toggle('on',k===g);
+  });
+  const w=GRIP_CFG[g].w;
+  if(typeof MODE_W!=='undefined'){MODE_W.flick=w.flick;MODE_W.grid=w.grid;MODE_W.track=w.track;}
+  const wLbl=$('gr-w-lbl');
+  if(wLbl)wLbl.textContent=`F:${Math.round(w.flick*100)}% · G:${Math.round(w.grid*100)}% · T:${Math.round(w.track*100)}%`;
+  updPv();
+}
+function applyGripOptSens(){
+  const gc=GRIP_CFG[gripStyle]||GRIP_CFG.hybrid;
+  const c=GC[game];
+  const optS=Math.max(c.sensMin,Math.min(c.sensMax,sensFromCm(gc.cmOpt,gD())));
+  const si=$('is');
+  if(si){
+    si.value=optS.toFixed(game==='val'?3:2);
+    si.style.borderColor='var(--a2)';
+    setTimeout(()=>{si.style.borderColor='';},500);
+  }
+  updPv();
+}
 function updPv(){
   const c=GC[game];const s=gS(),d=gD();
+  const rawS=parseFloat($('is')?.value),rawD=parseInt($('id')?.value),rawF=parseInt($('if')?.value);
+  $('is')?.classList.toggle('warn',isNaN(rawS)||rawS<c.sensMin||rawS>c.sensMax);
+  $('id')?.classList.toggle('warn',isNaN(rawD)||rawD<100||rawD>32000);
+  $('if')?.classList.toggle('warn',isNaN(rawF)||rawF<60||rawF>120);
+  const cm=cm360(s,d);
   $('pv-e').textContent=Math.round(s*d);
-  $('pv-c').textContent=cm360(s,d).toFixed(1);
+  $('pv-c').textContent=cm.toFixed(1);
   $('pv-cv').textContent=(s*c.convF).toFixed(3);
   $('pv-cl').textContent=game==='cs2'?T('pvC'):T('pvCA');
   document.querySelectorAll('[data-dpi]').forEach(b=>{
     b.classList.toggle('on',parseInt(b.getAttribute('data-dpi'))===d);
   });
+  const gc=GRIP_CFG[gripStyle]||GRIP_CFG.hybrid;
+  const stEl=$('gr-status'),optBtn=$('btn-gr-opt');
+  const gName=gripLabel(gripStyle);
+  const optS=Math.max(c.sensMin,Math.min(c.sensMax,sensFromCm(gc.cmOpt,d))).toFixed(game==='val'?3:2);
+  if(stEl){
+    if(gripStyle==='unknown'){
+      const detName=gripLabel(detectGripByCm(cm));
+      stEl.textContent=T('grUnkInfo',cm.toFixed(1),detName);
+      stEl.style.color='rgba(255,255,255,.55)';
+      if(optBtn)optBtn.style.display='none';
+    } else if(cm>=gc.cmMin&&cm<=gc.cmMax){
+      stEl.textContent=T('grMatch',gName,gc.cmMin,gc.cmMax);
+      stEl.style.color='var(--a2)';
+      if(optBtn)optBtn.style.display='none';
+    } else if(cm>gc.cmMax){
+      stEl.textContent=T('grSlow',gName,cm.toFixed(1));
+      stEl.style.color='var(--a)';
+      if(optBtn){optBtn.textContent=T('grOptBtn',optS);optBtn.style.display='inline-block';}
+    } else {
+      stEl.textContent=T('grFast',gName,cm.toFixed(1));
+      stEl.style.color='var(--a)';
+      if(optBtn){optBtn.textContent=T('grOptBtn',optS);optBtn.style.display='inline-block';}
+    }
+  }
 }
 
 // ─── STORAGE ───
@@ -670,6 +822,7 @@ function resumeSession(){
   const s=load();if(!s)return;
   const _g=s.game||'cs2';
   setGame(_g);$('id').value=s.dpi||800;$('is').value=s.sens.toFixed(3);
+  if(s.grip)setGripStyle(s.grip);
   // FOV restore (localStorage'dan — setGame default'u ezmişse koru)
   const _rfov=localStorage.getItem('sf_fov_'+_g)||localStorage.getItem('sf_fov');if(_rfov)$('if').value=_rfov;
   updPv();
@@ -678,16 +831,13 @@ function resumeSession(){
   // Per-mod state restore (yeni format) ya da eski format'tan reconstruct
   if(s.modLo&&s.modHi){
     modLo=s.modLo;modHi=s.modHi;
-    // modInitRange: kaydedilmişse restore et; yoksa mevcut span'den reconstruct
-    // (eski format uyumluluğu - eski kayıtlarda modInitRange yoktu)
     if(s.modInitRange){
       modInitRange=s.modInitRange;
     } else {
-      // Eski kayıt: mevcut span'i başlangıç olarak kabul et (confidence biraz yanıltıcı olur ama crash olmaz)
       MODES.forEach(m=>{modInitRange[m]=modHi[m]-modLo[m];});
     }
-    lo=MODES.reduce((a,m)=>a+modLo[m],0)/MODES.length;
-    hi=MODES.reduce((a,m)=>a+modHi[m],0)/MODES.length;
+    lo=MODES.reduce((a,m)=>a+modLo[m]*(MODE_W[m]||1/3),0);
+    hi=MODES.reduce((a,m)=>a+modHi[m]*(MODE_W[m]||1/3),0);
   } else {
     lo=s.lo||s.sens*.45;hi=s.hi||s.sens*2.1;
     _initModRanges((lo+hi)/2);
@@ -712,47 +862,57 @@ function updateCameraFov(){
 }
 
 function initThree(){
-  if(renderer)return; // prevent double init
-  const c=GC[game];const W=window.innerWidth,H=window.innerHeight;
-  scene=new THREE.Scene();scene.background=new THREE.Color(0x070708);
-  scene.fog=new THREE.FogExp2(0x070708,.018);
-  camera=new THREE.PerspectiveCamera(75,W/H,.1,200);
-  updateCameraFov();
-  renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
-  renderer.setSize(W,H);$('rc').appendChild(renderer.domElement);
-  scene.add(new THREE.AmbientLight(0x222222,.8));
-  const dl=new THREE.DirectionalLight(0xfff0ee,.6);dl.position.set(3,8,4);scene.add(dl);
-  gridHelper=new THREE.GridHelper(120,60,c.gc,c.gc);gridHelper.position.y=-3.5;scene.add(gridHelper);
-  const wm=new THREE.MeshBasicMaterial({color:0x070708,side:THREE.BackSide});
-  const rm=new THREE.Mesh(new THREE.BoxGeometry(80,40,80),wm);rm.position.set(0,16.5,0);scene.add(rm);
-  // Center orientation reference pole for 360° awareness
-  const refPole = new THREE.Mesh(new THREE.CylinderGeometry(.02,.02,6,12),new THREE.MeshBasicMaterial({color:0x22222e}));
-  refPole.position.set(0,-0.5,-8);scene.add(refPole);
-  // Red fill lights so targets are vivid from all angles
-  tL=new THREE.PointLight(0xff1122,4,16);scene.add(tL);
-  const fl=new THREE.PointLight(0xff3344,2,18);fl.position.set(-4,2,-6);scene.add(fl);
-  yaw=0;pitch=0;
-  camera.quaternion.setFromEuler(new THREE.Euler(0,0,0,'YXZ'));
-  
-  doRender();
-  window.addEventListener('resize',()=>{
-    if(!renderer)return;
-    const W=window.innerWidth,H=window.innerHeight;
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
-    renderer.setSize(W,H);
-    camera.aspect=W/H;
+  if(renderer)return true; // prevent double init
+  if(typeof THREE==='undefined'){
+    const errEl=$('webgl-err');if(errEl){errEl.textContent=T('webglErr');errEl.style.display='block';}
+    return false;
+  }
+  try{
+    const c=GC[game];const W=window.innerWidth,H=window.innerHeight;
+    scene=new THREE.Scene();scene.background=new THREE.Color(0x070708);
+    scene.fog=new THREE.FogExp2(0x070708,.018);
+    camera=new THREE.PerspectiveCamera(75,W/H,.1,200);
     updateCameraFov();
-  });
+    renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+    renderer.setSize(W,H);$('rc').appendChild(renderer.domElement);
+    scene.add(new THREE.AmbientLight(0x222222,.8));
+    const dl=new THREE.DirectionalLight(0xfff0ee,.6);dl.position.set(3,8,4);scene.add(dl);
+    gridHelper=new THREE.GridHelper(120,60,c.gc,c.gc);gridHelper.position.y=-3.5;scene.add(gridHelper);
+    const wm=new THREE.MeshBasicMaterial({color:0x070708,side:THREE.BackSide});
+    const rm=new THREE.Mesh(new THREE.BoxGeometry(80,40,80),wm);rm.position.set(0,16.5,0);scene.add(rm);
+    const refPole = new THREE.Mesh(new THREE.CylinderGeometry(.02,.02,6,12),new THREE.MeshBasicMaterial({color:0x22222e}));
+    refPole.position.set(0,-0.5,-8);scene.add(refPole);
+    tL=new THREE.PointLight(_targetColorHex(),4,16);scene.add(tL);
+    const fl=new THREE.PointLight(0xff3344,2,18);fl.position.set(-4,2,-6);scene.add(fl);
+    yaw=0;pitch=0;
+    camera.quaternion.setFromEuler(new THREE.Euler(0,0,0,'YXZ'));
+    doRender();
+    window.addEventListener('resize',()=>{
+      if(!renderer)return;
+      const W=window.innerWidth,H=window.innerHeight;
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+      renderer.setSize(W,H);
+      camera.aspect=W/H;
+      updateCameraFov();
+    });
+    return true;
+  }catch(e){
+    const errEl=$('webgl-err');if(errEl){errEl.textContent=T('webglErr');errEl.style.display='block';}
+    return false;
+  }
 }
 
+let _targetColor=localStorage.getItem('sf_tcolor')||'#ff2020';
+function _targetColorHex(){return parseInt(_targetColor.replace('#',''),16)||0xff2020;}
+
 function mkSph(r=.3){
-  // MeshBasicMaterial ignores scene lighting entirely - guaranteed red no matter what
-  return new THREE.Mesh(new THREE.SphereGeometry(r,20,20),new THREE.MeshBasicMaterial({color:0xff2020}));
+  return new THREE.Mesh(new THREE.SphereGeometry(r,20,20),new THREE.MeshBasicMaterial({color:_targetColorHex()}));
 }
 function updTC(){
-  [...(tM?[tM]:[]),...tMs].forEach(m=>{m.material.color.setHex(0xff2020);});
-  if(tL)tL.color.setHex(0xff1122);
+  const tcHex=_targetColorHex();
+  [...(tM?[tM]:[]),...tMs].forEach(m=>{if(m&&m.material)m.material.color.setHex(tcHex);});
+  if(tL)tL.color.setHex(tcHex);
   if(gridHelper&&gridHelper.material){
     const gc=GC[game].gc;
     if(Array.isArray(gridHelper.material))gridHelper.material.forEach(m=>m.color.setHex(gc));
@@ -774,22 +934,31 @@ function clrT(){
   tMs=[];
 }
 
-// Grid base konumları — setupT'de her test için hafifçe rastgele kaydırılır
-const GP_BASE=[[-2.1,.65,-8],[0,.65,-8],[2.1,.65,-8],[-2.1,-.3,-8],[0,-.3,-8],[2.1,-.3,-8]];
+// Grid base konumları (3x3 = 9 hücre) — her aktifleşmede hücre içinde hafif rastgele kaydırılır
+const GP_BASE=[
+  [-2.0,1.0,-8],[0,1.0,-8],[2.0,1.0,-8],
+  [-2.0,0.1,-8],[0,0.1,-8],[2.0,0.1,-8],
+  [-2.0,-0.8,-8],[0,-0.8,-8],[2.0,-0.8,-8]
+];
 let GP=[...GP_BASE];
 let gridActiveIndices=new Set(),gridLastHitTime=0;
 
+function _jitterGridSlot(idx){
+  const [bx,by,bz]=GP_BASE[idx];
+  const gMul=GRIP_CFG[gripStyle]?.spreadMul||1;
+  return [bx*gMul+(Math.random()-.5)*.34,by+(Math.random()-.5)*.22,bz];
+}
+
 function setupT(mode,label){
   clrT();gridActiveIndices.clear();
-  const tColor=0xff2020;
+  const tColor=_targetColorHex();
   if(mode==='grid'){
-    // Her testte GP konumlarını ±0.25 birim rastgele kaydır — pattern öğrenmeyi önle
-    GP=GP_BASE.map(([x,y,z])=>[x+(Math.random()-.5)*.5,y+(Math.random()-.5)*.25,z]);
+    GP=GP_BASE.map((_,idx)=>_jitterGridSlot(idx));
     GP.forEach(p=>{
-      const m=new THREE.Mesh(new THREE.SphereGeometry(.28,20,20),new THREE.MeshBasicMaterial({color:tColor}));
+      const m=new THREE.Mesh(new THREE.SphereGeometry(.26,20,20),new THREE.MeshBasicMaterial({color:tColor}));
       m.position.set(...p);m.visible=false;scene.add(m);tMs.push(m);
     });
-    // Klasik Gridshot: Aynı anda 3 hedef aktif olur
+    // Klasik Gridshot: Aynı anda 3 farklı hedef aktif olur
     while(gridActiveIndices.size<3&&gridActiveIndices.size<tMs.length){
       gridActiveIndices.add(Math.floor(Math.random()*tMs.length));
     }
@@ -801,8 +970,8 @@ function setupT(mode,label){
 }
 function spawnS(jump,label){
   const isTrack=cMode==='track';
-  // Track: round arttıkça hedef küçülür (min 0.22, başlangıç 0.36)
-  const tRadius=isTrack?Math.max(0.22,0.36-curRound*0.02):undefined;
+  // Track: daha küçük ve hassas hedef (Tur 1: 0.20, tur arttıkça min 0.15'e iner)
+  const tRadius=isTrack?Math.max(0.15,0.215-curRound*0.015):undefined;
   if(tM){
     scene.remove(tM);
     if(tM.geometry)tM.geometry.dispose();
@@ -810,19 +979,20 @@ function spawnS(jump,label){
     tM=null;
   }
   tM=tRadius!=null?mkSph(tRadius):mkSph();
-  if(jump){
-    // Anti-center: crosshair'den en az 0.8 birim uzakta spawnla
+  if(jump||cMode==='flick'){
+    // Anti-center: Flick modunda ilk hedef dahil hiçbir zaman tam nişangâhın üstünde (merkezde) doğmaz
     let attempts=0;
-    const spreadX=cMode==='flick'?8.5:6;
-    const spreadY=cMode==='flick'?1.4:.7;
+    const gMul=GRIP_CFG[gripStyle]?.spreadMul||1;
+    const spreadX=(cMode==='flick'?(jump?8.5:5.5):6)*gMul;
+    const spreadY=cMode==='flick'?(jump?1.4:1.0):.7;
     do{
       tX=(Math.random()-.5)*spreadX;
       tY=(Math.random()-.5)*spreadY+.15;
       attempts++;
-    } while(Math.sqrt(tX*tX+tY*tY)<0.8&&attempts<12);
-    tZ=-8+Math.random()*1.5;
+    } while(Math.sqrt(tX*tX+tY*tY)<0.85&&attempts<12);
+    tZ=-8+(jump?Math.random()*1.5:0);
   }
-  else{tX=(Math.random()-.5)*2.5;tY=(Math.random()-.5)*.5;tZ=-8;}
+  else{tX=(Math.random()-.5)*1.8;tY=(Math.random()-.5)*.4;tZ=-8;}
   // Tracking hızı flick/grid'den ~2.5x fazla
   const spBase=isTrack?(.025+Math.random()*.02):(.01+Math.random()*.007);
   const ang=Math.random()*Math.PI*2;
@@ -831,7 +1001,24 @@ function spawnS(jump,label){
   if(cMode==='flick') _flickSpawnTime=performance.now();
 }
 let _jt=null;
-let _flickSpawnTime=0,_hitTimes=[];
+let _flickSpawnTime=0,_hitTimes=[],_streak=0;
+let _swipeLengthsCm=[],_swipeArcs=[],_curSwipeX=0,_curSwipeAbsY=0,_curSwipeDir=0,_lastMoveT=0;
+function analyzeKinematics(resCm){
+  if(_swipeLengthsCm.length<4){
+    return {style:detectGripByCm(resCm),p90Cm:null,arc:null};
+  }
+  const sorted=[..._swipeLengthsCm].sort((a,b)=>a-b);
+  const p90Cm=sorted[Math.min(sorted.length-1,Math.floor(sorted.length*0.88))];
+  const avgArc=_swipeArcs.length>0?_swipeArcs.reduce((a,b)=>a+b,0)/_swipeArcs.length:0.12;
+  // Biyomekanik puanlama: fiziksel tek hamle uzunluğu (cm) + bilek yay eğriliği + bulunan cm/360°
+  // Sabit bilek tek hamlede ~6.2 cm'yi geçemez ve yay (arc) çizer; kol >9.5 cm düz süpürme yapar.
+  let armScore=0;
+  if(p90Cm>9.2)armScore+=2;else if(p90Cm<5.8)armScore-=2;
+  if(avgArc<0.11)armScore+=1;else if(avgArc>0.17)armScore-=1;
+  if(resCm>42)armScore+=1;else if(resCm<28)armScore-=1;
+  const style=armScore>=2?'arm':armScore<=-2?'wrist':'hybrid';
+  return {style,p90Cm,arc:avgArc};
+}
 function schedJ(mode,label){
   // Track ve grid modlarında schedJ gerekmez
   clearTimeout(_jt);if(mode==='track'||mode==='grid')return;
@@ -875,7 +1062,7 @@ function doRender(){
     tZ+=(Math.random()-.5)*.003*dt60;tZ=Math.max(-9,Math.min(-7.5,tZ));
     tM.position.set(tX,tY,tZ);
   }
-  const firstActiveGrid=Array.from(gridActiveIndices)[0];
+  const firstActiveGrid=gridActiveIndices.values().next().value;
   const prim=tM||(tMs[firstActiveGrid]??tMs[0]??null);
   if(tL&&prim)tL.position.copy(prim.position);
 
@@ -961,11 +1148,13 @@ function setHitSound(preset){
 function setXhStyle(style){
   _xhStyle=style;
   try{localStorage.setItem('sf_xh_style',style);}catch(e){}
-  const xh=$('xh');
-  if(xh){
-    xh.classList.remove('style-cross','style-dot','style-compact');
-    xh.classList.add('style-'+style);
-  }
+  ['xh','xh-prev'].forEach(id=>{
+    const el=$(id);
+    if(el){
+      el.classList.remove('style-cross','style-dot','style-compact');
+      el.classList.add('style-'+style);
+    }
+  });
   ['cross','dot','compact'].forEach(s=>{
     const btn=$('btn-xh-'+s);
     if(btn)btn.classList.toggle('on',s===style);
@@ -980,6 +1169,17 @@ function setXhColor(col){
     const btn=$('btn-xhc-'+hex);
     if(btn)btn.classList.toggle('on','#'+hex===col.toLowerCase());
   });
+}
+
+function setTargetColor(col){
+  _targetColor=col;
+  try{localStorage.setItem('sf_tcolor',col);}catch(e){}
+  document.documentElement.style.setProperty('--tc-c',col);
+  ['ff2020','ffe600','ff2a85','00e5ff'].forEach(hex=>{
+    const btn=$('btn-tc-'+hex);
+    if(btn)btn.classList.toggle('on','#'+hex===col.toLowerCase());
+  });
+  updTC();
 }
 
 function openResModal(){const m=$('res-modal');if(m)m.style.display='flex';}
@@ -1128,6 +1328,22 @@ document.addEventListener('mousemove',e=>{
   if(!active)return;
   const dx=Math.max(-MAX_DELTA,Math.min(MAX_DELTA,e.movementX));
   const dy=Math.max(-MAX_DELTA,Math.min(MAX_DELTA,e.movementY));
+  if(phaseScoreActive&&cMode!=='track'){
+    const nowM=performance.now(),dpiM=gD();
+    const cmX=(dx/dpiM)*2.54,cmY=Math.abs(dy/dpiM)*2.54;
+    const dirX=Math.abs(dx)>2?Math.sign(dx):_curSwipeDir;
+    if(nowM-_lastMoveT>55||(dirX!==0&&_curSwipeDir!==0&&dirX!==_curSwipeDir&&Math.abs(dx)>4)){
+      const totCm=Math.hypot(_curSwipeX,_curSwipeAbsY);
+      if(totCm>=0.85){
+        _swipeLengthsCm.push(totCm);
+        if(Math.abs(_curSwipeX)>=1.2)_swipeArcs.push(_curSwipeAbsY/Math.abs(_curSwipeX));
+      }
+      _curSwipeX=cmX;_curSwipeAbsY=cmY;_curSwipeDir=dirX;
+    } else {
+      _curSwipeX+=cmX;_curSwipeAbsY+=cmY;if(dirX!==0)_curSwipeDir=dirX;
+    }
+    _lastMoveT=nowM;
+  }
   const scale=GC[game].yaw*curTS*(Math.PI/180);
   yaw-=dx*scale;
   pitch-=dy*scale;
@@ -1138,6 +1354,14 @@ document.addEventListener('mousedown',e=>{
   if(e.button!==0||isCalib)return;
   if(!active||!renderer||document.pointerLockElement!==renderer.domElement)return;
   if(cMode==='track'||isPaused||_endEarly||_quitEarly)return;
+  if(phaseScoreActive){
+    const totCm=Math.hypot(_curSwipeX,_curSwipeAbsY);
+    if(totCm>=0.85){
+      _swipeLengthsCm.push(totCm);
+      if(Math.abs(_curSwipeX)>=1.2)_swipeArcs.push(_curSwipeAbsY/Math.abs(_curSwipeX));
+    }
+    _curSwipeX=0;_curSwipeAbsY=0;_curSwipeDir=0;
+  }
   rc2.setFromCamera({x:0,y:0},camera);
 
   if(cMode==='grid'){
@@ -1152,23 +1376,32 @@ document.addEventListener('mousedown',e=>{
         const elapsed=Date.now()-gridLastHitTime;
         const speedBonus=Math.max(50,Math.round(500*Math.exp(-elapsed/1200)));
         if(phaseScoreActive){
-          curScore+=speedBonus;hits++;
+          curScore+=speedBonus;hits++;_streak++;
           if(elapsed>50&&elapsed<2000)_hitTimes.push(elapsed);
         }
-        playHit();showFB('+',true);
+        playHit();showFB(_streak>=3?`+ 🔥${_streak}x`:'+',true);
         gridLastHitTime=Date.now();
 
-        // Vurulan hedefi gizle ve aktif kümeden çıkar
+        // Vurulan hedefi gizle; boşta kalan FARKLI hücrelerden birini seç (aynı yerde çıkmasını kesinlikle önle)
         item.mesh.visible=false;
-        gridActiveIndices.delete(item.idx);
-
-        // Boşta kalan noktalardan birini seçip yeni aktif hedef yap (3 hedef dengesi)
         const inactiveIndices=[];
         for(let i=0;i<tMs.length;i++){
-          if(!gridActiveIndices.has(i))inactiveIndices.push(i);
+          if(!gridActiveIndices.has(i)&&i!==item.idx)inactiveIndices.push(i);
         }
+        gridActiveIndices.delete(item.idx);
+
         if(inactiveIndices.length>0){
-          const nextIdx=inactiveIndices[Math.floor(Math.random()*inactiveIndices.length)];
+          // Crosshair'in tam altında olmayan bir boş hücre seç
+          let nextIdx=inactiveIndices[Math.floor(Math.random()*inactiveIndices.length)];
+          for(let att=0;att<inactiveIndices.length;att++){
+            const cand=inactiveIndices[(Math.floor(Math.random()*inactiveIndices.length)+att)%inactiveIndices.length];
+            const [nx,ny,nz]=_jitterGridSlot(cand);
+            if(tMs[cand]){
+              tMs[cand].position.set(nx,ny,nz);
+              tMs[cand].updateMatrixWorld();
+              if(rc2.intersectObject(tMs[cand]).length===0){nextIdx=cand;break;}
+            }
+          }
           gridActiveIndices.add(nextIdx);
           if(tMs[nextIdx])tMs[nextIdx].visible=true;
         }
@@ -1176,6 +1409,7 @@ document.addEventListener('mousedown',e=>{
       }
     }
     if(!hitFound){
+      _streak=0;
       if(phaseScoreActive){
         curScore=Math.max(0,curScore-200);miss++;
       }
@@ -1190,16 +1424,17 @@ document.addEventListener('mousedown',e=>{
   for(const m of cands){
     if(rc2.intersectObject(m).length>0){
       if(phaseScoreActive){
-        curScore+=500;hits++;
+        curScore+=500;hits++;_streak++;
         const elFlick=Math.round(performance.now()-_flickSpawnTime);
         if(elFlick>50&&elFlick<2500)_hitTimes.push(elFlick);
       }
-      h=true;playHit();showFB('+',true);
+      h=true;playHit();showFB(_streak>=3?`+ 🔥${_streak}x`:'+',true);
       spawnS(true,curLabel);schedJ(cMode,curLabel);
       break;
     }
   }
   if(!h){
+    _streak=0;
     if(phaseScoreActive){
       curScore=Math.max(0,curScore-125);miss++;
     }
@@ -1214,7 +1449,7 @@ window.addEventListener('keydown',e=>{
   if(isPractice&&active){
     if(e.key==='1'||e.key==='2'||e.key==='3'){
       const m=['flick','grid','track'][parseInt(e.key)-1];
-      cMode=m;curScore=0;_trackFrames=0;_trackOnFrames=0;
+      cMode=m;curScore=0;_trackFrames=0;_trackOnFrames=0;_streak=0;
       $('hpill').textContent=T('tag'+['F','G','T'][parseInt(e.key)-1]);
       $('hl-sc').textContent=m==='track'?(lang==='tr'?'Takip Puanı':'Track Score'):T('scLbl');
       $('hv-sc').textContent='0';
@@ -1257,8 +1492,15 @@ window.addEventListener('keydown',e=>{
     }
   }
 });
-let _fbT;
-function showFB(t,g){const el=$('fb');el.textContent=t;el.style.color=g?'var(--a)':'#ff4455';el.style.opacity='1';clearTimeout(_fbT);_fbT=setTimeout(()=>el.style.opacity='0',280);}
+let _fbT,_xhPopT;
+function showFB(t,g){
+  const el=$('fb');el.textContent=t;el.style.color=g?'var(--a)':'#ff4455';el.style.opacity='1';
+  clearTimeout(_fbT);_fbT=setTimeout(()=>el.style.opacity='0',280);
+  if(g){
+    const xh=$('xh');
+    if(xh){xh.classList.add('hit-pop');clearTimeout(_xhPopT);_xhPopT=setTimeout(()=>xh.classList.remove('hit-pop'),90);}
+  }
+}
 
 // ─── PAUSE ───
 let _pauseRes=null,_endEarly=false,_quitEarly=false;
@@ -1276,7 +1518,7 @@ function pauseG(){
   // Faz ilerlemesi
   const _phEl=$('pmv-ph');if(_phEl){const _phV=parseInt($('hv-ph')?.textContent)||0;_phEl.textContent=_phV?`${_phV}/${currentPhaseTotal}`:'-';}
   showMenu('pm');
-  save({game,dpi:gD(),sens:best,round:curRound,lo,hi,hist,modLo,modHi,modInitRange});
+  save({game,dpi:gD(),sens:best,round:curRound,lo,hi,hist,modLo,modHi,modInitRange,grip:gripStyle});
   // Lock'u BIRAKMIYORUZ — resume'da drift olmaz
 }
 function resumeGame(){
@@ -1349,9 +1591,9 @@ function waitResume(){return new Promise(r=>{_pauseRes=r;});}
 
 function startPractice(mode){
   const ac=_getAC();if(ac&&ac.state==='suspended')ac.resume();
+  if(!renderer&&!initThree())return;
   hideAll();
-  isPractice=true;_quitEarly=false;_endEarly=false;isPaused=false;
-  if(!renderer)initThree();
+  isPractice=true;_quitEarly=false;_endEarly=false;isPaused=false;_streak=0;
   cMode=mode;curTS=gS();curScore=0;hits=0;miss=0;onT=false;
   _trackFrames=0;_trackOnFrames=0;phaseScoreActive=true;curLabel='FREE';
   const modeIdx=['flick','grid','track'].indexOf(mode);
@@ -1374,12 +1616,21 @@ function startPractice(mode){
   safeRequestPointerLock(renderer.domElement);
 }
 
+function testResultInPractice(){
+  if(_lastResult&&_lastResult.sens){
+    $('is').value=_lastResult.sens.toFixed(game==='val'?3:3);
+    updPv();
+  }
+  startPractice('flick');
+}
+
 // ─── CALIBRATION ───
 function startCalib(){
+  if(!renderer&&!initThree())return;
   isCalib=true;calMov=0;
   const liveEl=$('cal-live');if(liveEl)liveEl.textContent='...';
   hideAll();$('cov').classList.add('on');
-  if(!renderer)initThree();setTimeout(()=>safeRequestPointerLock(renderer.domElement),200);
+  setTimeout(()=>safeRequestPointerLock(renderer.domElement),200);
 }
 function finCalib(){
   isCalib=false;$('cov').classList.remove('on');showMenu('mm');
@@ -1396,22 +1647,34 @@ function finCalib(){
 
 // ─── TEST ENGINE ───
 // Her mod bağımsız binary search tutar; sonuçlar ağırlıklı ortalama ile birleşir.
-// Flick ağırlık: 0.35 | Grid: 0.35 | Track: 0.30
-// Normalize skor: her modun ham skoru 0–1 aralığına çekilir (kendi teorik max'ına göre),
-// bu sayede 3 farklı scoring sistemi birbirini ezmez.
 const MODES=['flick','grid','track'];
 const MODE_W={flick:.35,grid:.35,track:.30};   // ağırlıklar toplamı = 1.00
 const HALF_DUR=12;
 const WARMUP_DUR=1.5;
 const QUICK_DUR=10;
 const QUICK_WARMUP_DUR=1;
+const FAST_DUR=8;
+const FAST_WARMUP_DUR=1;
 const SESSION_ROUNDS=1; // 1 antreman = 9 faz (3 mod × 3 test)
 let _sessionTarget=1;
+let _testSpeed=localStorage.getItem('sf_speed')||'std';
+
+function setTestSpeed(sp){
+  _testSpeed=sp==='fast'?'fast':'std';
+  try{localStorage.setItem('sf_speed',_testSpeed);}catch(e){}
+  ['std','fast'].forEach(k=>{
+    const b=$('btn-dur-'+k);if(b)b.classList.toggle('on',k===_testSpeed);
+  });
+  updEstDur();
+}
 
 // Normalize skor: ham skoru 0–1'e çevir.
 const BASE_CAP={flick:12000,grid:8000,track:1440};
 let forceQuickRound=false;
 function roundConfig(){
+  if(_testSpeed==='fast'){
+    return {repeats:1,activeDur:FAST_DUR,warmupDur:FAST_WARMUP_DUR,countdown:2,name:'fast'};
+  }
   const initial=!forceQuickRound&&curRound===1&&hist.length===0;
   return initial
     ?{repeats:1,activeDur:HALF_DUR,warmupDur:WARMUP_DUR,countdown:2,name:'initial'}
@@ -1445,9 +1708,9 @@ function modeRangeConf(m){
 function currentAnalysis(finalS){
   const mids={};const confs={};
   MODES.forEach(m=>{mids[m]=modeMid(m);confs[m]=modeRangeConf(m);});
-  const rangeConf=MODES.reduce((s,m)=>s+confs[m],0)/MODES.length;
-  const mean=MODES.reduce((s,m)=>s+mids[m],0)/MODES.length;
-  const variance=MODES.reduce((s,m)=>s+Math.pow(mids[m]-mean,2),0)/MODES.length;
+  const rangeConf=MODES.reduce((s,m)=>s+confs[m]*(MODE_W[m]||1/3),0);
+  const mean=MODES.reduce((s,m)=>s+mids[m]*(MODE_W[m]||1/3),0);
+  const variance=MODES.reduce((s,m)=>s+Math.pow(mids[m]-mean,2)*(MODE_W[m]||1/3),0);
   const spreadPct=Math.sqrt(variance)/Math.max(mean,0.001);
   const agreement=Math.max(0,Math.min(100,100-spreadPct*420));
   const recent=hist.slice(-3).map(r=>r.sens).concat([finalS]);
@@ -1464,21 +1727,36 @@ function currentAnalysis(finalS){
 
 function _initModRanges(centerSens){
   const c=GC[game];
-  modLo.flick=Math.max(c.sensMin,centerSens*.50);
-  modHi.flick=Math.min(c.sensMax,centerSens*1.50);
-  modLo.grid =Math.max(c.sensMin,centerSens*.50);
-  modHi.grid =Math.min(c.sensMax,centerSens*1.50);
-  modLo.track=Math.max(c.sensMin,centerSens*.55);
-  modHi.track=Math.min(c.sensMax,centerSens*1.45);
-  MODES.forEach(m=>{modInitRange[m]=modHi[m]-modLo[m];});
-  lo=Math.max(c.sensMin,centerSens*.50);
-  hi=Math.min(c.sensMax,centerSens*1.50);
+  const gc=GRIP_CFG[gripStyle]||GRIP_CFG.hybrid;
+  MODE_W.flick=gc.w.flick;MODE_W.grid=gc.w.grid;MODE_W.track=gc.w.track;
+  const d=gD();
+  let baseLo,baseHi;
+  if(gc.unbounded){
+    baseLo=centerSens*.50;
+    baseHi=centerSens*1.50;
+  } else {
+    // Tutuş stilinin fiziksel cm/360° sınırlarına karşılık gelen hassasiyet aralığı
+    const gLo=Math.max(c.sensMin,sensFromCm(gc.cmMax*1.25,d));
+    const gHi=Math.min(c.sensMax,sensFromCm(gc.cmMin*0.75,d));
+    baseLo=Math.min(centerSens*.75,Math.max(centerSens*.48,gLo*.85));
+    baseHi=Math.max(centerSens*1.25,Math.min(centerSens*1.52,gHi*1.15));
+  }
+  modLo.flick=Math.max(c.sensMin,baseLo);
+  modHi.flick=Math.min(c.sensMax,baseHi);
+  modLo.grid =Math.max(c.sensMin,baseLo);
+  modHi.grid =Math.min(c.sensMax,baseHi);
+  modLo.track=Math.max(c.sensMin,baseLo*1.05);
+  modHi.track=Math.min(c.sensMax,baseHi*.95);
+  MODES.forEach(m=>{modInitRange[m]=Math.max(0.02,modHi[m]-modLo[m]);});
+  lo=MODES.reduce((s,m)=>s+modLo[m]*MODE_W[m],0);
+  hi=MODES.reduce((s,m)=>s+modHi[m]*MODE_W[m],0);
 }
 
 function startFresh(){
   const ac=_getAC();if(ac&&ac.state==='suspended')ac.resume();
+  if(!renderer&&!initThree())return;
   localStorage.removeItem(SK);$('sb').style.display='none';hist=[];curRound=1;modLo={};modHi={};modInitRange={};lastAnalysis=null;phaseScoreActive=false;forceQuickRound=false;
-  _hitTimes=[];
+  _hitTimes=[];_streak=0;
   _initModRanges(gS());
   _sessionTarget=SESSION_ROUNDS;
   startRound();
@@ -1493,8 +1771,9 @@ function startNextRound(){
 }
 
 function startRound(){
-  hideAll();isPractice=false;_endEarly=false;_quitEarly=false;_hitTimes=[];
-  if(!renderer)initThree();
+  if(!renderer&&!initThree())return;
+  hideAll();isPractice=false;_endEarly=false;_quitEarly=false;_hitTimes=[];_streak=0;
+  _swipeLengthsCm=[];_swipeArcs=[];_curSwipeX=0;_curSwipeAbsY=0;_curSwipeDir=0;
   const cfg=roundConfig();
   forceQuickRound=false;
   const totalPhases=phaseTotal(cfg);
@@ -1605,6 +1884,15 @@ function startRound(){
       return;
     }
 
+    // Eğer "Bilmiyorum" seçiliyse, toplanan fiziksel kaydırma (cm) ve yay eğriliği verisinden
+    // oyuncunun biyomekanik stilini tespit edip mod ağırlıklarını (MODE_W) nihai hesaba uygula
+    if(gripStyle==='unknown'&&_swipeLengthsCm.length>=4){
+      const prelimS=MODES.reduce((s,m)=>s+(modLo[m]+modHi[m])/2,0)/MODES.length;
+      const kin=analyzeKinematics(cm360(prelimS,gD()));
+      const kw=GRIP_CFG[kin.style]?.w;
+      if(kw){MODE_W.flick=kw.flick;MODE_W.grid=kw.grid;MODE_W.track=kw.track;}
+    }
+
     // Ağırlıklı ensemble — modLo/modHi her zaman geçerli (endEarly dahil)
     let wSum=0,finalS=0;
     MODES.forEach(m=>{
@@ -1618,11 +1906,11 @@ function startRound(){
     lastAnalysis=currentAnalysis(finalS);
     const conf=lastAnalysis.confidence;
 
-    lo=MODES.reduce((s,m)=>s+modLo[m],0)/MODES.length;
-    hi=MODES.reduce((s,m)=>s+modHi[m],0)/MODES.length;
+    lo=MODES.reduce((s,m)=>s+modLo[m]*(MODE_W[m]||1/3),0);
+    hi=MODES.reduce((s,m)=>s+modHi[m]*(MODE_W[m]||1/3),0);
     hist.push({round:curRound,sens:finalS,totalSc,lo,hi,conf,modeMids:lastAnalysis.mids,agreement:lastAnalysis.agreement,stability:lastAnalysis.stability});
     if(hist.length>12)hist=hist.slice(-12);
-    save({game,dpi:gD(),sens:finalS,round:_endEarly?curRound:curRound+1,lo,hi,hist,modLo,modHi,modInitRange});
+    save({game,dpi:gD(),sens:finalS,round:_endEarly?curRound:curRound+1,lo,hi,hist,modLo,modHi,modInitRange,grip:gripStyle});
     pushHistLog({date:Date.now(),game,sens:finalS,conf,round:curRound});
 
     active=false;clearTimeout(_jt);document.exitPointerLock();
@@ -1723,10 +2011,14 @@ function runH(sens,label,mode,phIdx,totalPhases,cfg){
   return new Promise(resolve=>{
     _resT=resolve;
     showSOv(sens,label,mode,phIdx,totalPhases,cfg,()=>{
-      curTS=sens;curScore=0;hits=0;miss=0;onT=false;phaseScoreActive=false;
+      curTS=sens;curScore=0;hits=0;miss=0;onT=false;phaseScoreActive=false;_streak=0;
       _trackFrames=0;_trackOnFrames=0;
       currentPhaseActiveDur=cfg.activeDur;
-      cMode=mode;setupT(mode,label);schedJ(mode,label);      const modeIdx=['flick','grid','track'].indexOf(mode);
+      // Her faz başında kamerayı merkeze hizala (önceki fazdan kalan açı sapmasını sıfırla)
+      yaw=0;pitch=0;
+      if(camera)camera.quaternion.setFromEuler(new THREE.Euler(0,0,0,'YXZ'));
+      cMode=mode;setupT(mode,label);schedJ(mode,label);
+      const modeIdx=['flick','grid','track'].indexOf(mode);
       $('hpill').textContent=T('tag'+['F','G','T'][modeIdx]);
       // Tracking modunda HUD'da farklı açıklama
       if(mode==='track'){$('hl-sc').textContent=lang==='tr'?'Takip Puanı':'Track Score';}
@@ -1753,7 +2045,13 @@ function runH(sens,label,mode,phIdx,totalPhases,cfg){
         if(_pausedAt){_totalPaused+=performance.now()-_pausedAt;_pausedAt=0;}
         
         const el=performance.now()-start-_totalPaused;
+        const wasScored=phaseScoreActive;
         phaseScoreActive=el>=warm;
+        // Isınma bittiği anda zamanlayıcıları sıfırla (ısınma süresinin ilk vuruş tepki süresini şişirmesini önle)
+        if(!wasScored&&phaseScoreActive){
+          gridLastHitTime=Date.now();
+          _flickSpawnTime=performance.now();
+        }
         const scoredElapsed=Math.max(0,el-warm);
         const pct=Math.min(100,scoredElapsed/(cfg.activeDur*1000)*100);
         $('pb').style.width=pct+'%';
@@ -1925,6 +2223,22 @@ function showRR(sens,h,miss_,conf,trkOn=0,trkTot=0){
   mbHtml+=`<div class="mb-row"><span class="mb-tag">${lang==='tr'?'Stabil':'Stable'}</span><div class="mb-bar"><div class="mb-fill" style="width:${Math.round(analysis.stability)}%"></div></div><span class="mb-val">${Math.round(analysis.stability)}%</span><span class="mb-conf"></span></div>`;
   $('mb-rows').innerHTML=mbHtml;
 
+  const resCm=cm360(sens,dpi);
+  const kin=analyzeKinematics(resCm);
+  const detGrip=kin.style;
+  const selName=gripLabel(gripStyle),detName=gripLabel(detGrip);
+  const swipeInfo=kin.p90Cm?` · ${lang==='tr'?'Tek hamle':'Max swipe'}: ~${kin.p90Cm.toFixed(1)} cm`:'';
+  const ftGrEl=$('ft-gr');
+  if(ftGrEl){
+    const gc=GRIP_CFG[gripStyle]||GRIP_CFG.hybrid;
+    if(gripStyle==='unknown'){
+      ftGrEl.textContent=T('ftGrDet',detName,resCm.toFixed(1))+swipeInfo;
+    } else if(detGrip===gripStyle||(resCm>=gc.cmMin&&resCm<=gc.cmMax)){
+      ftGrEl.textContent=T('ftGrOk',selName,resCm.toFixed(1))+swipeInfo;
+    } else {
+      ftGrEl.textContent=T('ftGrDiff',selName,detName,resCm.toFixed(1))+swipeInfo;
+    }
+  }
   $('ft-ov').textContent=T('ftOv');$('ft-un').textContent=T('ftUn');
 
   const maxSc=Math.max(...hist.map(r=>r.totalSc),1);
@@ -1975,6 +2289,9 @@ setTimeout(()=>{
   const el=$('sfx-btn');if(el)el.textContent=_sfxOn?"🔊":"🔇";
   setXhStyle(_xhStyle);
   setXhColor(_xhColor);
+  setTargetColor(_targetColor);
+  setGripStyle(gripStyle);
+  setTestSpeed(_testSpeed);
   ['laser','pop','bell'].forEach(p=>{const b=$('btn-snd-'+p);if(b)b.classList.toggle('on',p===_hitSoundPreset);});
 },0);
 updPv();checkSaved();renderHistLog();
