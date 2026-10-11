@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="version" content="1.1.7">
+<meta name="version" content="1.1.8">
 <title>SensFinder — CS2 & Valorant</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
@@ -12,7 +12,7 @@
 :root{
   --a:#e8ff47;--a2:#47ffb8;--ag:rgba(232,255,71,.15);
   --bg:#070708;--p:rgba(9,9,11,.97);--b:rgba(255,255,255,.08);--b2:rgba(255,255,255,.14);
-  --t:#8888a0;--td:#3a3a52;--tb:#eeeef8;
+  --t:#8888a0;--td:#3a3a52;--tb:#eeeef8;--xh-c:#ffffff;
   --mono:'DM Mono',monospace;--sans:'Barlow',sans-serif;
 }
 body.val{--a:#c084fc;--a2:#818cf8;--ag:rgba(192,132,252,.15);}
@@ -23,15 +23,20 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
 #rc canvas{display:block;width:100%!important;height:100%!important;}
 #xh{display:none;position:fixed!important;top:50%!important;left:50%!important;transform:translate(-50%,-50%)!important;pointer-events:none!important;z-index:99999!important;width:0!important;height:0!important;}
 #xh.active{display:block;}
-.xh-h{position:absolute!important;width:26px!important;height:2px!important;background:#ffffff!important;top:-1px!important;left:-13px!important;outline:1px solid #000!important;box-shadow:0 0 3px #000!important;}
-.xh-v{position:absolute!important;width:2px!important;height:26px!important;background:#ffffff!important;left:-1px!important;top:-13px!important;outline:1px solid #000!important;box-shadow:0 0 3px #000!important;}
-.xh-dot{position:absolute!important;width:4px!important;height:4px!important;background:#ffffff!important;border-radius:50%!important;top:-2px!important;left:-2px!important;outline:1px solid #000!important;}
-#xh.on-target .xh-h,#xh.on-target .xh-v,#xh.on-target .xh-dot{background:#00ff88!important;outline-color:#006633!important;}
+.xh-h{position:absolute!important;width:26px!important;height:2px!important;background:var(--xh-c,#ffffff)!important;top:-1px!important;left:-13px!important;outline:1px solid #000!important;box-shadow:0 0 3px #000!important;}
+.xh-v{position:absolute!important;width:2px!important;height:26px!important;background:var(--xh-c,#ffffff)!important;left:-1px!important;top:-13px!important;outline:1px solid #000!important;box-shadow:0 0 3px #000!important;}
+.xh-dot{position:absolute!important;width:4px!important;height:4px!important;background:var(--xh-c,#ffffff)!important;border-radius:50%!important;top:-2px!important;left:-2px!important;outline:1px solid #000!important;}
+#xh.on-target .xh-h,#xh.on-target .xh-v,#xh.on-target .xh-dot{background:#00ff88!important;outline-color:#006633!important;box-shadow:0 0 6px #00ff88!important;}
 #xh.style-dot .xh-h,#xh.style-dot .xh-v{display:none!important;}
 #xh.style-dot .xh-dot{width:6px!important;height:6px!important;top:-3px!important;left:-3px!important;}
 #xh.style-compact .xh-h{width:14px!important;left:-7px!important;}
 #xh.style-compact .xh-v{height:14px!important;top:-7px!important;}
 #xh.style-compact .xh-dot{width:3px!important;height:3px!important;top:-1.5px!important;left:-1.5px!important;}
+.clr-dot{width:14px;height:14px;border-radius:50%;border:1px solid rgba(255,255,255,.25);cursor:pointer;transition:transform .15s,border-color .15s;padding:0;}
+.clr-dot:hover{transform:scale(1.18);}
+.clr-dot.on{border:2px solid #fff;box-shadow:0 0 6px currentColor;transform:scale(1.15);}
+button:focus-visible,input:focus-visible{outline:1px solid var(--a);outline-offset:2px;}
+button:active{transform:scale(0.98);}
 #pw{position:fixed;bottom:0;left:0;right:0;z-index:8;height:2px;background:rgba(255,255,255,.04);}
 #pb{height:100%;background:var(--a);width:0;box-shadow:0 0 8px var(--ag);transition:background .3s;}
 #hud{position:fixed;top:18px;left:18px;z-index:8;background:rgba(7,7,8,.9);border:1px solid var(--b);padding:12px 16px;min-width:178px;display:none;backdrop-filter:blur(12px);}
@@ -85,36 +90,39 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
 .cbtn:hover{border-color:rgba(255,255,255,.18);color:rgba(255,255,255,.7);background:rgba(255,255,255,.04);}
 .cbtn em{color:var(--a);font-style:normal;font-size:14px;}
 .sep{border:none;border-top:1px solid rgba(255,255,255,.07);margin:14px 0;}
-#sb{display:none;background:rgba(232,255,71,.03);border:1px solid rgba(232,255,71,.15);padding:11px 14px;margin-bottom:13px;}
+#sb{display:none;background:rgba(255,255,255,.02);border:1px solid var(--a);box-shadow:inset 0 0 20px var(--ag);padding:11px 14px;margin-bottom:13px;}
 .sb-r{display:flex;justify-content:space-between;align-items:flex-start;}
 .sb-l{font-family:var(--mono);font-size:7px;letter-spacing:.12em;color:rgba(255,255,255,.3);text-transform:uppercase;}
 .sb-v{font-family:var(--mono);font-size:16px;color:var(--a);font-weight:500;}
 .sb-s{font-family:var(--mono);font-size:7px;color:rgba(255,255,255,.25);margin-top:2px;}
 .sb-btns{display:flex;gap:5px;margin-top:8px;}
 .sb-btn{flex:1;padding:6px;border:1px solid rgba(255,255,255,.08);background:none;color:rgba(255,255,255,.35);font-family:var(--mono);font-size:7px;letter-spacing:.12em;cursor:pointer;text-transform:uppercase;transition:all .2s;}
-.sb-btn:hover,.sb-btn.p{border-color:var(--a);color:var(--a);}
-.sbtn{width:100%;padding:15px;margin-top:6px;border:1px solid var(--a);background:linear-gradient(135deg,rgba(232,255,71,.1) 0%,rgba(232,255,71,.04) 100%);color:var(--a);font-family:var(--sans);font-size:13px;font-weight:800;letter-spacing:.18em;cursor:pointer;text-transform:uppercase;transition:all .25s;position:relative;overflow:hidden;}
-.sbtn::before{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(232,255,71,.08),transparent);transition:left .4s;}
+.sb-btn:hover,.sb-btn.p,.sb-btn.on{border-color:var(--a);color:var(--a);}
+.sbtn{width:100%;padding:15px;margin-top:6px;border:1px solid var(--a);background:var(--ag);color:var(--a);font-family:var(--sans);font-size:13px;font-weight:800;letter-spacing:.18em;cursor:pointer;text-transform:uppercase;transition:all .25s;position:relative;overflow:hidden;}
+.sbtn::before{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent);transition:left .4s;}
 .sbtn:hover::before{left:100%;}
-.sbtn:hover{background:linear-gradient(135deg,rgba(232,255,71,.18) 0%,rgba(232,255,71,.08) 100%);box-shadow:0 0 30px var(--ag),inset 0 0 20px rgba(232,255,71,.03);}
+.sbtn:hover{box-shadow:0 0 30px var(--ag),inset 0 0 20px var(--ag);filter:brightness(1.12);}
 .sbtn.g{border-color:rgba(255,255,255,.1);background:rgba(255,255,255,.02);color:rgba(255,255,255,.4);font-size:11px;margin-top:5px;letter-spacing:.12em;}
 .sbtn.g::before{display:none;}
-.sbtn.g:hover{border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.7);background:rgba(255,255,255,.04);box-shadow:none;}
+.sbtn.g:hover{border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.7);background:rgba(255,255,255,.04);box-shadow:none;filter:none;}
 .lbtns{display:flex;gap:4px;}
 .lbtn{padding:4px 10px;border:1px solid rgba(255,255,255,.1);background:none;color:rgba(255,255,255,.25);font-size:8px;font-family:var(--mono);letter-spacing:.12em;cursor:pointer;transition:all .2s;}
-.lbtn.on{border-color:var(--a);color:var(--a);}
+.lbtn:hover:not(.on){border-color:rgba(255,255,255,.22);color:rgba(255,255,255,.65);}
+.lbtn.on{border-color:var(--a);color:var(--a);background:rgba(255,255,255,.03);}
 .mrow{display:flex;justify-content:space-between;align-items:flex-start;}
 /* round result */
 .rr-eye{font-family:var(--mono);font-size:7px;letter-spacing:.28em;color:var(--a);text-transform:uppercase;display:block;margin-bottom:10px;transition:color .3s;}
-.rr-main{font-size:64px;font-weight:900;color:var(--tb);line-height:.95;letter-spacing:-.04em;margin-bottom:4px;font-family:var(--sans);}
+.rr-main{font-size:64px;font-weight:900;color:var(--tb);line-height:.95;letter-spacing:-.04em;margin-bottom:4px;font-family:var(--sans);transition:color .2s,text-shadow .2s;}
+.rr-main:hover{color:var(--a);text-shadow:0 0 24px var(--ag);}
 .rr-unit{font-family:var(--mono);font-size:8px;letter-spacing:.2em;color:rgba(255,255,255,.25);text-transform:uppercase;margin-bottom:18px;}
-.rr-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:14px;}
+.rr-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:14px;}
 .rs{background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.07);padding:10px;text-align:center;}
 .rs-l{font-family:var(--mono);font-size:7px;letter-spacing:.12em;color:rgba(255,255,255,.25);text-transform:uppercase;display:block;margin-bottom:4px;}
 .rs-v{font-family:var(--mono);font-size:16px;color:var(--a);font-weight:500;transition:color .3s;}
 .rr-cv{background:rgba(0,0,0,.3);border:1px solid var(--a);padding:12px 14px;text-align:center;margin-bottom:13px;box-shadow:0 0 20px var(--ag);transition:all .3s;}
+.rr-cv:hover{background:rgba(255,255,255,.03);box-shadow:0 0 28px var(--ag);}
 .rc-l{font-family:var(--mono);font-size:7px;letter-spacing:.18em;color:rgba(255,255,255,.3);text-transform:uppercase;display:block;margin-bottom:4px;}
-.rc-v{font-family:var(--mono);font-size:22px;color:var(--a);font-weight:500;transition:color .3s;}
+.rc-v{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--a);letter-spacing:-.02em;margin-top:3px;transition:color .3s;}
 .confrow{margin-bottom:13px;}
 .conf-lbl{font-family:var(--mono);font-size:7px;letter-spacing:.12em;color:rgba(255,255,255,.25);text-transform:uppercase;margin-bottom:6px;display:flex;justify-content:space-between;}
 .conf-tr{height:4px;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.07);}
@@ -123,7 +131,7 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
 .rh-row{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
 .rh-n{font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.2);min-width:18px;}
 .rh-bar{flex:1;height:10px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.07);position:relative;overflow:hidden;}
-.rh-fill{position:absolute;top:0;left:0;bottom:0;background:rgba(232,255,71,.15);}
+.rh-fill{position:absolute;top:0;left:0;bottom:0;background:var(--ag);}
 .rh-mk{position:absolute;top:1px;bottom:1px;width:2px;background:var(--a);}
 .rh-val{font-family:var(--mono);font-size:9px;color:var(--a);min-width:42px;text-align:right;}
 /* per-mode breakdown */
@@ -133,7 +141,8 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
 .mb-fill{position:absolute;top:0;left:0;bottom:0;background:var(--a);opacity:.55;transition:width .7s cubic-bezier(.16,1,.3,1);}
 .mb-val{font-family:var(--mono);font-size:9px;color:var(--a);min-width:38px;text-align:right;}
 .mb-conf{font-family:var(--mono);font-size:7px;color:rgba(255,255,255,.22);min-width:28px;text-align:right;}
-.rc-v{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--a);letter-spacing:-.02em;margin-top:3px;}
+.hist-item{display:flex;justify-content:space-between;align-items:baseline;padding:6px 6px;border-bottom:1px solid rgba(255,255,255,.05);font-family:var(--mono);font-size:9px;cursor:pointer;transition:background .15s;}
+.hist-item:hover{background:rgba(255,255,255,.04);}
 .ft-box{border:1px solid rgba(255,255,255,.07);padding:13px;margin-bottom:13px;background:rgba(255,255,255,.02);}
 .ft-ti{font-family:var(--mono);font-size:7px;letter-spacing:.18em;color:var(--a);text-transform:uppercase;display:block;margin-bottom:9px;transition:color .3s;}
 .ft-it{display:flex;gap:8px;margin-bottom:5px;font-size:11px;line-height:1.6;color:rgba(255,255,255,.4);}
@@ -233,11 +242,11 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
   <div class="g2">
     <div class="fg"><label class="flbl" id="ld">Mouse DPI</label><input class="fi" type="number" id="id" value="800" min="100" max="32000" step="50" oninput="updPv()" onfocus="this.select()">
       <div style="display:flex;gap:4px;margin-top:5px;">
-        <button type="button" class="lbtn" style="flex:1;padding:4px 1px;" onclick="$('id').value=400;updPv();">400</button>
-        <button type="button" class="lbtn" style="flex:1;padding:4px 1px;" onclick="$('id').value=800;updPv();">800</button>
-        <button type="button" class="lbtn" style="flex:1;padding:4px 1px;" onclick="$('id').value=1200;updPv();">1200</button>
-        <button type="button" class="lbtn" style="flex:1;padding:4px 1px;" onclick="$('id').value=1600;updPv();">1600</button>
-        <button type="button" class="lbtn" style="flex:1;padding:4px 1px;" onclick="$('id').value=3200;updPv();">3200</button>
+        <button type="button" class="lbtn" data-dpi="400" style="flex:1;padding:4px 1px;" onclick="$('id').value=400;updPv();">400</button>
+        <button type="button" class="lbtn on" data-dpi="800" style="flex:1;padding:4px 1px;" onclick="$('id').value=800;updPv();">800</button>
+        <button type="button" class="lbtn" data-dpi="1200" style="flex:1;padding:4px 1px;" onclick="$('id').value=1200;updPv();">1200</button>
+        <button type="button" class="lbtn" data-dpi="1600" style="flex:1;padding:4px 1px;" onclick="$('id').value=1600;updPv();">1600</button>
+        <button type="button" class="lbtn" data-dpi="3200" style="flex:1;padding:4px 1px;" onclick="$('id').value=3200;updPv();">3200</button>
       </div>
     </div>
     <div class="fg">
@@ -275,6 +284,14 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
         <button type="button" class="lbtn" id="btn-snd-bell" onclick="setHitSound('bell')">Bell</button>
       </div>
     </div>
+    <div style="display:flex;align-items:center;gap:7px;margin-top:8px;padding-top:7px;border-top:1px solid rgba(255,255,255,.05);">
+      <span class="flbl" style="margin-bottom:0;font-size:7px;" id="l-xhc-ti">Color:</span>
+      <button type="button" class="clr-dot on" id="btn-xhc-ffffff" style="background:#ffffff;" onclick="setXhColor('#ffffff')" aria-label="White"></button>
+      <button type="button" class="clr-dot" id="btn-xhc-00ff88" style="background:#00ff88;" onclick="setXhColor('#00ff88')" aria-label="Green"></button>
+      <button type="button" class="clr-dot" id="btn-xhc-00e5ff" style="background:#00e5ff;" onclick="setXhColor('#00e5ff')" aria-label="Cyan"></button>
+      <button type="button" class="clr-dot" id="btn-xhc-e8ff47" style="background:#e8ff47;" onclick="setXhColor('#e8ff47')" aria-label="Yellow"></button>
+      <button type="button" class="clr-dot" id="btn-xhc-ff3366" style="background:#ff3366;" onclick="setXhColor('#ff3366')" aria-label="Pink"></button>
+    </div>
   </div>
   <button class="cbtn" onclick="startCalib()"><em>📐</em><span id="lca">Calibrate via 360° mousepad movement</span></button>
   <hr class="sep">
@@ -288,8 +305,13 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
     </div>
   </div>
   <button class="sbtn" onclick="startFresh()">▶ &nbsp;<span id="lst">START TEST</span></button>
+  <div style="display:flex;gap:5px;margin-top:6px;">
+    <button type="button" class="sb-btn" style="flex:1;padding:6px 4px;" onclick="startPractice('flick')" id="btn-prac-f">🎯 Flick</button>
+    <button type="button" class="sb-btn" style="flex:1;padding:6px 4px;" onclick="startPractice('grid')" id="btn-prac-g">⚡ Gridshot</button>
+    <button type="button" class="sb-btn" style="flex:1;padding:6px 4px;" onclick="startPractice('track')" id="btn-prac-t">🔄 Track</button>
+  </div>
   <div id="est-dur" style="text-align:center;font-family:var(--mono);font-size:8px;letter-spacing:.1em;color:rgba(255,255,255,.22);margin-top:7px;">~2.3 dk</div>
-  <div style="text-align:center;font-family:var(--mono);font-size:7px;letter-spacing:.08em;color:rgba(255,255,255,.15);margin-top:10px;" id="kb-hint">⌨ Boşluk başlat · M ses · F tam ekran · ESC duraklat</div>
+  <div style="text-align:center;font-family:var(--mono);font-size:7px;letter-spacing:.08em;color:rgba(255,255,255,.15);margin-top:8px;" id="kb-hint">⌨ Boşluk başlat · M ses · F tam ekran · ESC duraklat</div>
 <div id="histWrap" style="display:none;margin-top:13px;">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
     <span class="slbl" id="hist-l" style="margin-bottom:0;">Recent Results</span>
@@ -343,12 +365,15 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
     <div class="ft-it"><span class="ft-b">↑</span><span id="ft-un"></span></div>
   </div>
   <button class="sbtn" onclick="startNextRound()"><span id="ln">▶ Next Round (More Precise)</span></button>
-  <button class="sbtn g" id="share-btn" onclick="shareResult()"><span id="lsh">📋 Share result</span></button>
+  <div style="display:flex;gap:6px;margin-top:7px;">
+    <button class="sbtn g" style="margin-top:0;flex:1;" id="share-btn" onclick="shareResult()"><span id="lsh">📋 Share result</span></button>
+    <button class="sbtn g" style="margin-top:0;flex:1;" id="cmd-btn" onclick="copyConsoleCmd()"><span id="lcmd">💻 Console Cmd</span></button>
+  </div>
   <button class="sbtn g" onclick="showMenu('mm');checkSaved();applyI18n();renderHistLog();"><span id="ld2">✓ Done</span></button>
 </div>
 
 <!-- RESOLUTION & ASPECT RATIO MODAL -->
-<div id="res-modal" style="display:none;position:fixed;inset:0;z-index:40;background:rgba(7,7,8,.88);backdrop-filter:blur(10px);align-items:center;justify-content:center;">
+<div id="res-modal" onclick="if(event.target===this)closeResModal()" style="display:none;position:fixed;inset:0;z-index:40;background:rgba(7,7,8,.88);backdrop-filter:blur(10px);align-items:center;justify-content:center;">
   <div style="background:linear-gradient(135deg,rgba(10,10,14,.98),rgba(16,16,22,.98));border:1px solid rgba(255,255,255,.12);border-radius:2px;max-width:480px;width:92vw;padding:24px;box-shadow:0 24px 60px rgba(0,0,0,.8);">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;border-bottom:1px solid rgba(255,255,255,.08);padding-bottom:12px;">
       <div>
@@ -400,8 +425,8 @@ const L={
     histTi:'Son Sonuçların',
     kbHint:'⌨ Boşluk başlat · M ses · F tam ekran · ESC duraklat',
     estDur:(m)=>`~${m} dk sürer (3 mod × isabet/hız testi)`,
-    shareTxt:(g,s,cm,c,og,os,d)=>`🎯 SensFinder Sonucu:\n🎮 ${g}: ${s} (${d} DPI · ${cm} cm/360°)\n🔄 ${og} Eşdeğeri: ${os}\n⭐ Güven: %${c}\nhttps://rasne-dev.github.io/SensFinder`,
     shareBtn:'📋 Sonucu paylaş',
+    cmdBtn:'💻 Konsol Komutu',
     shared:'✓ Kopyalandı!',
     lockTi:'TIKLA VE OYNA',
     lockSu:'Nişan alabilmek ve fareyi kilitlemek için tıkla',
@@ -411,6 +436,12 @@ const L={
     optTi:'Tercihler',
     xhTi:'Nişangah:',
     sndTi:'Ses:',
+    xhcTi:'Renk:',
+    pracF:'🎯 Flick Isınma',
+    pracG:'⚡ Grid Isınma',
+    pracT:'🔄 Takip Isınma',
+    pracBar:'Serbest Isınma · [ / ] Hassasiyet ± · 1/2/3 Mod · ESC Çık',
+    histLoadHint:'Bu hassasiyeti yüklemek için tıkla',
     resTi:'En-Boy Oranı & Çözünürlük Rehberi',
     resSu:'4:3 Stretched vs 16:9 & FOV',
     resCsT:'🎮 CS2 (4:3 Stretched):',
@@ -444,6 +475,7 @@ const L={
     estDur:(m)=>`~${m} min (3 modes × accuracy/speed tests)`,
     shareTxt:(g,s,cm,c,og,os,d,r)=>`🎯 SensFinder Result:\n🎮 ${g}: ${s} (${d} DPI · ${cm} cm/360°)\n🔄 ${og} Equivalent: ${os}\n⭐ Confidence: ${c}%${r?`\n⚡ Avg Reflex: ${r}ms`:''}\nhttps://rasne-dev.github.io/SensFinder`,
     shareBtn:'📋 Share result',
+    cmdBtn:'💻 Console Cmd',
     shared:'✓ Copied!',
     lockTi:'CLICK TO PLAY',
     lockSu:'Click anywhere to lock mouse and aim',
@@ -453,6 +485,12 @@ const L={
     optTi:'Preferences',
     xhTi:'Crosshair:',
     sndTi:'Sound:',
+    xhcTi:'Color:',
+    pracF:'🎯 Flick Warmup',
+    pracG:'⚡ Grid Warmup',
+    pracT:'🔄 Track Warmup',
+    pracBar:'Free Warmup · [ / ] Sensitivity ± · 1/2/3 Mode · ESC Exit',
+    histLoadHint:'Click to load this sensitivity',
     resTi:'Aspect Ratio & Sensitivity Guide',
     resSu:'4:3 Stretched vs 16:9 & FOV',
     resCsT:'🎮 CS2 (4:3 Stretched):',
@@ -465,10 +503,19 @@ const L={
 let lang=localStorage.getItem('sf_lang')||(navigator.language.startsWith('tr')?'tr':'en');
 const $=id=>document.getElementById(id);
 function T(k,...a){const v=L[lang][k];return typeof v==='function'?v(...a):(v??k);}
-function setLang(l){lang=l;try{localStorage.setItem('sf_lang',l);}catch(e){}document.querySelectorAll('.lbtn').forEach(b=>b.classList.toggle('on',b.textContent===l.toUpperCase()));applyI18n();}
+function setLang(l){
+  lang=l;
+  document.documentElement.lang=l;
+  try{localStorage.setItem('sf_lang',l);}catch(e){}
+  document.querySelectorAll('.lbtn,.sb-btn').forEach(b=>{
+    if(b.textContent==='TR'||b.textContent==='EN'){
+      b.classList.toggle('on',b.textContent===l.toUpperCase());
+    }
+  });
+  applyI18n();
+}
 function applyI18n(){
-  // ms gizli, mt-sub sabit kalır
-  // $('ms').textContent=T('sub');
+  document.documentElement.lang=lang;
   $('lg').textContent=T('game');
   $('ld').textContent=T('dpi');$('lf').textContent=T('fov');$('ls').textContent=T('sens');
   $('lca').textContent=T('calib');$('lst').textContent=T('start');
@@ -480,6 +527,10 @@ function applyI18n(){
   const _optTi=$('l-opt-ti');if(_optTi)_optTi.textContent=T('optTi');
   const _xhTi=$('l-xh-ti');if(_xhTi)_xhTi.textContent=T('xhTi');
   const _sndTi=$('l-snd-ti');if(_sndTi)_sndTi.textContent=T('sndTi');
+  const _xhcTi=$('l-xhc-ti');if(_xhcTi)_xhcTi.textContent=T('xhcTi');
+  const _pf=$('btn-prac-f');if(_pf)_pf.textContent=T('pracF');
+  const _pg=$('btn-prac-g');if(_pg)_pg.textContent=T('pracG');
+  const _pt=$('btn-prac-t');if(_pt)_pt.textContent=T('pracT');
   const _resTi=$('res-m-ti');if(_resTi)_resTi.textContent=T('resTi');
   const _resSu=$('res-m-su');if(_resSu)_resSu.textContent=T('resSu');
   const _resCsT=$('res-m-cs-t');if(_resCsT)_resCsT.textContent=T('resCsT');
@@ -498,6 +549,7 @@ function applyI18n(){
   updEstDur();
   $('ln').textContent=T('nextR');$('ld2').textContent=T('done');
   const _lshEl=$('lsh');if(_lshEl)_lshEl.textContent=T('shareBtn');
+  const _lcmdEl=$('lcmd');if(_lcmdEl)_lcmdEl.textContent=T('cmdBtn');
   const _ltEl=$('lock-ti');if(_ltEl)_ltEl.textContent=T('lockTi');
   const _lsEl=$('lock-su');if(_lsEl)_lsEl.textContent=T('lockSu');
   $('pm-ti').textContent=T('pmTi');$('pm-su').textContent=T('pmSu');if($('pml-ph'))$('pml-ph').textContent=T('pmPh');
@@ -534,7 +586,7 @@ function setGame(g, force=false){
   } else {
     if(parseFloat(si.value)>c.sensMax)si.value=c.sensD;
   }
-  applyI18n();updPv();if(camera)updateCameraFov();if(tM)updTC();
+  applyI18n();updPv();if(camera)updateCameraFov();if(renderer)updTC();
 }
 function gS(){const v=parseFloat($('is').value)||GC[game].sensD;const c=GC[game];return Math.max(c.sensMin,Math.min(c.sensMax,v));}
 function gD(){return Math.max(100,parseInt($('id').value)||800);}
@@ -545,6 +597,9 @@ function updPv(){
   $('pv-c').textContent=cm360(s,d).toFixed(1);
   $('pv-cv').textContent=(s*c.convF).toFixed(3);
   $('pv-cl').textContent=game==='cs2'?T('pvC'):T('pvCA');
+  document.querySelectorAll('[data-dpi]').forEach(b=>{
+    b.classList.toggle('on',parseInt(b.getAttribute('data-dpi'))===d);
+  });
 }
 
 // ─── STORAGE ───
@@ -573,6 +628,16 @@ function pushHistLog(entry){
     localStorage.setItem(HK,JSON.stringify(arr));
   }catch(e){}
 }
+function applyHistSens(g,s){
+  if(g==='cs2'||g==='val')setGame(g,true);
+  const si=$('is');
+  if(si){
+    si.value=Number(s).toFixed(game==='val'?3:3);
+    updPv();
+    si.style.borderColor='var(--a2)';
+    setTimeout(()=>{si.style.borderColor='';},500);
+  }
+}
 function renderHistLog(){
   const wrap=$('histWrap');if(!wrap)return;
   const arr=loadHistLog();
@@ -583,11 +648,13 @@ function renderHistLog(){
   recent.forEach(e=>{
     const d=new Date(e.date);
     const dstr=d.toLocaleDateString(lang==='tr'?'tr-TR':'en-US',{month:'short',day:'numeric'});
-    const gName=(GC[e.game]?GC[e.game].name:e.game)||'?';
-    html+=`<div style="display:flex;justify-content:space-between;align-items:baseline;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05);font-family:var(--mono);font-size:9px;">
+    const gKey=e.game==='val'?'val':'cs2';
+    const gName=(GC[gKey]?GC[gKey].name:e.game)||'?';
+    const sVal=Number(e.sens||0);
+    html+=`<div class="hist-item" title="${T('histLoadHint')}" onclick="applyHistSens('${gKey}',${sVal})">
       <span style="color:rgba(255,255,255,.3);min-width:44px;">${dstr}</span>
       <span style="color:rgba(255,255,255,.35);flex:1;text-align:center;">${gName} · R${e.round||1}</span>
-      <span style="color:var(--a);font-weight:500;">${(e.sens||0).toFixed(3)} · ${e.conf??'—'}%</span>
+      <span style="color:var(--a);font-weight:500;">${sVal.toFixed(3)} · ${e.conf??'—'}%</span>
     </div>`;
   });
   $('histRows').innerHTML=html;
@@ -631,7 +698,7 @@ function resumeSession(){
 }
 
 // ─── THREE.JS ───
-let scene,camera,renderer,tM,tL;
+let scene,camera,renderer,tM,tL,gridHelper;
 let tMs=[];
 let tVX=0,tVY=0,tX=0,tY=0,tZ=-8;
 let yaw=0,pitch=0,animF=null,active=false;
@@ -656,7 +723,7 @@ function initThree(){
   renderer.setSize(W,H);$('rc').appendChild(renderer.domElement);
   scene.add(new THREE.AmbientLight(0x222222,.8));
   const dl=new THREE.DirectionalLight(0xfff0ee,.6);dl.position.set(3,8,4);scene.add(dl);
-  const g=new THREE.GridHelper(120,60,c.gc,c.gc);g.position.y=-3.5;scene.add(g);
+  gridHelper=new THREE.GridHelper(120,60,c.gc,c.gc);gridHelper.position.y=-3.5;scene.add(gridHelper);
   const wm=new THREE.MeshBasicMaterial({color:0x070708,side:THREE.BackSide});
   const rm=new THREE.Mesh(new THREE.BoxGeometry(80,40,80),wm);rm.position.set(0,16.5,0);scene.add(rm);
   // Center orientation reference pole for 360° awareness
@@ -686,6 +753,11 @@ function mkSph(r=.3){
 function updTC(){
   [...(tM?[tM]:[]),...tMs].forEach(m=>{m.material.color.setHex(0xff2020);});
   if(tL)tL.color.setHex(0xff1122);
+  if(gridHelper&&gridHelper.material){
+    const gc=GC[game].gc;
+    if(Array.isArray(gridHelper.material))gridHelper.material.forEach(m=>m.color.setHex(gc));
+    else gridHelper.material.color.setHex(gc);
+  }
 }
 function clrT(){
   if(tM){
@@ -873,6 +945,8 @@ function toggleSfx(half=false){
 let _masterGain=null;
 let _hitSoundPreset=localStorage.getItem('sf_hitsound')||'laser';
 let _xhStyle=localStorage.getItem('sf_xh_style')||'cross';
+let _xhColor=localStorage.getItem('sf_xh_color')||'#ffffff';
+let isPractice=false;
 
 function setHitSound(preset){
   _hitSoundPreset=preset;
@@ -895,6 +969,16 @@ function setXhStyle(style){
   ['cross','dot','compact'].forEach(s=>{
     const btn=$('btn-xh-'+s);
     if(btn)btn.classList.toggle('on',s===style);
+  });
+}
+
+function setXhColor(col){
+  _xhColor=col;
+  try{localStorage.setItem('sf_xh_color',col);}catch(e){}
+  document.documentElement.style.setProperty('--xh-c',col);
+  ['ffffff','00ff88','00e5ff','e8ff47','ff3366'].forEach(hex=>{
+    const btn=$('btn-xhc-'+hex);
+    if(btn)btn.classList.toggle('on','#'+hex===col.toLowerCase());
   });
 }
 
@@ -1007,6 +1091,7 @@ document.addEventListener('pointerlockchange',()=>{
   }
   // Lock kayboldu
   if(isCalib){finCalib();return;}
+  if(isPractice){quitToMenu();return;}
   if(!isCalib&&active&&!isPaused){
     setTimeout(()=>{
       if(!active||isPaused||!renderer||document.pointerLockElement===renderer.domElement)return;
@@ -1126,9 +1211,33 @@ document.addEventListener('mousedown',e=>{
 window.addEventListener('keydown',e=>{
   const isInput=document.activeElement?.tagName==='INPUT';
   if((e.key==='m'||e.key==='M')&&!isInput){toggleSfx(e.shiftKey);return;}
+  if(isPractice&&active){
+    if(e.key==='1'||e.key==='2'||e.key==='3'){
+      const m=['flick','grid','track'][parseInt(e.key)-1];
+      cMode=m;curScore=0;_trackFrames=0;_trackOnFrames=0;
+      $('hpill').textContent=T('tag'+['F','G','T'][parseInt(e.key)-1]);
+      $('hl-sc').textContent=m==='track'?(lang==='tr'?'Takip Puanı':'Track Score'):T('scLbl');
+      $('hv-sc').textContent='0';
+      setupT(m,'FREE');schedJ(m,'FREE');
+      return;
+    }
+    if(e.key==='['||e.key===']'||e.key==='ArrowDown'||e.key==='ArrowUp'){
+      const step=game==='val'?0.01:0.05;
+      const dir=(e.key===']'||e.key==='ArrowUp')?1:-1;
+      const c=GC[game];
+      curTS=Math.max(c.sensMin,Math.min(c.sensMax,curTS+dir*step));
+      $('is').value=curTS.toFixed(game==='val'?3:2);
+      updPv();
+      $('hv-s').textContent=curTS.toFixed(3);
+      $('hv-cm').textContent=cm360(curTS,gD()).toFixed(1);
+      return;
+    }
+  }
   if(e.key==='Escape'){
     if(isCalib){return;} // browser lock'u zaten bırakır → pointerlockchange → finCalib
+    if(isPractice){quitToMenu();return;}
     if($('res-modal')?.style.display==='flex'){closeResModal();return;}
+    if($('sov')?.classList.contains('on')){quitToMenu();return;}
     if(isPaused){resumeGame();return;}
     if($('rr').style.display==='block'){
       showMenu('mm');checkSaved();applyI18n();renderHistLog();
@@ -1172,10 +1281,11 @@ function pauseG(){
 }
 function resumeGame(){
   if(!isPaused)return;isPaused=false;hideAll();
+  gridLastHitTime=Date.now();_flickSpawnTime=performance.now();
   if(cMode==='track'&&tM){const sp=Math.hypot(tVX,tVY);if(sp<0.01){const ang=Math.random()*Math.PI*2;tVX=Math.cos(ang)*.032;tVY=Math.sin(ang)*.022;}}
   if(renderer&&document.pointerLockElement===renderer.domElement){
     // Lock zaten var — settle guard'a DOKUNMA (kayma hissi yaratır)
-    active=true;schedJ(cMode);
+    active=true;schedJ(cMode,curLabel);
     if(_pauseRes){_pauseRes();_pauseRes=null;}
   } else {
     // Lock düşmüşse (örn. kullanıcı tab değiştirmişti) yeniden al
@@ -1183,7 +1293,8 @@ function resumeGame(){
       if(document.pointerLockElement===renderer.domElement){
         document.removeEventListener('pointerlockchange',onLock);
         _lockAcquiredAt=performance.now();
-        active=true;schedJ(cMode);
+        gridLastHitTime=Date.now();_flickSpawnTime=performance.now();
+        active=true;schedJ(cMode,curLabel);
         if(_pauseRes){_pauseRes();_pauseRes=null;}
       }
     }
@@ -1192,7 +1303,9 @@ function resumeGame(){
     setTimeout(()=>{
       if(!active){
         document.removeEventListener('pointerlockchange',onLock);
-        _lockAcquiredAt=performance.now();active=true;schedJ(cMode);if(_pauseRes){_pauseRes();_pauseRes=null;}
+        _lockAcquiredAt=performance.now();
+        gridLastHitTime=Date.now();_flickSpawnTime=performance.now();
+        active=true;schedJ(cMode,curLabel);if(_pauseRes){_pauseRes();_pauseRes=null;}
       }
       if(!renderer||document.pointerLockElement!==renderer.domElement){
         const lkOv=$('lock-ov');if(lkOv)lkOv.classList.add('on');
@@ -1208,7 +1321,7 @@ function endEarly(){
   if(_resT){_resT(Math.floor(curScore));_resT=null;}
 }
 function quitToMenu(){
-  _quitEarly=true;
+  _quitEarly=true;isPractice=false;
   isPaused=false;active=false;_endEarly=true;phaseScoreActive=false;
   clearTimeout(_jt);
   if(window._sovCd){clearInterval(window._sovCd);window._sovCd=null;}
@@ -1233,6 +1346,33 @@ function quitToMenu(){
   renderHistLog();
 }
 function waitResume(){return new Promise(r=>{_pauseRes=r;});}
+
+function startPractice(mode){
+  const ac=_getAC();if(ac&&ac.state==='suspended')ac.resume();
+  hideAll();
+  isPractice=true;_quitEarly=false;_endEarly=false;isPaused=false;
+  if(!renderer)initThree();
+  cMode=mode;curTS=gS();curScore=0;hits=0;miss=0;onT=false;
+  _trackFrames=0;_trackOnFrames=0;phaseScoreActive=true;curLabel='FREE';
+  const modeIdx=['flick','grid','track'].indexOf(mode);
+  $('hud').style.display='block';$('pi').style.display='none';$('bbar').style.display='block';
+  $('pb').style.width='100%';
+  $('hpill').textContent=T('tag'+['F','G','T'][modeIdx]);
+  $('hl-sc').textContent=mode==='track'?(lang==='tr'?'Takip Puanı':'Track Score'):T('scLbl');
+  $('hv-r').textContent='—';
+  $('hv-ph').textContent='FREE';
+  $('hv-s').textContent=curTS.toFixed(3);
+  $('hv-cm').textContent=cm360(curTS,gD()).toFixed(1);
+  $('hv-sc').textContent='0';
+  const timerEl=$('hud-timer');if(timerEl){timerEl.textContent='∞';timerEl.style.color='var(--a)';}
+  $('bbar').textContent=T('pracBar');
+  yaw=0;pitch=0;
+  camera.quaternion.setFromEuler(new THREE.Euler(0,0,0,'YXZ'));
+  setupT(mode,'FREE');
+  active=true;
+  schedJ(mode,'FREE');
+  safeRequestPointerLock(renderer.domElement);
+}
 
 // ─── CALIBRATION ───
 function startCalib(){
@@ -1353,7 +1493,7 @@ function startNextRound(){
 }
 
 function startRound(){
-  hideAll();_endEarly=false;_quitEarly=false;_hitTimes=[];
+  hideAll();isPractice=false;_endEarly=false;_quitEarly=false;_hitTimes=[];
   if(!renderer)initThree();
   const cfg=roundConfig();
   forceQuickRound=false;
@@ -1555,6 +1695,16 @@ function shareResult(){
   copyToClipboard(txt).then(()=>{
     const el=$('lsh');if(!el)return;
     const orig=el.textContent;el.textContent=T('shared');
+    setTimeout(()=>{el.textContent=orig;},1500);
+  }).catch(()=>{});
+}
+
+function copyConsoleCmd(){
+  if(!_lastResult)return;
+  const cmd=game==='cs2'?`sensitivity ${_lastResult.sens.toFixed(3)}`:_lastResult.sens.toFixed(3);
+  copyToClipboard(cmd).then(()=>{
+    const el=$('lcmd');if(!el)return;
+    const orig=el.textContent;el.textContent=`✓ ${cmd}`;
     setTimeout(()=>{el.textContent=orig;},1500);
   }).catch(()=>{});
 }
@@ -1812,7 +1962,7 @@ window.addEventListener("keydown",e=>{
 });
 
 // ─── INIT ───
-document.querySelectorAll('.lbtn').forEach(b=>{
+document.querySelectorAll('.lbtn,.sb-btn').forEach(b=>{
   if(b.textContent==='TR'||b.textContent==='EN'){
     b.classList.toggle('on',b.textContent===lang.toUpperCase());
   }
@@ -1824,6 +1974,7 @@ const _sfov=localStorage.getItem("sf_fov_cs2")||localStorage.getItem("sf_fov");i
 setTimeout(()=>{
   const el=$('sfx-btn');if(el)el.textContent=_sfxOn?"🔊":"🔇";
   setXhStyle(_xhStyle);
+  setXhColor(_xhColor);
   ['laser','pop','bell'].forEach(p=>{const b=$('btn-snd-'+p);if(b)b.classList.toggle('on',p===_hitSoundPreset);});
 },0);
 updPv();checkSaved();renderHistLog();
