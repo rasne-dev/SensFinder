@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="version" content="1.2.1">
+<meta name="version" content="1.2.2">
 <title>SensFinder — CS2 & Valorant</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -221,7 +221,7 @@ button:active{transform:scale(0.98);}
   </div>
   <div class="hr"><span class="hl" id="hl-r">Round</span><span class="hv" id="hv-r">1</span></div>
   <div class="hr"><span class="hl" id="hl-ph">Phase</span><span class="hv" id="hv-ph">—</span></div>
-  <div class="hr"><span class="hl">Sens</span><span class="hv big" id="hv-s">2.500</span></div>
+  <div class="hr"><span class="hl" id="hl-s">Sens</span><span class="hv big" id="hv-s">2.500</span></div>
   <div class="hr"><span class="hl">cm/360°</span><span class="hv" id="hv-cm">34.9</span></div>
   <div class="hr"><span class="hl" id="hl-sc">Score</span><span class="hv" id="hv-sc">0</span></div>
 </div>
@@ -265,7 +265,7 @@ button:active{transform:scale(0.98);}
         <div class="mt-sub" id="ms">CS2 &amp; VALORANT</div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
-        <div class="lbtns"><button class="lbtn on" onclick="setLang('tr')" aria-label="Türkçe">TR</button><button class="lbtn" onclick="setLang('en')" aria-label="English">EN</button><button class="lbtn" id="sfx-btn" onclick="toggleSfx()" style="min-width:28px;" title="Sound (M)" aria-label="Toggle Sound">🔊</button><button class="lbtn" onclick="toggleFS()" title="Fullscreen (F)" aria-label="Toggle Fullscreen" style="min-width:28px;">⛶</button></div>
+        <div class="lbtns"><button class="lbtn on" onclick="setLang('tr')" aria-label="Türkçe">TR</button><button class="lbtn" onclick="setLang('en')" aria-label="English">EN</button><button class="lbtn" id="sfx-btn" onclick="toggleSfx()" style="min-width:28px;" title="Sound (M)" aria-label="Toggle Sound">🔊</button><button class="lbtn" id="fs-btn" onclick="toggleFS()" title="Fullscreen (F)" aria-label="Toggle Fullscreen" style="min-width:28px;">⛶</button></div>
       </div>
     </div>
   </div>
@@ -311,6 +311,9 @@ button:active{transform:scale(0.98);}
       <div class="spv"><span class="spvl">cm/360°</span><span class="spvv" id="pv-c">34.9</span></div>
       <div class="spv"><span class="spvl" id="pv-cl">VAL eq.</span><span class="spvv" id="pv-cv">0.786</span></div>
     </div>
+    <button type="button" class="sb-btn" id="btn-open-conv" onclick="openConvModal()" style="width:100%;margin-top:6px;padding:6px 8px;display:flex;align-items:center;justify-content:center;gap:6px;" title="Apex, OW2, R6, COD">
+      <span>🌐</span> <span id="l-conv-btn">Tüm Oyunlara Dönüştür (Apex, OW2, R6...)</span>
+    </button>
     <div id="inp-warn" role="alert" style="display:none;font-family:var(--mono);font-size:10px;line-height:1.5;color:#ff8899;margin-top:7px;"></div>
     <div style="display:flex;gap:8px;align-items:center;margin-top:9px;">
       <label class="flbl" id="l-cm-in" for="cm-in" style="margin-bottom:0;white-space:nowrap;">cm/360° → sens</label>
@@ -374,6 +377,7 @@ button:active{transform:scale(0.98);}
     <button type="button" class="sb-btn" style="flex:1;padding:6px 4px;" onclick="startPractice('flick')" id="btn-prac-f">🎯 Flick</button>
     <button type="button" class="sb-btn" style="flex:1;padding:6px 4px;" onclick="startPractice('grid')" id="btn-prac-g">⚡ Gridshot</button>
     <button type="button" class="sb-btn" style="flex:1;padding:6px 4px;" onclick="startPractice('track')" id="btn-prac-t">🔄 Track</button>
+    <button type="button" class="sb-btn" style="padding:6px 9px;" onclick="openWarmupModal()" id="btn-prac-cfg" title="Özel Isınma Ayarları (Hedef Boyutu, Hız, Süre)">⚙️</button>
   </div>
   <div id="est-dur" style="text-align:center;font-family:var(--mono);font-size:8px;letter-spacing:.1em;color:rgba(255,255,255,.22);margin-top:7px;">~2.3 dk</div>
   <div style="text-align:center;font-family:var(--mono);font-size:7px;letter-spacing:.08em;color:rgba(255,255,255,.15);margin-top:8px;" id="kb-hint">⌨ Boşluk başlat · M ses · F tam ekran · ESC duraklat</div>
@@ -381,6 +385,13 @@ button:active{transform:scale(0.98);}
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
     <span class="slbl" id="hist-l" style="margin-bottom:0;">Recent Results</span>
     <button class="sb-btn" id="hist-clr" onclick="clearHistLog()" style="padding:2px 8px;font-size:7px;">Clear</button>
+  </div>
+  <div id="histChartBox" style="background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.07);padding:8px 10px;margin-bottom:8px;position:relative;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+      <span style="font-family:var(--mono);font-size:8px;letter-spacing:.1em;color:var(--a);text-transform:uppercase;" id="l-hist-chart-ti">Hassasiyet Trendi</span>
+      <span style="font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.45);" id="histChartStats">—</span>
+    </div>
+    <div id="histSvgWrap" style="width:100%;height:58px;position:relative;"></div>
   </div>
   <div id="histRows"></div>
 </div>
@@ -413,7 +424,10 @@ button:active{transform:scale(0.98);}
     <div class="rs"><span class="rs-l" id="rr-al">Accuracy</span><span class="rs-v" id="rr-a">—</span></div>
     <div class="rs"><span class="rs-l" id="rr-rl">Reflex</span><span class="rs-v" id="rr-r">—</span></div>
   </div>
-  <div class="rr-cv" style="cursor:pointer;" title="Click to copy equivalent sensitivity" onclick="copyEquivalent()"><span class="rc-l" id="rr-cl">Equivalent</span><div class="rc-v" id="rr-cv">—</div></div>
+  <div class="rr-cv" id="rr-cv-card" style="cursor:pointer;" title="Click to copy equivalent sensitivity" onclick="copyEquivalent()"><span class="rc-l" id="rr-cl">Equivalent</span><div class="rc-v" id="rr-cv">—</div></div>
+  <button type="button" class="sb-btn" id="btn-rr-conv" onclick="openConvModal()" style="width:100%;margin-bottom:13px;padding:7px 10px;display:flex;align-items:center;justify-content:center;gap:6px;" title="Apex, OW2, R6, COD">
+    <span>🌐</span> <span id="l-rr-conv-btn">Tüm Oyunlara Dönüştür (Apex, OW2, R6, COD...)</span>
+  </button>
   <div class="confrow">
     <div class="conf-lbl"><span id="conf-l">Confidence</span><span class="conf-pct" id="conf-p">—</span></div>
     <div class="conf-tr"><div class="conf-fi" id="conf-f"></div></div>
@@ -423,7 +437,16 @@ button:active{transform:scale(0.98);}
     <div class="slbl" id="mb-l">Per Mode</div>
     <div id="mb-rows"></div>
   </div>
-  <div style="margin-bottom:13px;"><div class="slbl" id="rh-l">History</div><div id="rh-rows"></div></div>
+  <div style="margin-bottom:13px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+      <div class="slbl" id="rh-l" style="margin-bottom:0;">History</div>
+      <span style="font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.3);" id="rh-span-lbl"></span>
+    </div>
+    <div id="rrConvWrap" style="background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.07);padding:6px 8px;margin-bottom:6px;display:none;">
+      <div id="rrConvSvg" style="width:100%;height:38px;"></div>
+    </div>
+    <div id="rh-rows"></div>
+  </div>
   <div class="ft-box">
     <span class="ft-ti" id="ft-ti">In-Game Fine Tuning</span>
     <div class="ft-it"><span class="ft-b">◎</span><span id="ft-gr"></span></div>
@@ -464,6 +487,75 @@ button:active{transform:scale(0.98);}
       </div>
     </div>
     <button class="sbtn g" onclick="closeResModal()" style="margin-top:16px;padding:8px;" id="res-m-close">Kapat</button>
+  </div>
+</div>
+
+<!-- UNIVERSAL GAME CONVERTER MODAL -->
+<div id="conv-modal" role="dialog" aria-modal="true" aria-labelledby="conv-m-ti" onclick="if(event.target===this)closeConvModal()" style="display:none;position:fixed;inset:0;z-index:40;background:rgba(7,7,8,.88);backdrop-filter:blur(10px);align-items:center;justify-content:center;">
+  <div style="background:linear-gradient(135deg,rgba(10,10,14,.98),rgba(16,16,22,.98));border:1px solid rgba(255,255,255,.12);border-radius:2px;max-width:500px;width:92vw;padding:24px;box-shadow:0 24px 60px rgba(0,0,0,.8);max-height:90vh;overflow-y:auto;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;border-bottom:1px solid rgba(255,255,255,.08);padding-bottom:12px;">
+      <div>
+        <div style="font-size:16px;font-weight:900;color:var(--tb);font-family:var(--sans);" id="conv-m-ti">Tüm Oyunlara Hassasiyet Dönüştürücü</div>
+        <div style="font-family:var(--mono);font-size:8px;color:var(--a);letter-spacing:.12em;text-transform:uppercase;margin-top:2px;" id="conv-m-su">Birebir Fiziksel Mesafe (cm/360°) ve Kas Hafızası</div>
+      </div>
+      <button class="sb-btn" onclick="closeConvModal()" aria-label="Close" style="padding:4px 8px;font-size:12px;line-height:1;">✕</button>
+    </div>
+    <div id="conv-m-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+    <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);padding:8px 10px;font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.5);margin-top:12px;" id="conv-m-note">
+      💡 Tüm değerler mevcut cm/360° dönüş mesafeniz temel alınarak hesaplanmıştır. Fare kas hafızanız oyunlar arasında birebir korunur.
+    </div>
+    <button class="sbtn g" onclick="closeConvModal()" style="margin-top:14px;padding:8px;" id="conv-m-close">Kapat</button>
+  </div>
+</div>
+
+<!-- CUSTOM WARMUP SETTINGS MODAL -->
+<div id="warmup-modal" role="dialog" aria-modal="true" aria-labelledby="warm-m-ti" onclick="if(event.target===this)closeWarmupModal()" style="display:none;position:fixed;inset:0;z-index:40;background:rgba(7,7,8,.88);backdrop-filter:blur(10px);align-items:center;justify-content:center;">
+  <div style="background:linear-gradient(135deg,rgba(10,10,14,.98),rgba(16,16,22,.98));border:1px solid rgba(255,255,255,.12);border-radius:2px;max-width:480px;width:92vw;padding:24px;box-shadow:0 24px 60px rgba(0,0,0,.8);">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;border-bottom:1px solid rgba(255,255,255,.08);padding-bottom:12px;">
+      <div>
+        <div style="font-size:16px;font-weight:900;color:var(--tb);font-family:var(--sans);" id="warm-m-ti">Özel Isınma Ayarları</div>
+        <div style="font-family:var(--mono);font-size:8px;color:var(--a);letter-spacing:.12em;text-transform:uppercase;margin-top:2px;" id="warm-m-su">Serbest Alıştırma Parametreleri</div>
+      </div>
+      <button class="sb-btn" onclick="closeWarmupModal()" aria-label="Close" style="padding:4px 8px;font-size:12px;line-height:1;">✕</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div>
+        <span class="flbl" id="l-w-size">Hedef Boyutu (Target Size)</span>
+        <div style="display:flex;gap:5px;">
+          <button type="button" class="lbtn" id="btn-ws-sm" onclick="setWarmupSize('sm')">Küçük (0.16)</button>
+          <button type="button" class="lbtn on" id="btn-ws-md" onclick="setWarmupSize('md')">Standart (0.26)</button>
+          <button type="button" class="lbtn" id="btn-ws-lg" onclick="setWarmupSize('lg')">Büyük (0.38)</button>
+        </div>
+      </div>
+      <div>
+        <span class="flbl" id="l-w-spd">Hedef Hızı (Tracking &amp; Grid)</span>
+        <div style="display:flex;gap:5px;">
+          <button type="button" class="lbtn" id="btn-wspd-slow" onclick="setWarmupSpeed('slow')">Yavaş (0.7x)</button>
+          <button type="button" class="lbtn on" id="btn-wspd-norm" onclick="setWarmupSpeed('norm')">Standart (1.0x)</button>
+          <button type="button" class="lbtn" id="btn-wspd-fast" onclick="setWarmupSpeed('fast')">Hızlı (1.4x)</button>
+        </div>
+      </div>
+      <div>
+        <span class="flbl" id="l-w-cnt">Gridshot Hedef Sayısı</span>
+        <div style="display:flex;gap:5px;">
+          <button type="button" class="lbtn" id="btn-wcnt-1" onclick="setWarmupCount(1)">1 Hedef (Refleks)</button>
+          <button type="button" class="lbtn on" id="btn-wcnt-3" onclick="setWarmupCount(3)">3 Hedef (Standart)</button>
+          <button type="button" class="lbtn" id="btn-wcnt-5" onclick="setWarmupCount(5)">5 Hedef (Yoğun)</button>
+        </div>
+      </div>
+      <div>
+        <span class="flbl" id="l-w-dur">Isınma Süresi</span>
+        <div style="display:flex;gap:5px;">
+          <button type="button" class="lbtn" id="btn-wdur-30" onclick="setWarmupDur(30)">30 Saniye</button>
+          <button type="button" class="lbtn" id="btn-wdur-60" onclick="setWarmupDur(60)">60 Saniye</button>
+          <button type="button" class="lbtn on" id="btn-wdur-0" onclick="setWarmupDur(0)">Sınırsız (∞)</button>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:18px;">
+      <button class="sbtn" onclick="closeWarmupModal();startPractice('flick');" style="flex:1;margin-top:0;padding:10px;" id="warm-m-start">🎯 Başlat</button>
+      <button class="sbtn g" onclick="closeWarmupModal()" style="flex:1;margin-top:0;padding:10px;" id="warm-m-close">Kaydet &amp; Kapat</button>
+    </div>
   </div>
 </div>
 
@@ -546,7 +638,30 @@ const L={
     resValD:'Valorant oyun motoru 3D dünyayı her zaman 103° FOV (16:9) olarak kilitli işler. 4:3 veya 5:4 çözünürlük seçseniz dahi 3D açı ve hassasiyet (cm/360°) birebir aynı kalır; yalnızca arayüz ve nişangah esner.',
     resNote:'💡 SensFinder\'da bulduğunuz cm/360° değeri her iki oyunda da tüm çözünürlüklerde kas hafızanızı korumanızı sağlar.',
     resClose:'Kapat',
-    shareTxt:(g,s,cm,c,og,os,d,r)=>`🎯 SensFinder Sonucu:\n🎮 ${g}: ${s} (${d} DPI · ${cm} cm/360°)\n🔄 ${og} Eşdeğeri: ${os}\n⭐ Güven: %${c}${r?`\n⚡ Ortalama Tepki: ${r}ms`:''}\nhttps://rasne-dev.github.io/SensFinder`,},
+    copyVal:'Sens Değerini Kopyala',
+    hudSens:'Sens',
+    calibOk:'✓ Kalibrasyon hassasiyete uygulandı',
+    openConv:'🌐 Tüm Oyunlara Dönüştür (Apex, OW2, R6...)',
+    convTi:'Tüm Oyunlara Hassasiyet Dönüştürücü',
+    convSu:'Birebir Fiziksel Mesafe (cm/360°) ve Kas Hafızası',
+    convNote:'💡 Tüm değerler mevcut cm/360° dönüş mesafeniz temel alınarak hesaplanmıştır. Fare kas hafızanız oyunlar arasında birebir korunur.',
+    convClose:'Kapat',
+    copyBtn:'Kopyala',
+    copiedBtn:'Kopyalandı',
+    warmupCfgTi:'Özel Isınma Ayarları',
+    warmupCfgSu:'Serbest Alıştırma Parametreleri',
+    wSize:'Hedef Boyutu',
+    wSpeed:'Hedef Hızı (Tracking & Grid)',
+    wCount:'Gridshot Hedef Sayısı',
+    wDur:'Isınma Süresi',
+    wStart:'🎯 Başlat',
+    wClose:'Kaydet & Kapat',
+    wDone:(acc,hits,sc)=>`🎯 Isınma Bitti! İsabet: %${acc} · Vuruş: ${hits} · Puan: ${sc}`,
+    histChartTi:'Hassasiyet Trendi',
+    histAvg:'Ort',
+    histMin:'Min',
+    histMax:'Max',
+    shareTxt:(g,s,cm,c,og,os,d,r)=>`🎯 SensFinder Sonucu:\n🎮 ${g}: ${s} (${d} DPI · ${cm} cm/360°)\n🔄 ${og} Eşdeğeri: ${os}\n⭐ Güven: %${c}${r?`\n⚡ Ortalama Tepki: ${r}ms`:''}\nhttps://rasne-dev.github.io/SensFinder/?game=${g==='Valorant'?'val':'cs2'}&dpi=${d}&sens=${s}`,},
   en:{noMouse:'⚠️ This test needs a mouse (pointer lock) and may not work on touch devices. Open it on a computer.',
     warnSens:(mn,mx,u)=>`Sensitivity must be between ${mn} and ${mx} (using: ${u})`,warnDpi:'DPI must be between 100 and 32000',warnFov:'FOV must be between 60 and 120',
     cmLbl:'cm/360° → sens',
@@ -572,7 +687,7 @@ const L={
     histTi:'Recent Results',
     kbHint:'⌨ Space start · M sound · F fullscreen · ESC pause',
     estDur:(m)=>`~${m} min (3 modes × accuracy/speed tests)`,
-    shareTxt:(g,s,cm,c,og,os,d,r)=>`🎯 SensFinder Result:\n🎮 ${g}: ${s} (${d} DPI · ${cm} cm/360°)\n🔄 ${og} Equivalent: ${os}\n⭐ Confidence: ${c}%${r?`\n⚡ Avg Reflex: ${r}ms`:''}\nhttps://rasne-dev.github.io/SensFinder`,
+    shareTxt:(g,s,cm,c,og,os,d,r)=>`🎯 SensFinder Result:\n🎮 ${g}: ${s} (${d} DPI · ${cm} cm/360°)\n🔄 ${og} Equivalent: ${os}\n⭐ Confidence: ${c}%${r?`\n⚡ Avg Reflex: ${r}ms`:''}\nhttps://rasne-dev.github.io/SensFinder/?game=${g==='Valorant'?'val':'cs2'}&dpi=${d}&sens=${s}`,
     shareBtn:'📋 Share result',
     cmdBtn:'💻 Console Cmd',
     shared:'✓ Copied!',
@@ -615,7 +730,30 @@ const L={
     resValT:'⚡ Valorant (16:9 Locked FOV):',
     resValD:'Valorant always locks the 3D game world to 103° horizontal FOV. Even on 4:3 or 5:4 resolutions, 3D sensitivity and cm/360° stay strictly unchanged; only UI and crosshair stretch.',
     resNote:'💡 The cm/360° value you find in SensFinder preserves your muscle memory across all resolutions in both games.',
-    resClose:'Close',}
+    resClose:'Close',
+    copyVal:'Copy Sens Value',
+    hudSens:'Sens',
+    calibOk:'✓ Calibration applied to sensitivity',
+    openConv:'🌐 Convert to All Games (Apex, OW2, R6...)',
+    convTi:'Universal Sensitivity Converter',
+    convSu:'Exact Physical Distance (cm/360°) & Muscle Memory',
+    convNote:'💡 All values are calculated from your exact cm/360° rotation. Muscle memory is preserved.',
+    convClose:'Close',
+    copyBtn:'Copy',
+    copiedBtn:'Copied',
+    warmupCfgTi:'Custom Warmup Settings',
+    warmupCfgSu:'Free Practice Parameters',
+    wSize:'Target Size',
+    wSpeed:'Target Speed (Tracking & Grid)',
+    wCount:'Gridshot Target Count',
+    wDur:'Warmup Duration',
+    wStart:'🎯 Start',
+    wClose:'Save & Close',
+    wDone:(acc,hits,sc)=>`🎯 Warmup Complete! Acc: ${acc}% · Hits: ${hits} · Score: ${sc}`,
+    histChartTi:'Sensitivity Trend',
+    histAvg:'Avg',
+    histMin:'Min',
+    histMax:'Max',}
 };
 let lang=LS.get('sf_lang')||(navigator.language.startsWith('tr')?'tr':'en');
 const $=id=>document.getElementById(id);
@@ -643,6 +781,7 @@ function applyI18n(){
   $('lca').textContent=T('calib');$('lst').textContent=T('start');
   $('hl-r').textContent=T('rLbl');$('hl-ph').textContent=T('phLbl');
   $('hl-sc').textContent=T('scLbl');$('pi-l').textContent=T('piLbl');
+  const _hlS=$('hl-s');if(_hlS)_hlS.textContent=T('hudSens');
   $('cal-ti').textContent=T('calTi');$('cal-de').innerHTML=T('calDe');
   $('rr-al').textContent=T('rrAl');$('conf-l').textContent=T('confL');
   const _rrRl=$('rr-rl');if(_rrRl)_rrRl.textContent=T('rrRl');
@@ -665,6 +804,22 @@ function applyI18n(){
   const _resValD=$('res-m-val-d');if(_resValD)_resValD.textContent=T('resValD');
   const _resNote=$('res-m-note');if(_resNote)_resNote.textContent=T('resNote');
   const _resClose=$('res-m-close');if(_resClose)_resClose.textContent=T('resClose');
+  const _cb=$('l-conv-btn');if(_cb)_cb.textContent=T('openConv');
+  const _rcb=$('l-rr-conv-btn');if(_rcb)_rcb.textContent=T('openConv');
+  const _ct=$('conv-m-ti');if(_ct)_ct.textContent=T('convTi');
+  const _cs=$('conv-m-su');if(_cs)_cs.textContent=T('convSu');
+  const _cn=$('conv-m-note');if(_cn)_cn.textContent=T('convNote');
+  const _cc=$('conv-m-close');if(_cc)_cc.textContent=T('convClose');
+  const _wt=$('warm-m-ti');if(_wt)_wt.textContent=T('warmupCfgTi');
+  const _ws=$('warm-m-su');if(_ws)_ws.textContent=T('warmupCfgSu');
+  const _lws=$('l-w-size');if(_lws)_lws.textContent=T('wSize');
+  const _lwsp=$('l-w-spd');if(_lwsp)_lwsp.textContent=T('wSpeed');
+  const _lwc=$('l-w-cnt');if(_lwc)_lwc.textContent=T('wCount');
+  const _lwd=$('l-w-dur');if(_lwd)_lwd.textContent=T('wDur');
+  const _wst=$('warm-m-start');if(_wst)_wst.textContent=T('wStart');
+  const _wc=$('warm-m-close');if(_wc)_wc.textContent=T('wClose');
+  const _hct=$('l-hist-chart-ti');if(_hct)_hct.textContent=T('histChartTi');
+  const _pcfg=$('btn-prac-cfg');if(_pcfg)_pcfg.title=T('warmupCfgTi');
   $('rh-l').textContent=T('rhL');$('mb-l').textContent=T('perMode');$('ft-ti').textContent=T('ftTi');
   $('ft-ov').textContent=T('ftOv');$('ft-un').textContent=T('ftUn');
   const _cpHintEl=$('rr-cp-hint');if(_cpHintEl)_cpHintEl.textContent=T('cpHint');
@@ -675,7 +830,7 @@ function applyI18n(){
   updEstDur();
   $('ln').textContent=T('nextR');$('ld2').textContent=T('done');
   const _lshEl=$('lsh');if(_lshEl)_lshEl.textContent=T('shareBtn');
-  const _lcmdEl=$('lcmd');if(_lcmdEl)_lcmdEl.textContent=T('cmdBtn');
+  const _lcmdEl=$('lcmd');if(_lcmdEl)_lcmdEl.textContent=game==='cs2'?T('cmdBtn'):`📋 ${T('copyVal')}`;
   const _ltEl=$('lock-ti');if(_ltEl)_ltEl.textContent=T('lockTi');
   const _lsEl=$('lock-su');if(_lsEl)_lsEl.textContent=T('lockSu');
   $('pm-ti').textContent=T('pmTi');$('pm-su').textContent=T('pmSu');if($('pml-ph'))$('pml-ph').textContent=T('pmPh');
@@ -807,6 +962,11 @@ function updPv(){
       if(optBtn){optBtn.textContent=T('grOptBtn',optS);optBtn.style.display='inline-block';}
     }
   }
+  const cmInEl=$('cm-in');
+  if(cmInEl&&document.activeElement!==cmInEl){
+    cmInEl.value=cm.toFixed(1);
+    cmInEl.classList.remove('warn');
+  }
   if(_uiRestored)persistUI();
 }
 
@@ -840,6 +1000,8 @@ function applyURLParams(){
   const c=GC[game],sv=parseFloat(p.get('sens'));
   if(sv>=c.sensMin&&sv<=c.sensMax)$('is').value=String(Math.round(sv*1000)/1000);
   const f=parseInt(p.get('fov'),10);if(f>=60&&f<=120){$('if').value=f;LS.set('sf_fov_'+game,String(f));}
+  const gr=p.get('grip');if(gr&&GRIP_CFG[gr])setGripStyle(gr);
+  const sp=p.get('speed');if(sp==='fast'||sp==='std')setTestSpeed(sp);
 }
 // Hedef cm/360° girip hassasiyeti buradan hesapla (sens → cm/360° yönünün tersi)
 function applyCmInput(){
@@ -889,11 +1051,146 @@ function applyHistSens(g,s){
     setTimeout(()=>{si.style.borderColor='';},500);
   }
 }
+function getUniversalConversions(s,g,dpi){
+  const baseCS2=g==='cs2'?s:(s*(0.07/0.022));
+  return [
+    {id:'cs2',name:'CS2 / CS:GO',sens:baseCS2.toFixed(3),edpi:Math.round(baseCS2*dpi),icon:'🎮'},
+    {id:'val',name:'Valorant',sens:(baseCS2*(0.022/0.07)).toFixed(3),edpi:Math.round(baseCS2*(0.022/0.07)*dpi),icon:'⚡'},
+    {id:'apex',name:'Apex Legends',sens:baseCS2.toFixed(3),edpi:Math.round(baseCS2*dpi),icon:'🎯'},
+    {id:'ow2',name:'Overwatch 2',sens:(baseCS2*(0.022/0.0066)).toFixed(2),edpi:Math.round(baseCS2*(0.022/0.0066)*dpi),icon:'🛡️'},
+    {id:'cod',name:'Call of Duty (MW/WZ)',sens:(baseCS2*(0.022/0.0066)).toFixed(2),edpi:Math.round(baseCS2*(0.022/0.0066)*dpi),icon:'💥'},
+    {id:'r6',name:'Rainbow Six Siege (1x)',sens:Math.round(baseCS2*3.83967),edpi:Math.round(baseCS2*3.83967*dpi),icon:'🔫'},
+    {id:'fn',name:'Fortnite (%)',sens:(baseCS2*3.9604).toFixed(1)+'%',edpi:Math.round(baseCS2*3.9604*dpi),icon:'🪂'}
+  ];
+}
+function openConvModal(){
+  const s=gS(),g=game,d=gD();
+  const list=getUniversalConversions(s,g,d);
+  const cm=cm360(s,d);
+  let html='';
+  list.forEach(item=>{
+    html+=`
+    <div style="display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.07);padding:8px 10px;gap:10px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:16px;">${item.icon}</span>
+        <div>
+          <div style="font-weight:700;color:var(--tb);font-size:11px;">${item.name}</div>
+          <div style="font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.35);margin-top:2px;">eDPI: ${item.edpi} · ${cm.toFixed(1)} cm/360°</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-family:var(--mono);font-size:14px;color:var(--a);font-weight:700;">${item.sens}</span>
+        <button type="button" class="sb-btn" style="padding:5px 8px;font-size:8px;" onclick="copyConvItem(this, '${item.sens}')">📋 ${T('copyBtn')}</button>
+      </div>
+    </div>`;
+  });
+  $('conv-m-list').innerHTML=html;
+  $('conv-modal').style.display='flex';
+}
+function closeConvModal(){
+  $('conv-modal').style.display='none';
+}
+function copyConvItem(btn,val){
+  const cleanVal=String(val).replace('%','');
+  copyToClipboard(cleanVal).then(()=>{
+    const orig=btn.textContent;
+    btn.textContent='✓ '+T('copiedBtn');
+    btn.style.borderColor='var(--a2)';
+    btn.style.color='var(--a2)';
+    setTimeout(()=>{
+      btn.textContent=orig;
+      btn.style.borderColor='';
+      btn.style.color='';
+    },1200);
+  });
+}
+
+const _warmupCfg={
+  size:LS.get('sf_w_sz')||'md',
+  speed:LS.get('sf_w_spd')||'norm',
+  count:parseInt(LS.get('sf_w_cnt'),10)||3,
+  dur:parseInt(LS.get('sf_w_dur'),10)||0
+};
+function setWarmupSize(sz){
+  _warmupCfg.size=sz;LS.set('sf_w_sz',sz);
+  ['sm','md','lg'].forEach(k=>$('btn-ws-'+k)?.classList.toggle('on',k===sz));
+}
+function setWarmupSpeed(spd){
+  _warmupCfg.speed=spd;LS.set('sf_w_spd',spd);
+  ['slow','norm','fast'].forEach(k=>$('btn-wspd-'+k)?.classList.toggle('on',k===spd));
+}
+function setWarmupCount(cnt){
+  _warmupCfg.count=cnt;LS.set('sf_w_cnt',String(cnt));
+  [1,3,5].forEach(k=>$('btn-wcnt-'+k)?.classList.toggle('on',k===cnt));
+}
+function setWarmupDur(dur){
+  _warmupCfg.dur=dur;LS.set('sf_w_dur',String(dur));
+  [30,60,0].forEach(k=>$('btn-wdur-'+k)?.classList.toggle('on',k===dur));
+}
+function openWarmupModal(){
+  setWarmupSize(_warmupCfg.size);
+  setWarmupSpeed(_warmupCfg.speed);
+  setWarmupCount(_warmupCfg.count);
+  setWarmupDur(_warmupCfg.dur);
+  $('warmup-modal').style.display='flex';
+}
+function closeWarmupModal(){
+  $('warmup-modal').style.display='none';
+}
+
 function renderHistLog(){
   const wrap=$('histWrap');if(!wrap)return;
   const arr=loadHistLog();
   if(!arr.length){wrap.style.display='none';return;}
   wrap.style.display='block';
+
+  const svgWrap=$('histSvgWrap');
+  const statsEl=$('histChartStats');
+  if(svgWrap){
+    if(arr.length>=2){
+      const sensVals=arr.map(e=>Number(e.sens)||0).filter(v=>v>0);
+      const minS=Math.min(...sensVals);
+      const maxS=Math.max(...sensVals);
+      const avgS=sensVals.reduce((a,b)=>a+b,0)/sensVals.length;
+      if(statsEl){
+        statsEl.textContent=`${T('histMin')}: ${minS.toFixed(3)} · ${T('histAvg')}: ${avgS.toFixed(3)} · ${T('histMax')}: ${maxS.toFixed(3)}`;
+      }
+      const W=280,H=58,padX=10,padY=8;
+      const span=Math.max(maxS-minS,0.001);
+      const points=arr.map((e,i)=>{
+        const x=padX+(i/(arr.length-1))*(W-padX*2);
+        const y=H-padY-((Number(e.sens)-minS)/span)*(H-padY*2);
+        return {x,y,sens:Number(e.sens),game:e.game,date:e.date,conf:e.conf,round:e.round};
+      });
+      const dPath=points.map((p,i)=>(i===0?'M':'L')+p.x.toFixed(1)+' '+p.y.toFixed(1)).join(' ');
+      const areaPath=dPath+` L ${points[points.length-1].x.toFixed(1)} ${H} L ${points[0].x.toFixed(1)} ${H} Z`;
+      
+      let svgHtml=`<svg viewBox="0 0 ${W} ${H}" width="100%" height="100%" style="overflow:visible;">
+        <defs>
+          <linearGradient id="histGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="var(--a)" stop-opacity="0.25"/>
+            <stop offset="100%" stop-color="var(--a)" stop-opacity="0.0"/>
+          </linearGradient>
+        </defs>
+        <path d="${areaPath}" fill="url(#histGrad)" />
+        <path d="${dPath}" fill="none" stroke="var(--a)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />`;
+      
+      points.forEach(p=>{
+        const dStr=new Date(p.date).toLocaleDateString(lang==='tr'?'tr-TR':'en-US',{month:'short',day:'numeric'});
+        const gName=GC[p.game]?GC[p.game].name:p.game;
+        const tipText=`${gName} · ${p.sens.toFixed(3)} · ${dStr}`;
+        svgHtml+=`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3" fill="var(--a)" stroke="#070708" stroke-width="1.2" style="cursor:pointer;" onclick="applyHistSens('${p.game}',${p.sens})" role="button" tabindex="0">
+          <title>${tipText} (${T('histLoadHint')})</title>
+        </circle>`;
+      });
+      svgHtml+=`</svg>`;
+      svgWrap.innerHTML=svgHtml;
+    } else {
+      if(statsEl)statsEl.textContent=T('histTi');
+      svgWrap.innerHTML=`<div style="font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.3);text-align:center;padding:16px 0;">${lang==='tr'?'Trend grafiği için en az 2 test tamamlayın':'Complete at least 2 tests for trend graph'}</div>`;
+    }
+  }
+
   const recent=arr.slice(-5).reverse();
   let html='';
   recent.forEach(e=>{
@@ -901,7 +1198,6 @@ function renderHistLog(){
     const dstr=isNaN(d.getTime())?'—':d.toLocaleDateString(lang==='tr'?'tr-TR':'en-US',{month:'short',day:'numeric'});
     const gKey=e.game==='val'?'val':'cs2';
     const gName=(GC[gKey]?GC[gKey].name:e.game)||'?';
-    // localStorage'dan gelen değerler innerHTML'e girmeden önce sayıya zorlanır (bozuk/kurcalanmış kayıtlara karşı)
     const sVal=Number(e.sens)||0;
     const rNum=parseInt(e.round,10)||1;
     const cNum=(e.conf!==null&&e.conf!==''&&Number.isFinite(Number(e.conf)))?Math.round(Number(e.conf)):null;
@@ -916,13 +1212,17 @@ function renderHistLog(){
 function checkSaved(){
   const s=load();
   const sv=s?Number(s.sens):NaN;
-  if(!s||!(sv>0))return; // bozuk/eski kayıt artık init'i çökertmez
+  if(!s||!(sv>0)){
+    $('sb').style.display='none';
+    return;
+  }
   $('sb').style.display='block';
   $('sbv').textContent=sv.toFixed(3);
   const g=GC[s.game]?s.game:'cs2';
   $('sbs').textContent=`${GC[g].name} · Round ${s.round||1} · ${((360/(GC[g].yaw*sv))/(s.dpi||800)*2.54).toFixed(1)} cm/360°`;
 }
 function resumeSession(){
+  const ac=_getAC();if(ac&&ac.state==='suspended')ac.resume();
   const s=load();if(!s)return;
   const _sv=Number(s.sens);if(!(_sv>0))return;
   const _g=GC[s.game]?s.game:'cs2';
@@ -992,6 +1292,13 @@ function initThree(){
     const fl=new THREE.PointLight(0xff3344,2,18);fl.position.set(-4,2,-6);scene.add(fl);
     yaw=0;pitch=0;
     camera.quaternion.setFromEuler(new THREE.Euler(0,0,0,'YXZ'));
+    renderer.domElement.addEventListener('webglcontextlost',(e)=>{
+      e.preventDefault();
+      if(animF){cancelAnimationFrame(animF);animF=null;}
+    },false);
+    renderer.domElement.addEventListener('webglcontextrestored',()=>{
+      if(!animF)doRender();
+    },false);
     doRender();
     window.addEventListener('resize',()=>{
       if(!renderer)return;
@@ -1018,10 +1325,14 @@ function updTC(){
   const tcHex=_targetColorHex();
   [...(tM?[tM]:[]),...tMs].forEach(m=>{if(m&&m.material)m.material.color.setHex(tcHex);});
   if(tL)tL.color.setHex(tcHex);
-  if(gridHelper&&gridHelper.material){
+  if(scene&&GC[game]){
     const gc=GC[game].gc;
-    if(Array.isArray(gridHelper.material))gridHelper.material.forEach(m=>m.color.setHex(gc));
-    else gridHelper.material.color.setHex(gc);
+    if(gridHelper){
+      scene.remove(gridHelper);
+      if(gridHelper.geometry)gridHelper.geometry.dispose();
+      if(gridHelper.material)gridHelper.material.dispose();
+    }
+    gridHelper=new THREE.GridHelper(120,60,gc,gc);gridHelper.position.y=-3.5;scene.add(gridHelper);
   }
 }
 function clrT(){
@@ -1054,17 +1365,25 @@ function _jitterGridSlot(idx){
   return [bx*gMul+(Math.random()-.5)*.34,by+(Math.random()-.5)*.22,bz];
 }
 
+function _warmupRadius(baseR){
+  if(!isPractice)return baseR;
+  const mul=_warmupCfg.size==='sm'?0.62:(_warmupCfg.size==='lg'?1.4:1.0);
+  return baseR*mul;
+}
+
 function setupT(mode,label){
   clrT();gridActiveIndices.clear();
   const tColor=_targetColorHex();
   if(mode==='grid'){
     GP=GP_BASE.map((_,idx)=>_jitterGridSlot(idx));
+    const gR=_warmupRadius(0.26);
     GP.forEach(p=>{
-      const m=new THREE.Mesh(new THREE.SphereGeometry(.26,20,20),new THREE.MeshBasicMaterial({color:tColor}));
+      const m=new THREE.Mesh(new THREE.SphereGeometry(gR,20,20),new THREE.MeshBasicMaterial({color:tColor}));
       m.position.set(...p);m.visible=false;scene.add(m);tMs.push(m);
     });
-    // Klasik Gridshot: Aynı anda 3 farklı hedef aktif olur
-    while(gridActiveIndices.size<3&&gridActiveIndices.size<tMs.length){
+    // Klasik Gridshot: Aynı anda 3 farklı hedef aktif olur (ısınmada özel sayı seçilebilir)
+    const targetCount=isPractice?Math.max(1,Math.min(5,_warmupCfg.count||3)):3;
+    while(gridActiveIndices.size<targetCount&&gridActiveIndices.size<tMs.length){
       gridActiveIndices.add(Math.floor(Math.random()*tMs.length));
     }
     gridActiveIndices.forEach(idx=>{
@@ -1076,14 +1395,15 @@ function setupT(mode,label){
 function spawnS(jump,label){
   const isTrack=cMode==='track';
   // Track: daha küçük ve hassas hedef (Tur 1: 0.20, tur arttıkça min 0.15'e iner)
-  const tRadius=isTrack?Math.max(0.15,0.215-curRound*0.015):undefined;
+  const baseR=isTrack?Math.max(0.15,0.215-curRound*0.015):0.3;
+  const tRadius=_warmupRadius(baseR);
   if(tM){
     scene.remove(tM);
     if(tM.geometry)tM.geometry.dispose();
     if(tM.material)tM.material.dispose();
     tM=null;
   }
-  tM=tRadius!=null?mkSph(tRadius):mkSph();
+  tM=mkSph(tRadius);
   if(jump||cMode==='flick'){
     // Anti-center: Flick modunda ilk hedef dahil hiçbir zaman tam nişangâhın üstünde (merkezde) doğmaz
     let attempts=0;
@@ -1099,7 +1419,8 @@ function spawnS(jump,label){
   }
   else{tX=(Math.random()-.5)*1.8;tY=(Math.random()-.5)*.4;tZ=-8;}
   // Tracking hızı flick/grid'den ~2.5x fazla
-  const spBase=isTrack?(.025+Math.random()*.02):(.01+Math.random()*.007);
+  const spMul=isPractice?(_warmupCfg.speed==='slow'?0.7:(_warmupCfg.speed==='fast'?1.4:1.0)):1.0;
+  const spBase=(isTrack?(.025+Math.random()*.02):(.01+Math.random()*.007))*spMul;
   const ang=Math.random()*Math.PI*2;
   tVX=Math.cos(ang)*spBase;tVY=Math.sin(ang)*spBase*.7;
   tM.position.set(tX,tY,tZ);scene.add(tM);
@@ -1212,7 +1533,8 @@ function doRender(){
   }
 
   if(active&&cMode==='track'&&tM){
-    tX+=tVX*dt60;tY+=tVY*dt60;
+    const spMul=isPractice?(_warmupCfg.speed==='slow'?0.7:(_warmupCfg.speed==='fast'?1.4:1.0)):1.0;
+    tX+=tVX*dt60*spMul;tY+=tVY*dt60*spMul;
     const dist=Math.sqrt(tX*tX+tY*tY);
     if(dist>2.5){
       const nx=tX/dist,ny=tY/dist;
@@ -1649,6 +1971,8 @@ window.addEventListener('keydown',e=>{
     if(isCalib){return;} // browser lock'u zaten bırakır → pointerlockchange → finCalib
     if(isPractice){quitToMenu();return;}
     if($('res-modal')?.style.display==='flex'){closeResModal();return;}
+    if($('conv-modal')?.style.display==='flex'){closeConvModal();return;}
+    if($('warmup-modal')?.style.display==='flex'){closeWarmupModal();return;}
     if($('sov')?.classList.contains('on')){quitToMenu();return;}
     if(isPaused){resumeGame();return;}
     if($('rr').style.display==='block'){
@@ -1660,7 +1984,7 @@ window.addEventListener('keydown',e=>{
   const _ae=document.activeElement;
   const _onBtn=!!(_ae&&(_ae.tagName==='BUTTON'||(_ae.getAttribute&&_ae.getAttribute('role')==='button')));
   if((e.code==='Space'||e.key===' ')&&!isInput&&!_onBtn){
-    if($('mm').style.display!=='none'&&!active&&!isPaused&&!isCalib){
+    if($('mm').style.display!=='none'&&!active&&!isPaused&&!isCalib&&$('res-modal')?.style.display!=='flex'&&$('conv-modal')?.style.display!=='flex'&&$('warmup-modal')?.style.display!=='flex'&&!$('cov')?.classList.contains('on')){
       e.preventDefault();
       startFresh();
       return;
@@ -1749,6 +2073,7 @@ function quitToMenu(){
   if(window._sovCd){clearInterval(window._sovCd);window._sovCd=null;}
   if(window._cuTimer){clearInterval(window._cuTimer);window._cuTimer=null;}
   if(window._hudTimer){clearInterval(window._hudTimer);window._hudTimer=null;}
+  if(_warmupInterval){clearInterval(_warmupInterval);_warmupInterval=null;}
   if(_pauseRes){_pauseRes();_pauseRes=null;}
   if(_resT){_resT(0);_resT=null;}
   if(document.pointerLockElement)document.exitPointerLock();
@@ -1769,6 +2094,7 @@ function quitToMenu(){
 }
 function waitResume(){return new Promise(r=>{_pauseRes=r;});}
 
+let _warmupInterval=null;
 function startPractice(mode){
   const ac=_getAC();if(ac&&ac.state==='suspended')ac.resume();
   if(!renderer&&!initThree())return;
@@ -1786,7 +2112,33 @@ function startPractice(mode){
   $('hv-s').textContent=curTS.toFixed(3);
   $('hv-cm').textContent=cm360(curTS,gD()).toFixed(1);
   $('hv-sc').textContent='0';
-  const timerEl=$('hud-timer');if(timerEl){timerEl.textContent='∞';timerEl.style.color='var(--a)';}
+  const timerEl=$('hud-timer');
+  if(_warmupInterval){clearInterval(_warmupInterval);_warmupInterval=null;}
+  const dur=_warmupCfg.dur||0;
+  if(dur>0){
+    let rem=dur;
+    if(timerEl){timerEl.textContent=rem.toFixed(1)+'s';timerEl.style.color='var(--tb)';}
+    const startT=performance.now();
+    _warmupInterval=setInterval(()=>{
+      if(!active||!isPractice||isPaused)return;
+      const el=(performance.now()-startT)/1000;
+      rem=Math.max(0,dur-el);
+      if(timerEl){
+        timerEl.textContent=rem.toFixed(1)+'s';
+        timerEl.style.color=rem<=5?'#ff4455':'var(--tb)';
+      }
+      if(rem<=0){
+        clearInterval(_warmupInterval);_warmupInterval=null;
+        const tot=(hits+miss);
+        const accPct=tot>0?Math.round(hits/tot*100):(cMode==='track'?Math.round(_trackFrames>0?_trackOnFrames/_trackFrames*100:0):0);
+        const fbMsg=T('wDone',accPct,hits,Math.floor(curScore));
+        quitToMenu();
+        showFB(fbMsg,true);
+      }
+    },100);
+  } else {
+    if(timerEl){timerEl.textContent='∞';timerEl.style.color='var(--a)';}
+  }
   $('bbar').textContent=T('pracBar');
   yaw=0;pitch=0;
   camera.quaternion.setFromEuler(new THREE.Euler(0,0,0,'YXZ'));
@@ -1820,7 +2172,13 @@ function finCalib(){
   if(absCalMov>500){
     const rawSens=360/(GC[game].yaw*absCalMov);
     const clampedSens=Math.min(Math.max(rawSens,GC[game].sensMin),GC[game].sensMax);
-    $('is').value=clampedSens.toFixed(4);updPv();
+    const isEl=$('is');
+    if(isEl){
+      isEl.value=clampedSens.toFixed(4);
+      isEl.style.borderColor='var(--a2)';
+      setTimeout(()=>{isEl.style.borderColor='';},800);
+    }
+    updPv();
   }
   calMov=0;
 }
@@ -1870,10 +2228,6 @@ function updEstDur(){
   const totalSec=totalPhases*(cfg.activeDur+cfg.warmupDur+cfg.countdown);
   const min=Math.round(totalSec/6)/10; // dakika, 1 ondalık
   el.textContent=T('estDur',min);
-}
-function normScore(raw,mode,dur=HALF_DUR){
-  const cap=BASE_CAP[mode]*(dur/12); // durasyona göre ölçekle
-  return Math.min(1,Math.max(0,raw/cap));
 }
 
 let modLo={},modHi={},modInitRange={};
@@ -1994,6 +2348,7 @@ function startRound(){
         phIdx++;updDots(phIdx);
         const raw=await runH(which==='LOW'?sLo:sHi,which,mode,phIdx,totalPhases,cfg);
         if(!(_endEarly||_quitEarly))_phasesDone++;
+        totalSc+=raw;
         if(mode!=='track'){totalH+=hits;totalM+=miss;}
         if(which==='LOW'){rawLo=raw;aimLo={..._aimStats};}else{rawHi=raw;aimHi={..._aimStats};}
         if(_endEarly||_quitEarly)break;
@@ -2040,6 +2395,7 @@ function startRound(){
       phIdx++;updDots(phIdx);
       const rawMid=await runH(sMid,'MID',mode,phIdx,totalPhases,cfg);
       if(!(_endEarly||_quitEarly))_phasesDone++;
+      totalSc+=rawMid;
       if(mode!=='track'){totalH+=hits;totalM+=miss;}
       const aimMid={..._aimStats};
       if(_endEarly||_quitEarly)break;
@@ -2076,8 +2432,6 @@ function startRound(){
         else if(_sp2Hi>GC[game].sensMax){_sp2Hi=GC[game].sensMax;_sp2Lo=_sp2Hi-minS2;}
         modLo[mode]=_sp2Lo;modHi[mode]=_sp2Hi;
       }
-
-      totalSc+=rawLo+rawHi+rawMid;
     }
     if(_endEarly||_quitEarly)break;
     }
@@ -2218,6 +2572,7 @@ function runH(sens,label,mode,phIdx,totalPhases,cfg){
     showSOv(sens,label,mode,phIdx,totalPhases,cfg,()=>{
       curTS=sens;curScore=0;hits=0;miss=0;onT=false;phaseScoreActive=false;_streak=0;
       _trackFrames=0;_trackOnFrames=0;_aimStats=_mkAim();
+      _curSwipeX=0;_curSwipeAbsY=0;_curSwipeDir=0;_lastMoveT=0;_aimReset();
       currentPhaseActiveDur=cfg.activeDur;
       // Her faz başında kamerayı merkeze hizala (önceki fazdan kalan açı sapmasını sıfırla)
       yaw=0;pitch=0;
@@ -2377,7 +2732,10 @@ function showRR(sens,h,miss_,conf,trkOn=0,trkTot=0){
   $('rr-al').textContent=T('rrAl');
   $('rr-cl').textContent=T('rrCl',c.opp);
   $('rr-cv').textContent=_cvVal;
-  $('rr-cv').title=`${c.opp} sensitivity: ${_cvVal} (${lang==='tr'?'aynı cm/360° için':'same cm/360°'})`;$('rr-cl').title=$('rr-cv').title;
+  const cvTitle=`${c.opp} sensitivity: ${_cvVal} (${lang==='tr'?'aynı cm/360° için':'same cm/360°'})`;
+  $('rr-cv').title=cvTitle;$('rr-cl').title=cvTitle;
+  const _cardEl=$('rr-cv-card');if(_cardEl)_cardEl.title=cvTitle;
+  const _lcmd=$('lcmd');if(_lcmd)_lcmd.textContent=game==='cs2'?T('cmdBtn'):`📋 ${T('copyVal')}`;
   $('conf-f').style.width=conf+'%';$('conf-p').textContent=conf+'%';
   $('conf-f').style.background=conf>=90?'#00ff88':conf>=70?'var(--a)':'var(--a)';$('conf-p').style.color=conf>=90?'#00ff88':'var(--a)';
   const analysis=lastAnalysis||currentAnalysis(sens);
@@ -2485,6 +2843,40 @@ function showRR(sens,h,miss_,conf,trkOn=0,trkTot=0){
     html+=`<div class="rh-row"><span class="rh-n">${r.round}</span><div class="rh-bar"><div class="rh-fill" style="width:${w}%"></div><div class="rh-mk" style="left:${mk}%"></div></div><span class="rh-val">${r.sens.toFixed(3)}${arr}</span></div>`;
   });
   $('rh-rows').innerHTML=html;
+
+  const convWrap=$('rrConvWrap');
+  if(convWrap){
+    if(hist.length>=2){
+      convWrap.style.display='block';
+      const spanEl=$('rh-span-lbl');
+      const firstSpan=Math.abs((hist[0].hi||hist[0].sens*1.5)-(hist[0].lo||hist[0].sens*0.5));
+      const lastSpan=Math.abs((hist[hist.length-1].hi||hist[hist.length-1].sens*1.05)-(hist[hist.length-1].lo||hist[hist.length-1].sens*0.95));
+      if(spanEl)spanEl.textContent=`${lang==='tr'?'Daralma':'Narrowing'}: ±${((firstSpan/hist[0].sens)*50).toFixed(0)}% → ±${((lastSpan/hist[hist.length-1].sens)*50).toFixed(0)}%`;
+      const W=280,H=36,padX=8,padY=4;
+      const allVals=hist.flatMap(h=>[h.sens,h.lo||h.sens*0.9,h.hi||h.sens*1.1]);
+      const minV=Math.min(...allVals),maxV=Math.max(...allVals),spanV=Math.max(maxV-minV,0.001);
+      const pts=hist.map((h,i)=>{
+        const x=padX+(i/(hist.length-1))*(W-padX*2);
+        const y=H-padY-((h.sens-minV)/spanV)*(H-padY*2);
+        const yLo=H-padY-(((h.lo||h.sens*0.9)-minV)/spanV)*(H-padY*2);
+        const yHi=H-padY-(((h.hi||h.sens*1.1)-minV)/spanV)*(H-padY*2);
+        return {x,y,yLo,yHi};
+      });
+      const dLo=pts.map((p,i)=>(i===0?'M':'L')+p.x.toFixed(1)+' '+p.yLo.toFixed(1)).join(' ');
+      const dHiRev=[...pts].reverse().map((p)=>'L'+p.x.toFixed(1)+' '+p.yHi.toFixed(1)).join(' ');
+      const areaBand=dLo+' '+dHiRev+' Z';
+      const dMid=pts.map((p,i)=>(i===0?'M':'L')+p.x.toFixed(1)+' '+p.y.toFixed(1)).join(' ');
+      let svgHtml=`<svg viewBox="0 0 ${W} ${H}" width="100%" height="100%">
+        <path d="${areaBand}" fill="var(--a)" opacity="0.12"/>
+        <path d="${dMid}" fill="none" stroke="var(--a)" stroke-width="1.6" stroke-linecap="round"/>`;
+      pts.forEach(p=>{svgHtml+=`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="2.5" fill="var(--a)"/>`;});
+      svgHtml+=`</svg>`;
+      $('rrConvSvg').innerHTML=svgHtml;
+    } else {
+      convWrap.style.display='none';
+    }
+  }
+
   showMenu('rr');
 }
 
@@ -2503,7 +2895,7 @@ function toggleFS(){
   else{document.exitFullscreen();}
 }
 document.addEventListener("fullscreenchange",()=>{
-  const btn=document.querySelector('[title="Fullscreen (F)"]');
+  const btn=$('fs-btn')||document.querySelector('[title="Fullscreen (F)"]');
   if(btn)btn.textContent=document.fullscreenElement?"✕":"⛶";
 });
 window.addEventListener("keydown",e=>{
@@ -2532,6 +2924,10 @@ setTimeout(()=>{
   setTargetColor(_targetColor);
   setGripStyle(gripStyle);
   setTestSpeed(_testSpeed);
+  setWarmupSize(_warmupCfg.size);
+  setWarmupSpeed(_warmupCfg.speed);
+  setWarmupCount(_warmupCfg.count);
+  setWarmupDur(_warmupCfg.dur);
   ['laser','pop','bell'].forEach(p=>{const b=$('btn-snd-'+p);if(b)b.classList.toggle('on',p===_hitSoundPreset);});
 },0);
 restoreUI();applyURLParams();_uiRestored=true;
