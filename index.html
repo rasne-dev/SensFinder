@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="version" content="1.2.2">
+<meta name="version" content="1.2.3">
 <title>SensFinder — CS2 & Valorant</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -57,7 +57,7 @@ button:active{transform:scale(0.98);}
 .idot.done{background:rgba(255,255,255,.2);}
 .idot.active{background:var(--a);box-shadow:0 0 5px var(--ag);}
 #bbar{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:8;display:none;font-family:var(--mono);font-size:9px;letter-spacing:.2em;color:rgba(255,255,255,.22);text-transform:uppercase;text-align:center;}
-#fb{position:fixed;top:44%;left:50%;transform:translateX(-50%);z-index:9;font-family:var(--mono);font-size:18px;font-weight:500;pointer-events:none;opacity:0;transition:opacity .12s;text-shadow:0 0 10px currentColor;}
+#fb{position:fixed;top:44%;left:50%;transform:translateX(-50%);z-index:45;font-family:var(--mono);font-size:18px;font-weight:500;pointer-events:none;opacity:0;transition:opacity .15s;text-shadow:0 0 12px currentColor;text-align:center;max-width:90vw;}
 .menu{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:20;background:linear-gradient(135deg,rgba(7,7,8,.98) 0%,rgba(12,12,16,.97) 100%);border:1px solid rgba(255,255,255,.1);padding:28px 28px 24px;width:500px;max-width:96vw;max-height:94vh;overflow-y:auto;backdrop-filter:blur(24px);scrollbar-width:thin;scrollbar-color:var(--b) transparent;box-shadow:0 0 0 1px rgba(0,0,0,.5),0 32px 80px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.06);}
 .menu::-webkit-scrollbar{width:3px;}.menu::-webkit-scrollbar-thumb{background:var(--b);}
 .hud-timer-badge{display:inline-block;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--tb);background:rgba(255,255,255,.05);padding:2px 8px;border:1px solid var(--b);margin-left:auto;}
@@ -381,10 +381,15 @@ button:active{transform:scale(0.98);}
   </div>
   <div id="est-dur" style="text-align:center;font-family:var(--mono);font-size:8px;letter-spacing:.1em;color:rgba(255,255,255,.22);margin-top:7px;">~2.3 dk</div>
   <div style="text-align:center;font-family:var(--mono);font-size:7px;letter-spacing:.08em;color:rgba(255,255,255,.15);margin-top:8px;" id="kb-hint">⌨ Boşluk başlat · M ses · F tam ekran · ESC duraklat</div>
-<div id="histWrap" style="display:none;margin-top:13px;">
+  <div id="histWrap" style="display:none;margin-top:13px;">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
     <span class="slbl" id="hist-l" style="margin-bottom:0;">Recent Results</span>
-    <button class="sb-btn" id="hist-clr" onclick="clearHistLog()" style="padding:2px 8px;font-size:7px;">Clear</button>
+    <div style="display:flex;gap:4px;">
+      <button class="sb-btn" id="btn-export-json" onclick="exportDataJSON()" style="padding:2px 6px;font-size:7px;" title="JSON Export">💾</button>
+      <button class="sb-btn" id="btn-import-json" onclick="$('inp-import-file').click()" style="padding:2px 6px;font-size:7px;" title="JSON Import">📥</button>
+      <input type="file" id="inp-import-file" accept=".json" style="display:none;" onchange="importDataJSON(event)">
+      <button class="sb-btn" id="hist-clr" onclick="clearHistLog()" style="padding:2px 6px;font-size:7px;">Clear</button>
+    </div>
   </div>
   <div id="histChartBox" style="background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.07);padding:8px 10px;margin-bottom:8px;position:relative;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
@@ -425,8 +430,11 @@ button:active{transform:scale(0.98);}
     <div class="rs"><span class="rs-l" id="rr-rl">Reflex</span><span class="rs-v" id="rr-r">—</span></div>
   </div>
   <div class="rr-cv" id="rr-cv-card" style="cursor:pointer;" title="Click to copy equivalent sensitivity" onclick="copyEquivalent()"><span class="rc-l" id="rr-cl">Equivalent</span><div class="rc-v" id="rr-cv">—</div></div>
-  <button type="button" class="sb-btn" id="btn-rr-conv" onclick="openConvModal()" style="width:100%;margin-bottom:13px;padding:7px 10px;display:flex;align-items:center;justify-content:center;gap:6px;" title="Apex, OW2, R6, COD">
+  <button type="button" class="sb-btn" id="btn-rr-conv" onclick="openConvModal()" style="width:100%;margin-bottom:8px;padding:7px 10px;display:flex;align-items:center;justify-content:center;gap:6px;" title="Apex, OW2, R6, COD">
     <span>🌐</span> <span id="l-rr-conv-btn">Tüm Oyunlara Dönüştür (Apex, OW2, R6, COD...)</span>
+  </button>
+  <button type="button" class="sb-btn" id="btn-rr-ab" onclick="openABModal()" style="width:100%;margin-bottom:13px;padding:7px 10px;display:flex;align-items:center;justify-content:center;gap:6px;border-color:var(--a);color:var(--a);" title="A/B Test">
+    <span id="l-rr-ab-btn">⚔️ A/B Kör Karşılaştırma Testi</span>
   </button>
   <div class="confrow">
     <div class="conf-lbl"><span id="conf-l">Confidence</span><span class="conf-pct" id="conf-p">—</span></div>
@@ -559,6 +567,61 @@ button:active{transform:scale(0.98);}
   </div>
 </div>
 
+<!-- WARMUP SUMMARY MODAL -->
+<div id="wsummary-modal" role="dialog" aria-modal="true" aria-labelledby="wsum-m-ti" onclick="if(event.target===this)closeWarmupSummary()" style="display:none;position:fixed;inset:0;z-index:45;background:rgba(7,7,8,.88);backdrop-filter:blur(10px);align-items:center;justify-content:center;">
+  <div style="background:linear-gradient(135deg,rgba(10,10,14,.98),rgba(16,16,22,.98));border:1px solid rgba(255,255,255,.12);border-radius:2px;max-width:440px;width:92vw;padding:24px;box-shadow:0 24px 60px rgba(0,0,0,.8);">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;border-bottom:1px solid rgba(255,255,255,.08);padding-bottom:12px;">
+      <div>
+        <div style="font-size:16px;font-weight:900;color:var(--tb);font-family:var(--sans);" id="wsum-m-ti">Isınma Özeti</div>
+        <div style="font-family:var(--mono);font-size:8px;color:var(--a);letter-spacing:.12em;text-transform:uppercase;margin-top:2px;" id="wsum-m-su">Performans Metrikleri</div>
+      </div>
+      <button class="sb-btn" onclick="closeWarmupSummary()" aria-label="Close" style="padding:4px 8px;font-size:12px;line-height:1;">✕</button>
+    </div>
+    <div class="rr-stats" style="grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px;">
+      <div class="rs"><span class="rs-l" id="wsum-l-acc">İsabet Oranı</span><span class="rs-v" id="wsum-v-acc">—</span></div>
+      <div class="rs"><span class="rs-l" id="wsum-l-hits">Vuruş / Iska</span><span class="rs-v" id="wsum-v-hits">—</span></div>
+      <div class="rs"><span class="rs-l" id="wsum-l-streak">En Yüksek Seri</span><span class="rs-v" id="wsum-v-streak">—</span></div>
+      <div class="rs"><span class="rs-l" id="wsum-l-reflex">Ort. Refleks</span><span class="rs-v" id="wsum-v-reflex">—</span></div>
+    </div>
+    <div style="background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.07);padding:10px;text-align:center;margin-bottom:14px;">
+      <span class="slbl" id="wsum-l-score" style="margin-bottom:2px;">Toplam Puan</span>
+      <span style="font-family:var(--mono);font-size:24px;color:var(--a);font-weight:700;" id="wsum-v-score">0</span>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="sbtn" onclick="closeWarmupSummary();startPractice(cMode||'flick');" style="flex:1;margin-top:0;padding:10px;" id="wsum-m-replay">🎯 Tekrar Oyna</button>
+      <button class="sbtn g" onclick="closeWarmupSummary()" style="flex:1;margin-top:0;padding:10px;" id="wsum-m-close">Kapat</button>
+    </div>
+  </div>
+</div>
+
+<!-- AB BLIND TEST MODAL -->
+<div id="ab-modal" role="dialog" aria-modal="true" aria-labelledby="ab-m-ti" onclick="if(event.target===this)closeABModal()" style="display:none;position:fixed;inset:0;z-index:45;background:rgba(7,7,8,.88);backdrop-filter:blur(10px);align-items:center;justify-content:center;">
+  <div style="background:linear-gradient(135deg,rgba(10,10,14,.98),rgba(16,16,22,.98));border:1px solid rgba(255,255,255,.12);border-radius:2px;max-width:460px;width:92vw;padding:24px;box-shadow:0 24px 60px rgba(0,0,0,.8);">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;border-bottom:1px solid rgba(255,255,255,.08);padding-bottom:12px;">
+      <div>
+        <div style="font-size:16px;font-weight:900;color:var(--tb);font-family:var(--sans);" id="ab-m-ti">A/B Kör Karşılaştırma</div>
+        <div style="font-family:var(--mono);font-size:8px;color:var(--a);letter-spacing:.12em;text-transform:uppercase;margin-top:2px;" id="ab-m-su">Önceki Sens vs Yeni Sens</div>
+      </div>
+      <button class="sb-btn" onclick="closeABModal()" aria-label="Close" style="padding:4px 8px;font-size:12px;line-height:1;">✕</button>
+    </div>
+    <div style="font-size:11px;line-height:1.6;color:rgba(255,255,255,.75);margin-bottom:16px;" id="ab-m-desc">
+      Sens A ve Sens B 15'er saniye boyunca kör olarak test edilecek. En iyi hissettiğin ve en yüksek isabet sağladığın sens otomatik olarak karşılaştırılacak.
+    </div>
+    <div id="ab-result-box" style="display:none;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.08);padding:12px;margin-bottom:16px;">
+      <div style="font-size:12px;font-weight:700;color:var(--a);margin-bottom:8px;" id="ab-res-title">A/B Karşılaştırma Sonucu</div>
+      <div style="display:flex;justify-content:space-around;font-family:var(--mono);font-size:11px;margin-bottom:10px;">
+        <div id="ab-stat-a" style="text-align:center;">Sens A: %0</div>
+        <div id="ab-stat-b" style="text-align:center;">Sens B: %0</div>
+      </div>
+      <div style="font-size:11px;color:var(--tb);text-align:center;font-weight:500;" id="ab-verdict">—</div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="sbtn" onclick="startABTest()" style="flex:1;margin-top:0;padding:10px;" id="ab-m-start">⚔️ Karşılaştırmayı Başlat</button>
+      <button class="sbtn g" onclick="closeABModal()" style="flex:1;margin-top:0;padding:10px;" id="ab-m-close">Kapat</button>
+    </div>
+  </div>
+</div>
+
 <script>
 'use strict';
 // ─── SAFE STORAGE (çerezler/depolama engelliyse uygulama yine de çalışsın) ───
@@ -641,6 +704,7 @@ const L={
     copyVal:'Sens Değerini Kopyala',
     hudSens:'Sens',
     calibOk:'✓ Kalibrasyon hassasiyete uygulandı',
+    calibFail:'⚠️ Yetersiz fare hareketi — kalibrasyon iptal edildi',
     openConv:'🌐 Tüm Oyunlara Dönüştür (Apex, OW2, R6...)',
     convTi:'Tüm Oyunlara Hassasiyet Dönüştürücü',
     convSu:'Birebir Fiziksel Mesafe (cm/360°) ve Kas Hafızası',
@@ -654,6 +718,18 @@ const L={
     wSpeed:'Hedef Hızı (Tracking & Grid)',
     wCount:'Gridshot Hedef Sayısı',
     wDur:'Isınma Süresi',
+    wsSm:'Küçük (0.16)',
+    wsMd:'Standart (0.26)',
+    wsLg:'Büyük (0.38)',
+    wspdSlow:'Yavaş (0.7x)',
+    wspdNorm:'Standart (1.0x)',
+    wspdFast:'Hızlı (1.4x)',
+    wcnt1:'1 Hedef (Refleks)',
+    wcnt3:'3 Hedef (Standart)',
+    wcnt5:'5 Hedef (Yoğun)',
+    wdur30:'30 Saniye',
+    wdur60:'60 Saniye',
+    wdur0:'Sınırsız (∞)',
     wStart:'🎯 Başlat',
     wClose:'Kaydet & Kapat',
     wDone:(acc,hits,sc)=>`🎯 Isınma Bitti! İsabet: %${acc} · Vuruş: ${hits} · Puan: ${sc}`,
@@ -661,6 +737,30 @@ const L={
     histAvg:'Ort',
     histMin:'Min',
     histMax:'Max',
+    expBtn:'💾 Yedekle (JSON)',
+    impBtn:'📥 İçe Aktar',
+    impOk:'✓ Veriler ve geçmiş başarıyla içe aktarıldı!',
+    impErr:'⚠️ Geçersiz JSON veya bozuk dosya formatı.',
+    wSummaryTi:'Isınma Özeti',
+    wSummarySu:'Performans Metrikleri',
+    wMetricAcc:'İsabet Oranı',
+    wMetricHits:'Vuruş / Iska',
+    wMetricStreak:'En Yüksek Seri',
+    wMetricReflex:'Ort. Refleks',
+    wMetricScore:'Toplam Puan',
+    wReplay:'Tekrar Oyna',
+    abBtn:'⚔️ A/B Kör Karşılaştırma Testi',
+    abTi:'A/B Kör Karşılaştırma',
+    abSu:'Önceki Sens vs Yeni Sens (Hangisinin hangisi olduğunu bilmeden dene)',
+    abDesc:'Sens A ve Sens B 15\'er saniye boyunca kör olarak test edilecek. En iyi hissettiğin ve en yüksek isabet sağladığın sens otomatik olarak karşılaştırılacak.',
+    abStart:'⚔️ Karşılaştırmayı Başlat',
+    abPhaseA:'A/B Testi: Faz 1 (Sens A)',
+    abPhaseB:'A/B Testi: Faz 2 (Sens B)',
+    abResultTi:'A/B Karşılaştırma Sonucu',
+    abWinnerA:'🏆 Sens A daha başarılı (%s1 vs %s2 isabet)!',
+    abWinnerB:'🏆 Sens B daha başarılı (%s1 vs %s2 isabet)!',
+    abTie:'🤝 İki hassasiyet arasında belirgin fark oluşmadı.',
+    abApplyWinner:'Kazanan Hassasiyeti Seç',
     shareTxt:(g,s,cm,c,og,os,d,r)=>`🎯 SensFinder Sonucu:\n🎮 ${g}: ${s} (${d} DPI · ${cm} cm/360°)\n🔄 ${og} Eşdeğeri: ${os}\n⭐ Güven: %${c}${r?`\n⚡ Ortalama Tepki: ${r}ms`:''}\nhttps://rasne-dev.github.io/SensFinder/?game=${g==='Valorant'?'val':'cs2'}&dpi=${d}&sens=${s}`,},
   en:{noMouse:'⚠️ This test needs a mouse (pointer lock) and may not work on touch devices. Open it on a computer.',
     warnSens:(mn,mx,u)=>`Sensitivity must be between ${mn} and ${mx} (using: ${u})`,warnDpi:'DPI must be between 100 and 32000',warnFov:'FOV must be between 60 and 120',
@@ -734,6 +834,7 @@ const L={
     copyVal:'Copy Sens Value',
     hudSens:'Sens',
     calibOk:'✓ Calibration applied to sensitivity',
+    calibFail:'⚠️ Insufficient mouse movement — calibration cancelled',
     openConv:'🌐 Convert to All Games (Apex, OW2, R6...)',
     convTi:'Universal Sensitivity Converter',
     convSu:'Exact Physical Distance (cm/360°) & Muscle Memory',
@@ -747,13 +848,49 @@ const L={
     wSpeed:'Target Speed (Tracking & Grid)',
     wCount:'Gridshot Target Count',
     wDur:'Warmup Duration',
+    wsSm:'Small (0.16)',
+    wsMd:'Standard (0.26)',
+    wsLg:'Large (0.38)',
+    wspdSlow:'Slow (0.7x)',
+    wspdNorm:'Standard (1.0x)',
+    wspdFast:'Fast (1.4x)',
+    wcnt1:'1 Target (Reflex)',
+    wcnt3:'3 Targets (Standard)',
+    wcnt5:'5 Targets (Intense)',
+    wdur30:'30 Seconds',
+    wdur60:'60 Seconds',
+    wdur0:'Unlimited (∞)',
     wStart:'🎯 Start',
     wClose:'Save & Close',
     wDone:(acc,hits,sc)=>`🎯 Warmup Complete! Acc: ${acc}% · Hits: ${hits} · Score: ${sc}`,
     histChartTi:'Sensitivity Trend',
     histAvg:'Avg',
     histMin:'Min',
-    histMax:'Max',}
+    histMax:'Max',
+    expBtn:'💾 Backup (JSON)',
+    impBtn:'📥 Import',
+    impOk:'✓ Data and history imported successfully!',
+    impErr:'⚠️ Invalid JSON or corrupt file format.',
+    wSummaryTi:'Warmup Summary',
+    wSummarySu:'Performance Metrics',
+    wMetricAcc:'Accuracy',
+    wMetricHits:'Hits / Misses',
+    wMetricStreak:'Best Streak',
+    wMetricReflex:'Avg Reflex',
+    wMetricScore:'Total Score',
+    wReplay:'Play Again',
+    abBtn:'⚔️ A/B Blind Comparison Test',
+    abTi:'A/B Blind Comparison',
+    abSu:'Previous Sens vs New Sens (Blind comparison test)',
+    abDesc:'Sens A and Sens B will be tested for 15 seconds each without revealing their identity. Your accuracy and performance will determine the winner.',
+    abStart:'⚔️ Start Comparison',
+    abPhaseA:'A/B Test: Phase 1 (Sens A)',
+    abPhaseB:'A/B Test: Phase 2 (Sens B)',
+    abResultTi:'A/B Comparison Result',
+    abWinnerA:'🏆 Sens A performed better (%s1 vs %s2 acc)!',
+    abWinnerB:'🏆 Sens B performed better (%s1 vs %s2 acc)!',
+    abTie:'🤝 Performance between both sensitivities was nearly identical.',
+    abApplyWinner:'Select Winning Sensitivity',}
 };
 let lang=LS.get('sf_lang')||(navigator.language.startsWith('tr')?'tr':'en');
 const $=id=>document.getElementById(id);
@@ -816,10 +953,34 @@ function applyI18n(){
   const _lwsp=$('l-w-spd');if(_lwsp)_lwsp.textContent=T('wSpeed');
   const _lwc=$('l-w-cnt');if(_lwc)_lwc.textContent=T('wCount');
   const _lwd=$('l-w-dur');if(_lwd)_lwd.textContent=T('wDur');
+  [['btn-ws-sm','wsSm'],['btn-ws-md','wsMd'],['btn-ws-lg','wsLg'],
+   ['btn-wspd-slow','wspdSlow'],['btn-wspd-norm','wspdNorm'],['btn-wspd-fast','wspdFast'],
+   ['btn-wcnt-1','wcnt1'],['btn-wcnt-3','wcnt3'],['btn-wcnt-5','wcnt5'],
+   ['btn-wdur-30','wdur30'],['btn-wdur-60','wdur60'],['btn-wdur-0','wdur0']].forEach(([id,k])=>{
+    const el=$(id);if(el)el.textContent=T(k);
+  });
   const _wst=$('warm-m-start');if(_wst)_wst.textContent=T('wStart');
   const _wc=$('warm-m-close');if(_wc)_wc.textContent=T('wClose');
   const _hct=$('l-hist-chart-ti');if(_hct)_hct.textContent=T('histChartTi');
   const _pcfg=$('btn-prac-cfg');if(_pcfg)_pcfg.title=T('warmupCfgTi');
+  const _bExp=$('btn-export-json');if(_bExp)_bExp.title=T('expBtn');
+  const _bImp=$('btn-import-json');if(_bImp)_bImp.title=T('impBtn');
+  const _rab=$('l-rr-ab-btn');if(_rab)_rab.textContent=T('abBtn');
+  const _wsumTi=$('wsum-m-ti');if(_wsumTi)_wsumTi.textContent=T('wSummaryTi');
+  const _wsumSu=$('wsum-m-su');if(_wsumSu)_wsumSu.textContent=T('wSummarySu');
+  const _wsumLAcc=$('wsum-l-acc');if(_wsumLAcc)_wsumLAcc.textContent=T('wMetricAcc');
+  const _wsumLHits=$('wsum-l-hits');if(_wsumLHits)_wsumLHits.textContent=T('wMetricHits');
+  const _wsumLStrk=$('wsum-l-streak');if(_wsumLStrk)_wsumLStrk.textContent=T('wMetricStreak');
+  const _wsumLRflx=$('wsum-l-reflex');if(_wsumLRflx)_wsumLRflx.textContent=T('wMetricReflex');
+  const _wsumLSc=$('wsum-l-score');if(_wsumLSc)_wsumLSc.textContent=T('wMetricScore');
+  const _wsumRep=$('wsum-m-replay');if(_wsumRep)_wsumRep.textContent='🎯 '+T('wReplay');
+  const _wsumCl=$('wsum-m-close');if(_wsumCl)_wsumCl.textContent=T('resClose');
+  const _abTi=$('ab-m-ti');if(_abTi)_abTi.textContent=T('abTi');
+  const _abSu=$('ab-m-su');if(_abSu)_abSu.textContent=T('abSu');
+  const _abDesc=$('ab-m-desc');if(_abDesc)_abDesc.textContent=T('abDesc');
+  const _abResTi=$('ab-res-title');if(_abResTi)_abResTi.textContent=T('abResultTi');
+  const _abSt=$('ab-m-start');if(_abSt)_abSt.textContent=T('abStart');
+  const _abCl=$('ab-m-close');if(_abCl)_abCl.textContent=T('resClose');
   $('rh-l').textContent=T('rhL');$('mb-l').textContent=T('perMode');$('ft-ti').textContent=T('ftTi');
   $('ft-ov').textContent=T('ftOv');$('ft-un').textContent=T('ftUn');
   const _cpHintEl=$('rr-cp-hint');if(_cpHintEl)_cpHintEl.textContent=T('cpHint');
@@ -897,7 +1058,7 @@ function setGripStyle(g, userClick=false){
   gripStyle=g;
   try{LS.set('sf_grip',g);}catch(e){}
   ['wrist','arm','hybrid','unknown'].forEach(k=>{
-    const b=$('btn-gr-'+k);if(b)b.classList.toggle('on',k===g);
+    const b=$('btn-gr-'+k);if(b){b.classList.toggle('on',k===g);b.setAttribute('aria-pressed',String(k===g));}
   });
   const w=GRIP_CFG[g].w;
   if(typeof MODE_W!=='undefined'){MODE_W.flick=w.flick;MODE_W.grid=w.grid;MODE_W.track=w.track;}
@@ -936,7 +1097,9 @@ function updPv(){
   $('pv-cv').textContent=(s*c.convF).toFixed(3);
   $('pv-cl').textContent=game==='cs2'?T('pvC'):T('pvCA');
   document.querySelectorAll('[data-dpi]').forEach(b=>{
-    b.classList.toggle('on',parseInt(b.getAttribute('data-dpi'))===d);
+    const isOn=parseInt(b.getAttribute('data-dpi'))===d;
+    b.classList.toggle('on',isOn);
+    b.setAttribute('aria-pressed',String(isOn));
   });
   const gc=GRIP_CFG[gripStyle]||GRIP_CFG.hybrid;
   const stEl=$('gr-status'),optBtn=$('btn-gr-opt');
@@ -1045,7 +1208,7 @@ function applyHistSens(g,s){
   if(g==='cs2'||g==='val')setGame(g,true);
   const si=$('is');
   if(si){
-    si.value=Number(s).toFixed(game==='val'?3:3);
+    si.value=Number(s).toFixed(3);
     updPv();
     si.style.borderColor='var(--a2)';
     setTimeout(()=>{si.style.borderColor='';},500);
@@ -1113,19 +1276,19 @@ const _warmupCfg={
 };
 function setWarmupSize(sz){
   _warmupCfg.size=sz;LS.set('sf_w_sz',sz);
-  ['sm','md','lg'].forEach(k=>$('btn-ws-'+k)?.classList.toggle('on',k===sz));
+  ['sm','md','lg'].forEach(k=>{const b=$('btn-ws-'+k);if(b){b.classList.toggle('on',k===sz);b.setAttribute('aria-pressed',String(k===sz));}});
 }
 function setWarmupSpeed(spd){
   _warmupCfg.speed=spd;LS.set('sf_w_spd',spd);
-  ['slow','norm','fast'].forEach(k=>$('btn-wspd-'+k)?.classList.toggle('on',k===spd));
+  ['slow','norm','fast'].forEach(k=>{const b=$('btn-wspd-'+k);if(b){b.classList.toggle('on',k===spd);b.setAttribute('aria-pressed',String(k===spd));}});
 }
 function setWarmupCount(cnt){
   _warmupCfg.count=cnt;LS.set('sf_w_cnt',String(cnt));
-  [1,3,5].forEach(k=>$('btn-wcnt-'+k)?.classList.toggle('on',k===cnt));
+  [1,3,5].forEach(k=>{const b=$('btn-wcnt-'+k);if(b){b.classList.toggle('on',k===cnt);b.setAttribute('aria-pressed',String(k===cnt));}});
 }
 function setWarmupDur(dur){
   _warmupCfg.dur=dur;LS.set('sf_w_dur',String(dur));
-  [30,60,0].forEach(k=>$('btn-wdur-'+k)?.classList.toggle('on',k===dur));
+  [30,60,0].forEach(k=>{const b=$('btn-wdur-'+k);if(b){b.classList.toggle('on',k===dur);b.setAttribute('aria-pressed',String(k===dur));}});
 }
 function openWarmupModal(){
   setWarmupSize(_warmupCfg.size);
@@ -1147,20 +1310,28 @@ function renderHistLog(){
   const svgWrap=$('histSvgWrap');
   const statsEl=$('histChartStats');
   if(svgWrap){
-    if(arr.length>=2){
-      const sensVals=arr.map(e=>Number(e.sens)||0).filter(v=>v>0);
+    // Farklı oyunlarda kaydedilen sonuçları aktif oyunun ölçeğine (aynı cm/360° oranına) normalize et
+    const normEntries=arr.map(e=>{
+      const raw=Number(e.sens)||0;
+      const eg=e.game==='val'?'val':'cs2';
+      const norm=eg===game?raw:raw*(GC[eg]?.convF||1);
+      return {rawSens:raw,sens:norm,game:eg,date:e.date,conf:e.conf,round:e.round};
+    }).filter(e=>e.sens>0);
+    if(normEntries.length>=2){
+      const sensVals=normEntries.map(e=>e.sens);
       const minS=Math.min(...sensVals);
       const maxS=Math.max(...sensVals);
       const avgS=sensVals.reduce((a,b)=>a+b,0)/sensVals.length;
       if(statsEl){
-        statsEl.textContent=`${T('histMin')}: ${minS.toFixed(3)} · ${T('histAvg')}: ${avgS.toFixed(3)} · ${T('histMax')}: ${maxS.toFixed(3)}`;
+        statsEl.textContent=`${GC[game].name} · ${T('histMin')}: ${minS.toFixed(3)} · ${T('histAvg')}: ${avgS.toFixed(3)} · ${T('histMax')}: ${maxS.toFixed(3)}`;
       }
       const W=280,H=58,padX=10,padY=8;
-      const span=Math.max(maxS-minS,0.001);
-      const points=arr.map((e,i)=>{
-        const x=padX+(i/(arr.length-1))*(W-padX*2);
-        const y=H-padY-((Number(e.sens)-minS)/span)*(H-padY*2);
-        return {x,y,sens:Number(e.sens),game:e.game,date:e.date,conf:e.conf,round:e.round};
+      const flat=(maxS-minS)<1e-5;
+      const span=flat?1:(maxS-minS);
+      const points=normEntries.map((e,i)=>{
+        const x=padX+(i/(normEntries.length-1))*(W-padX*2);
+        const y=flat?(H/2):(H-padY-((e.sens-minS)/span)*(H-padY*2));
+        return {x,y,sens:e.sens,rawSens:e.rawSens,game:e.game,date:e.date,conf:e.conf,round:e.round};
       });
       const dPath=points.map((p,i)=>(i===0?'M':'L')+p.x.toFixed(1)+' '+p.y.toFixed(1)).join(' ');
       const areaPath=dPath+` L ${points[points.length-1].x.toFixed(1)} ${H} L ${points[0].x.toFixed(1)} ${H} Z`;
@@ -1178,8 +1349,8 @@ function renderHistLog(){
       points.forEach(p=>{
         const dStr=new Date(p.date).toLocaleDateString(lang==='tr'?'tr-TR':'en-US',{month:'short',day:'numeric'});
         const gName=GC[p.game]?GC[p.game].name:p.game;
-        const tipText=`${gName} · ${p.sens.toFixed(3)} · ${dStr}`;
-        svgHtml+=`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3" fill="var(--a)" stroke="#070708" stroke-width="1.2" style="cursor:pointer;" onclick="applyHistSens('${p.game}',${p.sens})" role="button" tabindex="0">
+        const tipText=`${gName} · ${p.rawSens.toFixed(3)} · ${dStr}`;
+        svgHtml+=`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3" fill="var(--a)" stroke="#070708" stroke-width="1.2" style="cursor:pointer;" onclick="applyHistSens('${p.game}',${p.rawSens})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();applyHistSens('${p.game}',${p.rawSens});}" role="button" tabindex="0" aria-label="${tipText}">
           <title>${tipText} (${T('histLoadHint')})</title>
         </circle>`;
       });
@@ -1209,6 +1380,71 @@ function renderHistLog(){
   });
   $('histRows').innerHTML=html;
 }
+
+function exportDataJSON(){
+  try{
+    const data={
+      version:'1.3.0',
+      exportedAt:new Date().toISOString(),
+      history:loadHistLog(),
+      ui:_readUI(),
+      grip:gripStyle,
+      speed:_testSpeed,
+      xhStyle:_xhStyle,
+      xhColor:_xhColor,
+      targetColor:_targetColor,
+      hitSound:_hitSoundPreset,
+      warmupCfg:_warmupCfg
+    };
+    const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download=`sensfinder-backup-${new Date().toISOString().slice(0,10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showFB('✓ '+T('expBtn'),true,2000);
+  }catch(e){
+    alert('Export error: '+e.message);
+  }
+}
+
+function importDataJSON(e){
+  const file=e?.target?.files?.[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(evt){
+    try{
+      const data=JSON.parse(evt.target.result);
+      if(!data||typeof data!=='object')throw new Error('Invalid format');
+      if(Array.isArray(data.history))LS.set(HK,JSON.stringify(data.history));
+      if(data.ui&&typeof data.ui==='object')LS.set('sf_ui',JSON.stringify(data.ui));
+      if(data.grip)setGripStyle(data.grip);
+      if(data.speed)setTestSpeed(data.speed);
+      if(data.xhStyle)setXhStyle(data.xhStyle);
+      if(data.xhColor)setXhColor(data.xhColor);
+      if(data.targetColor)setTargetColor(data.targetColor);
+      if(data.hitSound)setHitSound(data.hitSound);
+      if(data.warmupCfg){
+        if(data.warmupCfg.size)setWarmupSize(data.warmupCfg.size);
+        if(data.warmupCfg.speed)setWarmupSpeed(data.warmupCfg.speed);
+        if(data.warmupCfg.count)setWarmupCount(data.warmupCfg.count);
+        if(data.warmupCfg.dur!==undefined)setWarmupDur(data.warmupCfg.dur);
+      }
+      restoreUI();
+      updPv();
+      renderHistLog();
+      showFB(T('impOk'),true,2800);
+    }catch(err){
+      showFB(T('impErr'),false,3000);
+    }
+  };
+  reader.readAsText(file);
+  e.target.value='';
+}
+
 function checkSaved(){
   const s=load();
   const sv=s?Number(s.sens):NaN;
@@ -1418,9 +1654,8 @@ function spawnS(jump,label){
     tZ=-8+(jump?Math.random()*1.5:0);
   }
   else{tX=(Math.random()-.5)*1.8;tY=(Math.random()-.5)*.4;tZ=-8;}
-  // Tracking hızı flick/grid'den ~2.5x fazla
-  const spMul=isPractice?(_warmupCfg.speed==='slow'?0.7:(_warmupCfg.speed==='fast'?1.4:1.0)):1.0;
-  const spBase=(isTrack?(.025+Math.random()*.02):(.01+Math.random()*.007))*spMul;
+  // Tracking hızı flick/grid'den ~2.5x fazla (Isınma hız çarpanı doRender içinde uygulanır)
+  const spBase=isTrack?(.025+Math.random()*.02):(.01+Math.random()*.007);
   const ang=Math.random()*Math.PI*2;
   tVX=Math.cos(ang)*spBase;tVY=Math.sin(ang)*spBase*.7;
   tM.position.set(tX,tY,tZ);scene.add(tM);
@@ -1428,7 +1663,7 @@ function spawnS(jump,label){
   _aimReset();
 }
 let _jt=null;
-let _flickSpawnTime=0,_hitTimes=[],_streak=0;
+let _flickSpawnTime=0,_hitTimes=[],_streak=0,_maxStreak=0;
 let _swipeLengthsCm=[],_swipeArcs=[],_curSwipeX=0,_curSwipeAbsY=0,_curSwipeDir=0,_lastMoveT=0;
 
 // ─── HEDEFE YAKLAŞIM ANALİZİ (Overshoot / Undershoot) ───
@@ -1628,7 +1863,7 @@ function setHitSound(preset){
   try{LS.set('sf_hitsound',preset);}catch(e){}
   ['laser','pop','bell'].forEach(p=>{
     const btn=$('btn-snd-'+p);
-    if(btn)btn.classList.toggle('on',p===preset);
+    if(btn){btn.classList.toggle('on',p===preset);btn.setAttribute('aria-pressed',String(p===preset));}
   });
   playHit();
 }
@@ -1645,7 +1880,7 @@ function setXhStyle(style){
   });
   ['cross','dot','compact'].forEach(s=>{
     const btn=$('btn-xh-'+s);
-    if(btn)btn.classList.toggle('on',s===style);
+    if(btn){btn.classList.toggle('on',s===style);btn.setAttribute('aria-pressed',String(s===style));}
   });
 }
 
@@ -1655,7 +1890,8 @@ function setXhColor(col){
   document.documentElement.style.setProperty('--xh-c',col);
   ['ffffff','00ff88','00e5ff','e8ff47','ff3366'].forEach(hex=>{
     const btn=$('btn-xhc-'+hex);
-    if(btn)btn.classList.toggle('on','#'+hex===col.toLowerCase());
+    const isOn='#'+hex===col.toLowerCase();
+    if(btn){btn.classList.toggle('on',isOn);btn.setAttribute('aria-pressed',String(isOn));}
   });
 }
 
@@ -1665,7 +1901,8 @@ function setTargetColor(col){
   document.documentElement.style.setProperty('--tc-c',col);
   ['ff2020','ffe600','ff2a85','00e5ff'].forEach(hex=>{
     const btn=$('btn-tc-'+hex);
-    if(btn)btn.classList.toggle('on','#'+hex===col.toLowerCase());
+    const isOn='#'+hex===col.toLowerCase();
+    if(btn){btn.classList.toggle('on',isOn);btn.setAttribute('aria-pressed',String(isOn));}
   });
   updTC();
 }
@@ -1872,7 +2109,7 @@ document.addEventListener('mousedown',e=>{
         const elapsed=Date.now()-gridLastHitTime;
         const speedBonus=Math.max(50,Math.round(500*Math.exp(-elapsed/1200)));
         if(phaseScoreActive){
-          curScore+=speedBonus;hits++;_streak++;
+          curScore+=speedBonus;hits++;_streak++;if(_streak>_maxStreak)_maxStreak=_streak;
           if(elapsed>50&&elapsed<2000)_hitTimes.push(elapsed);
           _aimRecord(_aimEvalHit(item.mesh));
         }
@@ -1922,7 +2159,7 @@ document.addEventListener('mousedown',e=>{
   for(const m of cands){
     if(rc2.intersectObject(m).length>0){
       if(phaseScoreActive){
-        curScore+=500;hits++;_streak++;
+        curScore+=500;hits++;_streak++;if(_streak>_maxStreak)_maxStreak=_streak;
         const elFlick=Math.round(performance.now()-_flickSpawnTime);
         if(elFlick>50&&elFlick<2500)_hitTimes.push(elFlick);
         _aimRecord(_aimEvalHit(m));
@@ -1948,7 +2185,7 @@ window.addEventListener('keydown',e=>{
   if(isPractice&&active){
     if(e.key==='1'||e.key==='2'||e.key==='3'){
       const m=['flick','grid','track'][parseInt(e.key)-1];
-      cMode=m;curScore=0;_trackFrames=0;_trackOnFrames=0;_streak=0;
+      cMode=m;curScore=0;hits=0;miss=0;_trackFrames=0;_trackOnFrames=0;_streak=0;
       $('hpill').textContent=T('tag'+['F','G','T'][parseInt(e.key)-1]);
       $('hl-sc').textContent=m==='track'?(lang==='tr'?'Takip Puanı':'Track Score'):T('scLbl');
       $('hv-sc').textContent='0';
@@ -1973,6 +2210,8 @@ window.addEventListener('keydown',e=>{
     if($('res-modal')?.style.display==='flex'){closeResModal();return;}
     if($('conv-modal')?.style.display==='flex'){closeConvModal();return;}
     if($('warmup-modal')?.style.display==='flex'){closeWarmupModal();return;}
+    if($('wsummary-modal')?.style.display==='flex'){closeWarmupSummary();return;}
+    if($('ab-modal')?.style.display==='flex'){closeABModal();return;}
     if($('sov')?.classList.contains('on')){quitToMenu();return;}
     if(isPaused){resumeGame();return;}
     if($('rr').style.display==='block'){
@@ -1997,9 +2236,9 @@ window.addEventListener('keydown',e=>{
   }
 });
 let _fbT,_xhPopT;
-function showFB(t,g){
+function showFB(t,g,dur=280){
   const el=$('fb');el.textContent=t;el.style.color=g?'var(--a)':'#ff4455';el.style.opacity='1';
-  clearTimeout(_fbT);_fbT=setTimeout(()=>el.style.opacity='0',280);
+  clearTimeout(_fbT);_fbT=setTimeout(()=>el.style.opacity='0',dur);
   if(g){
     const xh=$('xh');
     if(xh){xh.classList.add('hit-pop');clearTimeout(_xhPopT);_xhPopT=setTimeout(()=>xh.classList.remove('hit-pop'),90);}
@@ -2099,7 +2338,7 @@ function startPractice(mode){
   const ac=_getAC();if(ac&&ac.state==='suspended')ac.resume();
   if(!renderer&&!initThree())return;
   hideAll();
-  isPractice=true;_quitEarly=false;_endEarly=false;isPaused=false;_streak=0;
+  isPractice=true;_quitEarly=false;_endEarly=false;isPaused=false;_streak=0;_maxStreak=0;_hitTimes=[];
   cMode=mode;curTS=gS();curScore=0;hits=0;miss=0;onT=false;
   _trackFrames=0;_trackOnFrames=0;phaseScoreActive=true;curLabel='FREE';
   const modeIdx=['flick','grid','track'].indexOf(mode);
@@ -2132,8 +2371,10 @@ function startPractice(mode){
         const tot=(hits+miss);
         const accPct=tot>0?Math.round(hits/tot*100):(cMode==='track'?Math.round(_trackFrames>0?_trackOnFrames/_trackFrames*100:0):0);
         const fbMsg=T('wDone',accPct,hits,Math.floor(curScore));
+        const avgRfx=_hitTimes.length>0?Math.round(_hitTimes.reduce((a,b)=>a+b,0)/_hitTimes.length):null;
+        const scFinal=Math.floor(curScore);
         quitToMenu();
-        showFB(fbMsg,true);
+        showWarmupSummary(accPct,hits,miss,tot,_maxStreak,avgRfx,scFinal);
       }
     },100);
   } else {
@@ -2148,9 +2389,118 @@ function startPractice(mode){
   safeRequestPointerLock(renderer.domElement);
 }
 
+function showWarmupSummary(accPct,h,m,tot,bestStreak,avgRfx,sc){
+  $('wsum-v-acc').textContent=`%${accPct}`;
+  $('wsum-v-hits').textContent=`${h} / ${m}`;
+  $('wsum-v-streak').textContent=bestStreak?`${bestStreak}x`:'—';
+  $('wsum-v-reflex').textContent=avgRfx?`${avgRfx} ms`:'—';
+  $('wsum-v-score').textContent=sc;
+  $('wsummary-modal').style.display='flex';
+}
+function closeWarmupSummary(){
+  $('wsummary-modal').style.display='none';
+}
+
+// ─── A/B BLIND COMPARISON TEST ───
+let _abSensA=0,_abSensB=0,_abSwapped=false;
+let _abResA={acc:0,hits:0,miss:0,score:0},_abResB={acc:0,hits:0,miss:0,score:0};
+
+function openABModal(){
+  const sNew=_lastResult?.sens||gS();
+  const histArr=loadHistLog();
+  let sOld=0;
+  if(histArr.length>=2){
+    const prev=histArr[histArr.length-2];
+    sOld=Number(prev.sens);
+    if(prev.game!==game)sOld=sOld*(GC[prev.game]?.convF||1);
+  } else {
+    const mult=sNew>1.5?0.8:1.2;
+    sOld=Number((sNew*mult).toFixed(3));
+  }
+  _abSwapped=Math.random()<0.5;
+  _abSensA=_abSwapped?sOld:sNew;
+  _abSensB=_abSwapped?sNew:sOld;
+  $('ab-result-box').style.display='none';
+  $('ab-m-start').style.display='block';
+  $('ab-modal').style.display='flex';
+}
+function closeABModal(){
+  $('ab-modal').style.display='none';
+}
+
+function startABTest(){
+  closeABModal();
+  const testSens=async(sens,label)=>{
+    return new Promise(resolve=>{
+      curLabel=label;
+      showSOv(sens,label,cMode||'flick',1,2,{repeats:1,countdown:2},()=>{
+        curTS=sens;curScore=0;hits=0;miss=0;onT=false;phaseScoreActive=true;_streak=0;
+        $('hv-s').textContent='???';$('hv-cm').textContent='—';$('hv-sc').textContent='0';
+        setupT('grid',label);schedJ('grid',label);
+        const dur=15;
+        let rem=dur;
+        const timerEl=$('hud-timer');
+        if(timerEl){timerEl.textContent=rem.toFixed(1)+'s';timerEl.style.color='var(--tb)';}
+        const st=performance.now();
+        const iv=setInterval(()=>{
+          if(!active||isPaused)return;
+          rem=Math.max(0,dur-(performance.now()-st)/1000);
+          if(timerEl)timerEl.textContent=rem.toFixed(1)+'s';
+          if(rem<=0){
+            clearInterval(iv);
+            const tot=hits+miss;
+            const acc=tot>0?Math.round(hits/tot*100):0;
+            resolve({acc,hits,miss,score:Math.floor(curScore)});
+          }
+        },100);
+      });
+    });
+  };
+
+  (async()=>{
+    if(!renderer&&!initThree())return;
+    hideAll();
+    $('hud').style.display='block';$('pi').style.display='none';$('bbar').style.display='block';
+    $('bbar').textContent=T('abTi');
+    $('hpill').textContent='GRID';
+    $('hv-r').textContent='A/B';$('hv-ph').textContent='TEST';
+    safeRequestPointerLock(renderer.domElement);
+    active=true;
+
+    _abResA=await testSens(_abSensA,'Sens A');
+    playCountdown(0);
+    _abResB=await testSens(_abSensB,'Sens B');
+
+    quitToMenu();
+    $('ab-result-box').style.display='block';
+    $('ab-m-start').style.display='none';
+    $('ab-stat-a').textContent=`Sens A: %${_abResA.acc} (${_abResA.hits} hit)`;
+    $('ab-stat-b').textContent=`Sens B: %${_abResB.acc} (${_abResB.hits} hit)`;
+    
+    let winnerSens=_abSensA;
+    if(Math.abs(_abResA.acc-_abResB.acc)<3){
+      $('ab-verdict').textContent=T('abTie');
+      winnerSens=_abResA.score>=_abResB.score?_abSensA:_abSensB;
+    } else if(_abResA.acc>_abResB.acc){
+      $('ab-verdict').textContent=T('abWinnerA').replace('%s1',_abResA.acc).replace('%s2',_abResB.acc);
+      winnerSens=_abSensA;
+    } else {
+      $('ab-verdict').textContent=T('abWinnerB').replace('%s1',_abResB.acc).replace('%s2',_abResA.acc);
+      winnerSens=_abSensB;
+    }
+    const realSensA=_abSensA.toFixed(3);
+    const realSensB=_abSensB.toFixed(3);
+    $('ab-stat-a').innerHTML+=`<br><small style="color:var(--a);">${realSensA}</small>`;
+    $('ab-stat-b').innerHTML+=`<br><small style="color:var(--a);">${realSensB}</small>`;
+    $('is').value=winnerSens.toFixed(3);
+    updPv();
+    $('ab-modal').style.display='flex';
+  })();
+}
+
 function testResultInPractice(){
   if(_lastResult&&_lastResult.sens){
-    $('is').value=_lastResult.sens.toFixed(game==='val'?3:3);
+    $('is').value=_lastResult.sens.toFixed(3);
     updPv();
   }
   startPractice('flick');
@@ -2179,6 +2529,9 @@ function finCalib(){
       setTimeout(()=>{isEl.style.borderColor='';},800);
     }
     updPv();
+    showFB(T('calibOk'),true,2200);
+  } else if(absCalMov>0){
+    showFB(T('calibFail'),false,2200);
   }
   calMov=0;
 }
@@ -2203,7 +2556,7 @@ function setTestSpeed(sp){
   _testSpeed=sp==='fast'?'fast':'std';
   try{LS.set('sf_speed',_testSpeed);}catch(e){}
   ['std','fast'].forEach(k=>{
-    const b=$('btn-dur-'+k);if(b)b.classList.toggle('on',k===_testSpeed);
+    const b=$('btn-dur-'+k);if(b){b.classList.toggle('on',k===_testSpeed);b.setAttribute('aria-pressed',String(k===_testSpeed));}
   });
   updEstDur();
 }
@@ -2727,7 +3080,7 @@ function showRR(sens,h,miss_,conf,trkOn=0,trkTot=0){
   }
   $('rr-a').textContent=accParts.length>0?accParts.join(' · '):'—';
   const rrREl=$('rr-r');if(rrREl)rrREl.textContent=avgReflex?avgReflex+' ms':'—';
-  $('is').value=sens.toFixed(game==='val'?3:2);
+  $('is').value=sens.toFixed(3);
   updPv();
   $('rr-al').textContent=T('rrAl');
   $('rr-cl').textContent=T('rrCl',c.opp);
