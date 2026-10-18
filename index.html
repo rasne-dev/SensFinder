@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="version" content="1.2.4">
+<meta name="version" content="1.2.5">
 <title>SensFinder — CS2 & Valorant</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -346,28 +346,28 @@ button:active{transform:scale(0.98);}
             <span style="color:rgba(255,255,255,.45);" id="l-xh-len">Boyut</span>
             <span style="color:var(--a);font-weight:500;" id="v-xh-len">10px</span>
           </div>
-          <input type="range" id="sl-xh-len" min="0" max="22" step="1" value="10" oninput="setXhCustom('len',this.value)" style="width:100%;height:4px;accent-color:var(--a);cursor:pointer;">
+          <input type="range" id="sl-xh-len" min="0" max="22" step="1" value="10" aria-labelledby="l-xh-len" oninput="setXhCustom('len',this.value)" style="width:100%;height:4px;accent-color:var(--a);cursor:pointer;">
         </div>
         <div>
           <div style="display:flex;justify-content:space-between;margin-bottom:2px;">
             <span style="color:rgba(255,255,255,.45);" id="l-xh-thick">Kalınlık</span>
             <span style="color:var(--a);font-weight:500;" id="v-xh-thick">2px</span>
           </div>
-          <input type="range" id="sl-xh-thick" min="1" max="5" step="1" value="2" oninput="setXhCustom('thick',this.value)" style="width:100%;height:4px;accent-color:var(--a);cursor:pointer;">
+          <input type="range" id="sl-xh-thick" min="1" max="5" step="1" value="2" aria-labelledby="l-xh-thick" oninput="setXhCustom('thick',this.value)" style="width:100%;height:4px;accent-color:var(--a);cursor:pointer;">
         </div>
         <div>
           <div style="display:flex;justify-content:space-between;margin-bottom:2px;">
             <span style="color:rgba(255,255,255,.45);" id="l-xh-gap">Boşluk</span>
             <span style="color:var(--a);font-weight:500;" id="v-xh-gap">3px</span>
           </div>
-          <input type="range" id="sl-xh-gap" min="0" max="14" step="1" value="3" oninput="setXhCustom('gap',this.value)" style="width:100%;height:4px;accent-color:var(--a);cursor:pointer;">
+          <input type="range" id="sl-xh-gap" min="0" max="14" step="1" value="3" aria-labelledby="l-xh-gap" oninput="setXhCustom('gap',this.value)" style="width:100%;height:4px;accent-color:var(--a);cursor:pointer;">
         </div>
         <div>
           <div style="display:flex;justify-content:space-between;margin-bottom:2px;">
             <span style="color:rgba(255,255,255,.45);" id="l-xh-dot">Merkez Nokta</span>
             <span style="color:var(--a);font-weight:500;" id="v-xh-dot">3px</span>
           </div>
-          <input type="range" id="sl-xh-dot" min="0" max="6" step="1" value="3" oninput="setXhCustom('dot',this.value)" style="width:100%;height:4px;accent-color:var(--a);cursor:pointer;">
+          <input type="range" id="sl-xh-dot" min="0" max="6" step="1" value="3" aria-labelledby="l-xh-dot" oninput="setXhCustom('dot',this.value)" style="width:100%;height:4px;accent-color:var(--a);cursor:pointer;">
         </div>
       </div>
     </div>
@@ -450,7 +450,7 @@ button:active{transform:scale(0.98);}
 </div>
 
 <!-- ROUND RESULT -->
-<div class="menu" id="rr" style="display:none;">
+<div class="menu" id="rr" role="dialog" aria-modal="true" aria-labelledby="rr-ey" style="display:none;">
   <span class="rr-eye" id="rr-ey">Round 1 Result</span>
   <div class="rr-main" id="rr-m" title="Click to copy" style="cursor:pointer;" onclick="copyMainSens()">2.750</div>
   <div class="rr-unit" id="rr-u">CS2 SENSITIVITY</div>
@@ -672,7 +672,7 @@ const L={
     sub:'Hassasiyet Bulucusu · CS2 & Valorant',game:'Oyun',dpi:'Mouse DPI',fov:'FOV',sens:'Mevcut Hassasiyet',
     calib:'360° mousepad hareketi ile kalibre et',start:'TESTİ BAŞLAT',
     rLbl:'Tur',phLbl:'Aşama',scLbl:'Puan',piLbl:'İlerleme',
-    calTi:'KALİBRASYON',calDe:'Seçenek A: Mousepad\'in bir kenarından diğerine kaydır (fiziksel mesafe eşleme).<br>Seçenek B: Tam 360° dönene kadar kaydır (hassasiyet ölçümü).<br>Bitirmek için <strong>ESC</strong> tuşuna bas.',
+    calTi:'KALİBRASYON',calDe:'3D alanda tam 360° dönene kadar farenizi yatayda kaydırın.<br>Bitirmek için <strong>ESC</strong> tuşuna basın.',
     eyLow:'Test: DÜŞÜK',eyHigh:'Test: YÜKSEK',eyMid:'Doğrulama',
     tagF:'Flick',tagG:'Gridshot',tagT:'Takip',
     rrEy:(r)=>`Tur ${r} Sonucu`,rrU:(g)=>`${g} HASSASİYETİ`,rrCl:(g)=>`${g} Eşdeğeri`,
@@ -707,7 +707,7 @@ const L={
     durStd:'⏱️ Standart (12s/faz)',
     durFast:'⚡ Hızlı Mod (8s/faz)',
     tryPrac:'🎯 Bu Sens ile Serbest Isınmada Dene',
-    webglErr:'⚠️ 3D motoru (Three.js / WebGL) yüklenemedi. İnternet bağlantınızı ve tarayıcı donanım hızlandırma ayarınızı kontrol edin.',
+    webglErr:'⚠️ 3D grafik motoru başlatılamadı. Tarayıcınızın donanım hızlandırma ayarını ve grafik sürücünüzü kontrol edin.',
     pracF:'🎯 Flick Isınma',
     pracG:'⚡ Grid Isınma',
     pracT:'🔄 Takip Isınma',
@@ -812,7 +812,7 @@ const L={
     sub:'Sensitivity Finder · CS2 & Valorant',game:'Game',dpi:'Mouse DPI',fov:'FOV',sens:'Current Sensitivity',
     calib:'Calibrate via 360° mousepad movement',start:'START TEST',
     rLbl:'Round',phLbl:'Phase',scLbl:'Score',piLbl:'Progress',
-    calTi:'CALIBRATION',calDe:'Option A: Drag from one edge of your mousepad to the other (distance mapping).<br>Option B: Drag until you complete a full 360° turn (measure current sens).<br>Press <strong>ESC</strong> to finish.',
+    calTi:'CALIBRATION',calDe:'Drag your mouse horizontally until you complete a full 360° turn in the 3D space.<br>Press <strong>ESC</strong> to finish.',
     eyLow:'Testing: LOW',eyHigh:'Testing: HIGH',eyMid:'Verification',
     tagF:'Flick',tagG:'Gridshot',tagT:'Tracking',
     rrEy:(r)=>`Round ${r} Result`,rrU:(g)=>`${g} SENSITIVITY`,rrCl:(g)=>`${g} Equivalent`,
@@ -848,7 +848,7 @@ const L={
     durStd:'⏱️ Standard (12s/phase)',
     durFast:'⚡ Fast Mode (8s/phase)',
     tryPrac:'🎯 Try This Sens in Free Warmup',
-    webglErr:'⚠️ 3D engine (Three.js / WebGL) failed to load. Check your internet connection and browser hardware acceleration.',
+    webglErr:'⚠️ 3D graphics engine could not start. Please check your browser hardware acceleration and graphics drivers.',
     pracF:'🎯 Flick Warmup',
     pracG:'⚡ Grid Warmup',
     pracT:'🔄 Track Warmup',
@@ -1283,7 +1283,7 @@ function getUniversalConversions(s,g,dpi){
     {id:'apex',name:'Apex Legends',sens:baseCS2.toFixed(3),edpi:Math.round(baseCS2*dpi),icon:'🎯'},
     {id:'ow2',name:'Overwatch 2',sens:(baseCS2*(0.022/0.0066)).toFixed(2),edpi:Math.round(baseCS2*(0.022/0.0066)*dpi),icon:'🛡️'},
     {id:'cod',name:'Call of Duty (MW/WZ)',sens:(baseCS2*(0.022/0.0066)).toFixed(2),edpi:Math.round(baseCS2*(0.022/0.0066)*dpi),icon:'💥'},
-    {id:'r6',name:'Rainbow Six Siege (1x)',sens:Math.round(baseCS2*3.83967),edpi:Math.round(baseCS2*3.83967*dpi),icon:'🔫'},
+    {id:'r6',name:'Rainbow Six Siege (1x)',sens:Math.max(1,Math.round(baseCS2*3.83967)),edpi:Math.round(baseCS2*3.83967*dpi),icon:'🔫'},
     {id:'fn',name:'Fortnite (%)',sens:(baseCS2*3.9604).toFixed(1)+'%',edpi:Math.round(baseCS2*3.9604*dpi),icon:'🪂'}
   ];
 }
@@ -1502,7 +1502,10 @@ function importDataJSON(e){
     try{
       const data=JSON.parse(evt.target.result);
       if(!data||typeof data!=='object')throw new Error('Invalid format');
-      if(Array.isArray(data.history))LS.set(HK,JSON.stringify(data.history));
+      if(Array.isArray(data.history)){
+        const validHistory=data.history.filter(h=>h&&typeof h==='object'&&isFinite(h.sens)&&Number(h.sens)>0).slice(-50);
+        LS.set(HK,JSON.stringify(validHistory));
+      }
       if(data.ui&&typeof data.ui==='object')LS.set('sf_ui',JSON.stringify(data.ui));
       if(data.grip)setGripStyle(data.grip);
       if(data.speed)setTestSpeed(data.speed);
@@ -1950,7 +1953,7 @@ function toggleSfx(half=false){
     return;
   }
   _sfxOn=!_sfxOn;LS.set("sf_sfx",_sfxOn?"1":"0");
-  _syncSfx(_sfxOn?"🔊":"🔇");
+  _syncSfx(_sfxOn?(parseFloat(LS.get('sf_vol')||'0.7')<0.5?"🔉":"🔊"):"🔇");
 }
 
 let _masterGain=null;
@@ -2196,13 +2199,18 @@ document.addEventListener('mousemove',e=>{
   if(isCalib){
     calMov+=e.movementX;
     const absCal=Math.abs(calMov);
-    const rotDeg=((absCal*GC[game].yaw*gS())%360).toFixed(0);
+    const totalDeg=absCal*GC[game].yaw*gS();
+    const is360Reached=totalDeg>=360;
+    const rotDeg=is360Reached?360:Math.round(totalDeg);
     const liveSens=absCal>50?(360/(GC[game].yaw*absCal)):0;
     const liveCm=liveSens>0?cm360(liveSens,gD()):0;
     const liveEl=$('cal-live');
     if(liveEl){
+      const statusText=is360Reached
+        ?`<span style="color:var(--a2);font-weight:700;">✓ ${lang==='tr'?'Tamamlandı (ESC)':'Completed (ESC)'}</span>`
+        :`<span style="font-weight:700;color:var(--tb);">${rotDeg}°</span> / 360°`;
       liveEl.innerHTML=liveSens>0
-        ?`<div>${lang==='tr'?'3D Dönüş Açısı':'3D Rotation'}: <span style="font-weight:700;color:var(--tb);">${rotDeg}°</span> / 360°</div>`
+        ?`<div>${lang==='tr'?'3D Dönüş Açısı':'3D Rotation'}: ${statusText}</div>`
          +`<div style="margin-top:4px;font-size:11px;">${lang==='tr'?'Tahmini Sens (360° için)':'Est. Sens (for 360°)'}: <span style="font-weight:700">${liveSens.toFixed(3)}</span> (${liveCm.toFixed(1)} cm/360°)</div>`
         :'...';
     }
@@ -2726,7 +2734,7 @@ function finCalib(){
     const clampedSens=Math.min(Math.max(rawSens,GC[game].sensMin),GC[game].sensMax);
     const isEl=$('is');
     if(isEl){
-      isEl.value=clampedSens.toFixed(4);
+      isEl.value=clampedSens.toFixed(3);
       isEl.style.borderColor='var(--a2)';
       setTimeout(()=>{isEl.style.borderColor='';},800);
     }
@@ -3485,7 +3493,8 @@ applyI18n();setGame('cs2',true);
 const _sfov=LS.get("sf_fov_cs2")||LS.get("sf_fov");if(_sfov){$('if').value=_sfov;}
 // Sfx butonunu ve tercihleri başlat
 setTimeout(()=>{
-  const el=$('sfx-btn');if(el)el.textContent=_sfxOn?"🔊":"🔇";
+  const _initVolIcon=_sfxOn?(parseFloat(LS.get('sf_vol')||'0.7')<0.5?"🔉":"🔊"):"🔇";
+  ['sfx-btn','pm-sfx'].forEach(id=>{const el=$(id);if(el)el.textContent=_initVolIcon;});
   setXhStyle(_xhStyle);
   setXhColor(_xhColor);
   setTargetColor(_targetColor);
