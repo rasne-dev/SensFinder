@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="version" content="1.2.3">
+<meta name="version" content="1.2.4">
 <title>SensFinder — CS2 & Valorant</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,6 +15,7 @@
   --a:#e8ff47;--a2:#47ffb8;--ag:rgba(232,255,71,.15);
   --bg:#070708;--p:rgba(9,9,11,.97);--b:rgba(255,255,255,.08);--b2:rgba(255,255,255,.14);
   --t:#8888a0;--td:#3a3a52;--tb:#eeeef8;--xh-c:#ffffff;--tc-c:#ff2020;
+  --xh-len:10px;--xh-thick:2px;--xh-gap:3px;--xh-dot:3px;
   --mono:'DM Mono',monospace;--sans:'Barlow',sans-serif;
 }
 body.val{--a:#c084fc;--a2:#818cf8;--ag:rgba(192,132,252,.15);}
@@ -26,15 +27,13 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
 #xh{display:none;position:fixed!important;top:50%!important;left:50%!important;transform:translate(-50%,-50%)!important;pointer-events:none!important;z-index:99999!important;width:0!important;height:0!important;transition:transform .08s ease-out;}
 #xh.active{display:block;}
 #xh.hit-pop{transform:translate(-50%,-50%) scale(1.32)!important;}
-.xh-h{position:absolute!important;width:26px!important;height:2px!important;background:var(--xh-c,#ffffff)!important;top:-1px!important;left:-13px!important;outline:1px solid #000!important;box-shadow:0 0 3px #000!important;}
-.xh-v{position:absolute!important;width:2px!important;height:26px!important;background:var(--xh-c,#ffffff)!important;left:-1px!important;top:-13px!important;outline:1px solid #000!important;box-shadow:0 0 3px #000!important;}
-.xh-dot{position:absolute!important;width:4px!important;height:4px!important;background:var(--xh-c,#ffffff)!important;border-radius:50%!important;top:-2px!important;left:-2px!important;outline:1px solid #000!important;}
-#xh.on-target .xh-h,#xh.on-target .xh-v,#xh.on-target .xh-dot{background:#00ff88!important;outline-color:#006633!important;box-shadow:0 0 6px #00ff88!important;}
-#xh.style-dot .xh-h,#xh.style-dot .xh-v,#xh-prev.style-dot .xh-h,#xh-prev.style-dot .xh-v{display:none!important;}
-#xh.style-dot .xh-dot,#xh-prev.style-dot .xh-dot{width:6px!important;height:6px!important;top:-3px!important;left:-3px!important;}
-#xh.style-compact .xh-h,#xh-prev.style-compact .xh-h{width:14px!important;left:-7px!important;}
-#xh.style-compact .xh-v,#xh-prev.style-compact .xh-v{height:14px!important;top:-7px!important;}
-#xh.style-compact .xh-dot,#xh-prev.style-compact .xh-dot{width:3px!important;height:3px!important;top:-1.5px!important;left:-1.5px!important;}
+.xh-arm{position:absolute!important;background:var(--xh-c,#ffffff)!important;outline:1px solid #000!important;box-shadow:0 0 2px #000!important;}
+.xh-top{width:var(--xh-thick,2px)!important;height:var(--xh-len,10px)!important;left:calc(var(--xh-thick,2px) / -2)!important;bottom:var(--xh-gap,3px)!important;}
+.xh-bottom{width:var(--xh-thick,2px)!important;height:var(--xh-len,10px)!important;left:calc(var(--xh-thick,2px) / -2)!important;top:var(--xh-gap,3px)!important;}
+.xh-left{height:var(--xh-thick,2px)!important;width:var(--xh-len,10px)!important;top:calc(var(--xh-thick,2px) / -2)!important;right:var(--xh-gap,3px)!important;}
+.xh-right{height:var(--xh-thick,2px)!important;width:var(--xh-len,10px)!important;top:calc(var(--xh-thick,2px) / -2)!important;left:var(--xh-gap,3px)!important;}
+.xh-dot{position:absolute!important;width:var(--xh-dot,3px)!important;height:var(--xh-dot,3px)!important;background:var(--xh-c,#ffffff)!important;border-radius:50%!important;top:calc(var(--xh-dot,3px) / -2)!important;left:calc(var(--xh-dot,3px) / -2)!important;outline:1px solid #000!important;}
+#xh.on-target .xh-arm,#xh.on-target .xh-dot{background:#00ff88!important;outline-color:#006633!important;box-shadow:0 0 6px #00ff88!important;}
 #xh-prev-box{width:46px;height:34px;background:radial-gradient(circle at 50% 50%,var(--tc-c,#ff2020) 0%,var(--tc-c,#ff2020) 7px,rgba(0,0,0,.65) 8px);border:1px solid rgba(255,255,255,.12);position:relative;flex-shrink:0;border-radius:2px;}
 #xh-prev{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:0;height:0;pointer-events:none;}
 .fi.warn{border-color:#ff4455!important;box-shadow:0 0 0 1px rgba(255,68,85,.3)!important;}
@@ -210,7 +209,7 @@ button:active{transform:scale(0.98);}
 </head>
 <body>
 <div id="rc"></div>
-<div id="xh"><div class="xh-h"></div><div class="xh-v"></div><div class="xh-dot"></div></div>
+<div id="xh"><div class="xh-arm xh-top"></div><div class="xh-arm xh-bottom"></div><div class="xh-arm xh-left"></div><div class="xh-arm xh-right"></div><div class="xh-dot"></div></div>
 <div id="pw"><div id="pb"></div></div>
 <div id="fb"></div>
 
@@ -323,7 +322,7 @@ button:active{transform:scale(0.98);}
   <div class="sg" style="margin-bottom:13px;padding:10px 12px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;">
       <span class="slbl" id="l-opt-ti" style="margin-bottom:0;">Preferences</span>
-      <div id="xh-prev-box" title="Live Crosshair &amp; Target Preview"><div id="xh-prev" class="style-cross"><div class="xh-h"></div><div class="xh-v"></div><div class="xh-dot"></div></div></div>
+      <div id="xh-prev-box" title="Live Crosshair &amp; Target Preview"><div id="xh-prev" class="style-cross"><div class="xh-arm xh-top"></div><div class="xh-arm xh-bottom"></div><div class="xh-arm xh-left"></div><div class="xh-arm xh-right"></div><div class="xh-dot"></div></div></div>
     </div>
     <div style="display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap;">
       <div style="display:flex;align-items:center;gap:4px;">
@@ -331,12 +330,45 @@ button:active{transform:scale(0.98);}
         <button type="button" class="lbtn on" id="btn-xh-cross" onclick="setXhStyle('cross')">✚ Plus</button>
         <button type="button" class="lbtn" id="btn-xh-dot" onclick="setXhStyle('dot')">• Dot</button>
         <button type="button" class="lbtn" id="btn-xh-compact" onclick="setXhStyle('compact')">✛ Mini</button>
+        <button type="button" class="lbtn" id="btn-xh-custom" onclick="toggleXhCustom()" title="Özel Nişangâh Ayarları">⚙️</button>
       </div>
       <div style="display:flex;align-items:center;gap:4px;">
         <span class="flbl" style="margin-bottom:0;font-size:7px;" id="l-snd-ti">Sound:</span>
         <button type="button" class="lbtn on" id="btn-snd-laser" onclick="setHitSound('laser')">Beep</button>
         <button type="button" class="lbtn" id="btn-snd-pop" onclick="setHitSound('pop')">Pop</button>
         <button type="button" class="lbtn" id="btn-snd-bell" onclick="setHitSound('bell')">Bell</button>
+      </div>
+    </div>
+    <div id="xh-custom-panel" style="display:none;margin-top:8px;padding:8px 10px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.07);">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;font-family:var(--mono);font-size:8px;">
+        <div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:2px;">
+            <span style="color:rgba(255,255,255,.45);" id="l-xh-len">Boyut</span>
+            <span style="color:var(--a);font-weight:500;" id="v-xh-len">10px</span>
+          </div>
+          <input type="range" id="sl-xh-len" min="0" max="22" step="1" value="10" oninput="setXhCustom('len',this.value)" style="width:100%;height:4px;accent-color:var(--a);cursor:pointer;">
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:2px;">
+            <span style="color:rgba(255,255,255,.45);" id="l-xh-thick">Kalınlık</span>
+            <span style="color:var(--a);font-weight:500;" id="v-xh-thick">2px</span>
+          </div>
+          <input type="range" id="sl-xh-thick" min="1" max="5" step="1" value="2" oninput="setXhCustom('thick',this.value)" style="width:100%;height:4px;accent-color:var(--a);cursor:pointer;">
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:2px;">
+            <span style="color:rgba(255,255,255,.45);" id="l-xh-gap">Boşluk</span>
+            <span style="color:var(--a);font-weight:500;" id="v-xh-gap">3px</span>
+          </div>
+          <input type="range" id="sl-xh-gap" min="0" max="14" step="1" value="3" oninput="setXhCustom('gap',this.value)" style="width:100%;height:4px;accent-color:var(--a);cursor:pointer;">
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:2px;">
+            <span style="color:rgba(255,255,255,.45);" id="l-xh-dot">Merkez Nokta</span>
+            <span style="color:var(--a);font-weight:500;" id="v-xh-dot">3px</span>
+          </div>
+          <input type="range" id="sl-xh-dot" min="0" max="6" step="1" value="3" oninput="setXhCustom('dot',this.value)" style="width:100%;height:4px;accent-color:var(--a);cursor:pointer;">
+        </div>
       </div>
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;padding-top:7px;border-top:1px solid rgba(255,255,255,.05);flex-wrap:wrap;">
@@ -617,6 +649,7 @@ button:active{transform:scale(0.98);}
     </div>
     <div style="display:flex;gap:8px;">
       <button class="sbtn" onclick="startABTest()" style="flex:1;margin-top:0;padding:10px;" id="ab-m-start">⚔️ Karşılaştırmayı Başlat</button>
+      <button class="sbtn" onclick="applyABWinner()" style="display:none;flex:1;margin-top:0;padding:10px;background:var(--a);color:#070708;font-weight:700;" id="ab-apply-btn">✓ Kazananı Uygula</button>
       <button class="sbtn g" onclick="closeABModal()" style="flex:1;margin-top:0;padding:10px;" id="ab-m-close">Kapat</button>
     </div>
   </div>
@@ -760,7 +793,18 @@ const L={
     abWinnerA:'🏆 Sens A daha başarılı (%s1 vs %s2 isabet)!',
     abWinnerB:'🏆 Sens B daha başarılı (%s1 vs %s2 isabet)!',
     abTie:'🤝 İki hassasiyet arasında belirgin fark oluşmadı.',
-    abApplyWinner:'Kazanan Hassasiyeti Seç',
+    abApplyWinner:'Kazanan Hassasiyeti Uygula',
+    abOldSens:'Önceki Sens',
+    abNewSens:'SensFinder',
+    abApplied:'Kazanan hassasiyet uygulandı!',
+    wMetricTrackAcc:'Takip Doğruluğu',
+    wMetricTrackTime:'Hedefte Süre',
+    histEmpty:'Henüz kayıtlı test geçmişi yok.',
+    xhCustom:'Özel Nişangâh Ayarları',
+    xhLen:'Boyut',
+    xhThick:'Kalınlık',
+    xhGap:'Boşluk',
+    xhDot:'Merkez Nokta',
     shareTxt:(g,s,cm,c,og,os,d,r)=>`🎯 SensFinder Sonucu:\n🎮 ${g}: ${s} (${d} DPI · ${cm} cm/360°)\n🔄 ${og} Eşdeğeri: ${os}\n⭐ Güven: %${c}${r?`\n⚡ Ortalama Tepki: ${r}ms`:''}\nhttps://rasne-dev.github.io/SensFinder/?game=${g==='Valorant'?'val':'cs2'}&dpi=${d}&sens=${s}`,},
   en:{noMouse:'⚠️ This test needs a mouse (pointer lock) and may not work on touch devices. Open it on a computer.',
     warnSens:(mn,mx,u)=>`Sensitivity must be between ${mn} and ${mx} (using: ${u})`,warnDpi:'DPI must be between 100 and 32000',warnFov:'FOV must be between 60 and 120',
@@ -890,7 +934,18 @@ const L={
     abWinnerA:'🏆 Sens A performed better (%s1 vs %s2 acc)!',
     abWinnerB:'🏆 Sens B performed better (%s1 vs %s2 acc)!',
     abTie:'🤝 Performance between both sensitivities was nearly identical.',
-    abApplyWinner:'Select Winning Sensitivity',}
+    abApplyWinner:'Apply Winning Sensitivity',
+    abOldSens:'Previous Sens',
+    abNewSens:'SensFinder',
+    abApplied:'Winning sensitivity applied!',
+    wMetricTrackAcc:'Tracking Accuracy',
+    wMetricTrackTime:'Time on Target',
+    histEmpty:'No saved test history yet.',
+    xhCustom:'Custom Crosshair Settings',
+    xhLen:'Size',
+    xhThick:'Thickness',
+    xhGap:'Gap',
+    xhDot:'Center Dot',}
 };
 let lang=LS.get('sf_lang')||(navigator.language.startsWith('tr')?'tr':'en');
 const $=id=>document.getElementById(id);
@@ -980,7 +1035,13 @@ function applyI18n(){
   const _abDesc=$('ab-m-desc');if(_abDesc)_abDesc.textContent=T('abDesc');
   const _abResTi=$('ab-res-title');if(_abResTi)_abResTi.textContent=T('abResultTi');
   const _abSt=$('ab-m-start');if(_abSt)_abSt.textContent=T('abStart');
+  const _abApp=$('ab-apply-btn');if(_abApp)_abApp.textContent=T('abApplyWinner');
   const _abCl=$('ab-m-close');if(_abCl)_abCl.textContent=T('resClose');
+  const _xhCust=$('btn-xh-custom');if(_xhCust)_xhCust.title=T('xhCustom');
+  const _lXhLen=$('l-xh-len');if(_lXhLen)_lXhLen.textContent=T('xhLen');
+  const _lXhThk=$('l-xh-thick');if(_lXhThk)_lXhThk.textContent=T('xhThick');
+  const _lXhGap=$('l-xh-gap');if(_lXhGap)_lXhGap.textContent=T('xhGap');
+  const _lXhDot=$('l-xh-dot');if(_lXhDot)_lXhDot.textContent=T('xhDot');
   $('rh-l').textContent=T('rhL');$('mb-l').textContent=T('perMode');$('ft-ti').textContent=T('ftTi');
   $('ft-ov').textContent=T('ftOv');$('ft-un').textContent=T('ftUn');
   const _cpHintEl=$('rr-cp-hint');if(_cpHintEl)_cpHintEl.textContent=T('cpHint');
@@ -1304,8 +1365,21 @@ function closeWarmupModal(){
 function renderHistLog(){
   const wrap=$('histWrap');if(!wrap)return;
   const arr=loadHistLog();
-  if(!arr.length){wrap.style.display='none';return;}
+  const clrBtn=$('hist-clr');
+  const expBtn=$('btn-export-json');
+  const chartBox=$('histChartBox');
+  const rowsEl=$('histRows');
   wrap.style.display='block';
+  if(!arr.length){
+    if(clrBtn)clrBtn.style.display='none';
+    if(expBtn)expBtn.style.display='none';
+    if(chartBox)chartBox.style.display='none';
+    if(rowsEl)rowsEl.innerHTML=`<div style="font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.3);text-align:center;padding:12px 0;">${T('histEmpty')}</div>`;
+    return;
+  }
+  if(clrBtn)clrBtn.style.display='inline-block';
+  if(expBtn)expBtn.style.display='inline-block';
+  if(chartBox)chartBox.style.display='block';
 
   const svgWrap=$('histSvgWrap');
   const statsEl=$('histChartStats');
@@ -1392,9 +1466,18 @@ function exportDataJSON(){
       speed:_testSpeed,
       xhStyle:_xhStyle,
       xhColor:_xhColor,
+      xhLen:parseInt(LS.get('sf_xh_len')||'10',10),
+      xhThick:parseInt(LS.get('sf_xh_thick')||'2',10),
+      xhGap:parseInt(LS.get('sf_xh_gap')||'3',10),
+      xhDot:parseInt(LS.get('sf_xh_dot')||'3',10),
       targetColor:_targetColor,
       hitSound:_hitSoundPreset,
-      warmupCfg:_warmupCfg
+      warmupCfg:_warmupCfg,
+      fovCS2:LS.get('sf_fov_cs2')||null,
+      fovVal:LS.get('sf_fov_val')||null,
+      vol:parseFloat(LS.get('sf_vol')||'0.7'),
+      sfx:_sfxOn,
+      lang:lang
     };
     const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
     const url=URL.createObjectURL(blob);
@@ -1425,6 +1508,11 @@ function importDataJSON(e){
       if(data.speed)setTestSpeed(data.speed);
       if(data.xhStyle)setXhStyle(data.xhStyle);
       if(data.xhColor)setXhColor(data.xhColor);
+      if(data.xhLen!==undefined)LS.set('sf_xh_len',String(data.xhLen));
+      if(data.xhThick!==undefined)LS.set('sf_xh_thick',String(data.xhThick));
+      if(data.xhGap!==undefined)LS.set('sf_xh_gap',String(data.xhGap));
+      if(data.xhDot!==undefined)LS.set('sf_xh_dot',String(data.xhDot));
+      if(typeof applyXhParams==='function')applyXhParams();
       if(data.targetColor)setTargetColor(data.targetColor);
       if(data.hitSound)setHitSound(data.hitSound);
       if(data.warmupCfg){
@@ -1433,6 +1521,19 @@ function importDataJSON(e){
         if(data.warmupCfg.count)setWarmupCount(data.warmupCfg.count);
         if(data.warmupCfg.dur!==undefined)setWarmupDur(data.warmupCfg.dur);
       }
+      if(data.fovCS2)LS.set('sf_fov_cs2',String(data.fovCS2));
+      if(data.fovVal)LS.set('sf_fov_val',String(data.fovVal));
+      if(typeof data.vol==='number'){
+        LS.set('sf_vol',String(data.vol));
+        if(_masterGain)_masterGain.gain.value=data.vol;
+      }
+      if(typeof data.sfx==='boolean'){
+        _sfxOn=data.sfx;
+        LS.set('sf_sfx',_sfxOn?'1':'0');
+        const sTxt=_sfxOn?(parseFloat(LS.get('sf_vol')||'0.7')<0.5?'🔉':'🔊'):'🔇';
+        ['sfx-btn','pm-sfx'].forEach(id=>{const el=$(id);if(el)el.textContent=sTxt;});
+      }
+      if(data.lang&&['en','tr'].includes(data.lang)&&data.lang!==lang){setLang(data.lang);}
       restoreUI();
       updPv();
       renderHistLog();
@@ -1868,20 +1969,78 @@ function setHitSound(preset){
   playHit();
 }
 
+function applyXhParams(){
+  const len=parseInt(LS.get('sf_xh_len')||'10',10);
+  const thick=parseInt(LS.get('sf_xh_thick')||'2',10);
+  const gap=parseInt(LS.get('sf_xh_gap')||'3',10);
+  const dot=parseInt(LS.get('sf_xh_dot')||'3',10);
+
+  document.documentElement.style.setProperty('--xh-len',len+'px');
+  document.documentElement.style.setProperty('--xh-thick',thick+'px');
+  document.documentElement.style.setProperty('--xh-gap',gap+'px');
+  document.documentElement.style.setProperty('--xh-dot',dot+'px');
+
+  document.querySelectorAll('.xh-arm').forEach(el=>{
+    el.style.display=len>0?'block':'none';
+  });
+  document.querySelectorAll('.xh-dot').forEach(el=>{
+    el.style.display=dot>0?'block':'none';
+  });
+
+  const vLen=$('v-xh-len'),vThk=$('v-xh-thick'),vGap=$('v-xh-gap'),vDot=$('v-xh-dot');
+  if(vLen)vLen.textContent=len+'px';
+  if(vThk)vThk.textContent=thick+'px';
+  if(vGap)vGap.textContent=gap+'px';
+  if(vDot)vDot.textContent=dot>0?(dot+'px'):'OFF';
+
+  const sLen=$('sl-xh-len'),sThk=$('sl-xh-thick'),sGap=$('sl-xh-gap'),sDot=$('sl-xh-dot');
+  if(sLen)sLen.value=len;
+  if(sThk)sThk.value=thick;
+  if(sGap)sGap.value=gap;
+  if(sDot)sDot.value=dot;
+}
+
 function setXhStyle(style){
   _xhStyle=style;
   try{LS.set('sf_xh_style',style);}catch(e){}
-  ['xh','xh-prev'].forEach(id=>{
-    const el=$(id);
-    if(el){
-      el.classList.remove('style-cross','style-dot','style-compact');
-      el.classList.add('style-'+style);
-    }
-  });
-  ['cross','dot','compact'].forEach(s=>{
+  ['cross','dot','compact','custom'].forEach(s=>{
     const btn=$('btn-xh-'+s);
     if(btn){btn.classList.toggle('on',s===style);btn.setAttribute('aria-pressed',String(s===style));}
   });
+  if(style==='cross'){
+    LS.set('sf_xh_len','10');LS.set('sf_xh_thick','2');LS.set('sf_xh_gap','3');LS.set('sf_xh_dot','3');
+  } else if(style==='dot'){
+    LS.set('sf_xh_len','0');LS.set('sf_xh_thick','2');LS.set('sf_xh_gap','0');LS.set('sf_xh_dot','5');
+  } else if(style==='compact'){
+    LS.set('sf_xh_len','5');LS.set('sf_xh_thick','2');LS.set('sf_xh_gap','2');LS.set('sf_xh_dot','0');
+  }
+  const panel=$('xh-custom-panel');
+  if(panel&&style==='custom')panel.style.display='block';
+  applyXhParams();
+}
+
+function setXhCustom(prop,val){
+  const num=Math.max(0,parseInt(val,10)||0);
+  LS.set('sf_xh_'+prop,String(num));
+  _xhStyle='custom';
+  LS.set('sf_xh_style','custom');
+  ['cross','dot','compact'].forEach(s=>{
+    const btn=$('btn-xh-'+s);if(btn){btn.classList.remove('on');btn.setAttribute('aria-pressed','false');}
+  });
+  const cBtn=$('btn-xh-custom');if(cBtn){cBtn.classList.add('on');cBtn.setAttribute('aria-pressed','true');}
+  applyXhParams();
+}
+
+function toggleXhCustom(){
+  const panel=$('xh-custom-panel');
+  if(!panel)return;
+  const isHidden=panel.style.display==='none';
+  panel.style.display=isHidden?'block':'none';
+  const btn=$('btn-xh-custom');
+  if(btn){
+    btn.classList.toggle('on',isHidden||_xhStyle==='custom');
+    btn.setAttribute('aria-pressed',String(isHidden||_xhStyle==='custom'));
+  }
 }
 
 function setXhColor(col){
@@ -2021,6 +2180,7 @@ document.addEventListener('pointerlockchange',()=>{
   // Lock kayboldu
   if(isCalib){finCalib();return;}
   if(isPractice){quitToMenu();return;}
+  if(_isABTest){cancelABTest();return;}
   if(!isCalib&&active&&!isPaused){
     setTimeout(()=>{
       if(!active||isPaused||!renderer||document.pointerLockElement===renderer.domElement)return;
@@ -2207,6 +2367,7 @@ window.addEventListener('keydown',e=>{
   if(e.key==='Escape'){
     if(isCalib){return;} // browser lock'u zaten bırakır → pointerlockchange → finCalib
     if(isPractice){quitToMenu();return;}
+    if(_isABTest){cancelABTest();return;}
     if($('res-modal')?.style.display==='flex'){closeResModal();return;}
     if($('conv-modal')?.style.display==='flex'){closeConvModal();return;}
     if($('warmup-modal')?.style.display==='flex'){closeWarmupModal();return;}
@@ -2306,13 +2467,14 @@ function endEarly(){
   if(_resT){_resT(Math.floor(curScore));_resT=null;}
 }
 function quitToMenu(){
-  _quitEarly=true;isPractice=false;
+  _quitEarly=true;isPractice=false;_isABTest=false;
   isPaused=false;active=false;_endEarly=true;phaseScoreActive=false;
   clearTimeout(_jt);
   if(window._sovCd){clearInterval(window._sovCd);window._sovCd=null;}
   if(window._cuTimer){clearInterval(window._cuTimer);window._cuTimer=null;}
   if(window._hudTimer){clearInterval(window._hudTimer);window._hudTimer=null;}
   if(_warmupInterval){clearInterval(_warmupInterval);_warmupInterval=null;}
+  if(_abInterval){clearInterval(_abInterval);_abInterval=null;}
   if(_pauseRes){_pauseRes();_pauseRes=null;}
   if(_resT){_resT(0);_resT=null;}
   if(document.pointerLockElement)document.exitPointerLock();
@@ -2390,8 +2552,17 @@ function startPractice(mode){
 }
 
 function showWarmupSummary(accPct,h,m,tot,bestStreak,avgRfx,sc){
+  const isTrk=cMode==='track';
+  $('wsum-l-acc').textContent=isTrk?T('wMetricTrackAcc'):T('wMetricAcc');
+  $('wsum-l-hits').textContent=isTrk?T('wMetricTrackTime'):T('wMetricHits');
   $('wsum-v-acc').textContent=`%${accPct}`;
-  $('wsum-v-hits').textContent=`${h} / ${m}`;
+  if(isTrk){
+    const onSec=(_trackOnFrames/60).toFixed(1);
+    const totSec=Math.max(0.1,_trackFrames/60).toFixed(1);
+    $('wsum-v-hits').textContent=`${onSec}s / ${totSec}s`;
+  } else {
+    $('wsum-v-hits').textContent=`${h} / ${m}`;
+  }
   $('wsum-v-streak').textContent=bestStreak?`${bestStreak}x`:'—';
   $('wsum-v-reflex').textContent=avgRfx?`${avgRfx} ms`:'—';
   $('wsum-v-score').textContent=sc;
@@ -2404,6 +2575,13 @@ function closeWarmupSummary(){
 // ─── A/B BLIND COMPARISON TEST ───
 let _abSensA=0,_abSensB=0,_abSwapped=false;
 let _abResA={acc:0,hits:0,miss:0,score:0},_abResB={acc:0,hits:0,miss:0,score:0};
+let _abWinnerSens=null,_isABTest=false,_abInterval=null;
+
+function cancelABTest(){
+  _isABTest=false;
+  if(_abInterval){clearInterval(_abInterval);_abInterval=null;}
+  quitToMenu();
+}
 
 function openABModal(){
   const sNew=_lastResult?.sens||gS();
@@ -2420,7 +2598,9 @@ function openABModal(){
   _abSwapped=Math.random()<0.5;
   _abSensA=_abSwapped?sOld:sNew;
   _abSensB=_abSwapped?sNew:sOld;
+  _abWinnerSens=null;
   $('ab-result-box').style.display='none';
+  const applyBtn=$('ab-apply-btn');if(applyBtn)applyBtn.style.display='none';
   $('ab-m-start').style.display='block';
   $('ab-modal').style.display='flex';
 }
@@ -2428,12 +2608,24 @@ function closeABModal(){
   $('ab-modal').style.display='none';
 }
 
+function applyABWinner(){
+  if(_abWinnerSens){
+    $('is').value=_abWinnerSens.toFixed(game==='val'?3:2);
+    updPv();
+    showFB(T('abApplied'),true,2000);
+  }
+  closeABModal();
+}
+
 function startABTest(){
   closeABModal();
-  const testSens=async(sens,label)=>{
-    return new Promise(resolve=>{
+  _isABTest=true;
+  const testSens=async(sens,label,phaseIdx)=>{
+    return new Promise((resolve,reject)=>{
       curLabel=label;
-      showSOv(sens,label,cMode||'flick',1,2,{repeats:1,countdown:2},()=>{
+      cMode='grid';
+      showSOv(sens,label,cMode,phaseIdx,2,{repeats:1,countdown:2},()=>{
+        if(!_isABTest){reject(new Error('AB cancelled'));return;}
         curTS=sens;curScore=0;hits=0;miss=0;onT=false;phaseScoreActive=true;_streak=0;
         $('hv-s').textContent='???';$('hv-cm').textContent='—';$('hv-sc').textContent='0';
         setupT('grid',label);schedJ('grid',label);
@@ -2441,13 +2633,18 @@ function startABTest(){
         let rem=dur;
         const timerEl=$('hud-timer');
         if(timerEl){timerEl.textContent=rem.toFixed(1)+'s';timerEl.style.color='var(--tb)';}
-        const st=performance.now();
-        const iv=setInterval(()=>{
+        let lastTick=performance.now();
+        if(_abInterval){clearInterval(_abInterval);_abInterval=null;}
+        _abInterval=setInterval(()=>{
+          if(!_isABTest){clearInterval(_abInterval);_abInterval=null;reject(new Error('AB cancelled'));return;}
+          const now=performance.now();
+          const dt=(now-lastTick)/1000;
+          lastTick=now;
           if(!active||isPaused)return;
-          rem=Math.max(0,dur-(performance.now()-st)/1000);
+          rem=Math.max(0,rem-dt);
           if(timerEl)timerEl.textContent=rem.toFixed(1)+'s';
           if(rem<=0){
-            clearInterval(iv);
+            clearInterval(_abInterval);_abInterval=null;
             const tot=hits+miss;
             const acc=tot>0?Math.round(hits/tot*100):0;
             resolve({acc,hits,miss,score:Math.floor(curScore)});
@@ -2458,43 +2655,48 @@ function startABTest(){
   };
 
   (async()=>{
-    if(!renderer&&!initThree())return;
-    hideAll();
-    $('hud').style.display='block';$('pi').style.display='none';$('bbar').style.display='block';
-    $('bbar').textContent=T('abTi');
-    $('hpill').textContent='GRID';
-    $('hv-r').textContent='A/B';$('hv-ph').textContent='TEST';
-    safeRequestPointerLock(renderer.domElement);
-    active=true;
+    try{
+      if(!renderer&&!initThree())return;
+      hideAll();
+      $('hud').style.display='block';$('pi').style.display='none';$('bbar').style.display='block';
+      $('bbar').textContent=T('abTi');
+      $('hpill').textContent='GRID';
+      $('hv-r').textContent='A/B';$('hv-ph').textContent='TEST';
+      safeRequestPointerLock(renderer.domElement);
+      active=true;
 
-    _abResA=await testSens(_abSensA,'Sens A');
-    playCountdown(0);
-    _abResB=await testSens(_abSensB,'Sens B');
+      _abResA=await testSens(_abSensA,'Sens A',1);
+      if(!_isABTest)return;
+      playCountdown(0);
+      _abResB=await testSens(_abSensB,'Sens B',2);
+      if(!_isABTest)return;
 
-    quitToMenu();
-    $('ab-result-box').style.display='block';
-    $('ab-m-start').style.display='none';
-    $('ab-stat-a').textContent=`Sens A: %${_abResA.acc} (${_abResA.hits} hit)`;
-    $('ab-stat-b').textContent=`Sens B: %${_abResB.acc} (${_abResB.hits} hit)`;
-    
-    let winnerSens=_abSensA;
-    if(Math.abs(_abResA.acc-_abResB.acc)<3){
-      $('ab-verdict').textContent=T('abTie');
-      winnerSens=_abResA.score>=_abResB.score?_abSensA:_abSensB;
-    } else if(_abResA.acc>_abResB.acc){
-      $('ab-verdict').textContent=T('abWinnerA').replace('%s1',_abResA.acc).replace('%s2',_abResB.acc);
-      winnerSens=_abSensA;
-    } else {
-      $('ab-verdict').textContent=T('abWinnerB').replace('%s1',_abResB.acc).replace('%s2',_abResA.acc);
-      winnerSens=_abSensB;
+      _isABTest=false;
+      quitToMenu();
+      $('ab-result-box').style.display='block';
+      $('ab-m-start').style.display='none';
+      const labelSensA=_abSwapped?T('abOldSens'):T('abNewSens');
+      const labelSensB=_abSwapped?T('abNewSens'):T('abOldSens');
+      $('ab-stat-a').innerHTML=`<strong>Sens A</strong> (${labelSensA}): <strong>%${_abResA.acc}</strong> (${_abResA.hits} hits)<br><small style="color:var(--a);font-weight:600;">${_abSensA.toFixed(3)}</small>`;
+      $('ab-stat-b').innerHTML=`<strong>Sens B</strong> (${labelSensB}): <strong>%${_abResB.acc}</strong> (${_abResB.hits} hits)<br><small style="color:var(--a);font-weight:600;">${_abSensB.toFixed(3)}</small>`;
+      
+      let winnerSens=_abSensA;
+      if(Math.abs(_abResA.acc-_abResB.acc)<3){
+        $('ab-verdict').textContent=T('abTie');
+        winnerSens=_abResA.score>=_abResB.score?_abSensA:_abSensB;
+      } else if(_abResA.acc>_abResB.acc){
+        $('ab-verdict').textContent=T('abWinnerA').replace('%s1',_abResA.acc).replace('%s2',_abResB.acc);
+        winnerSens=_abSensA;
+      } else {
+        $('ab-verdict').textContent=T('abWinnerB').replace('%s1',_abResB.acc).replace('%s2',_abResA.acc);
+        winnerSens=_abSensB;
+      }
+      _abWinnerSens=winnerSens;
+      const applyBtn=$('ab-apply-btn');if(applyBtn)applyBtn.style.display='block';
+      $('ab-modal').style.display='flex';
+    }catch(err){
+      // cancelled or aborted
     }
-    const realSensA=_abSensA.toFixed(3);
-    const realSensB=_abSensB.toFixed(3);
-    $('ab-stat-a').innerHTML+=`<br><small style="color:var(--a);">${realSensA}</small>`;
-    $('ab-stat-b').innerHTML+=`<br><small style="color:var(--a);">${realSensB}</small>`;
-    $('is').value=winnerSens.toFixed(3);
-    updPv();
-    $('ab-modal').style.display='flex';
   })();
 }
 
@@ -2995,12 +3197,24 @@ function requestGameLock(){
 }
 
 function showSOv(sens,label,mode,phIdx,totalPhases,cfg,cb){
-  $('sw-ey').textContent=label==='LOW'?T('eyLow'):label==='HIGH'?T('eyHigh'):T('eyMid');
-  $('sw-sn').textContent=sens.toFixed(3);
-  $('sw-tg').textContent=T('tag'+['F','G','T'][['flick','grid','track'].indexOf(mode)]);
-  const _swCm=$('sw-cm');if(_swCm)_swCm.textContent=cm360(sens,gD()).toFixed(1)+' cm/360°';
+  const isAB=_isABTest||label==='Sens A'||label==='Sens B';
+  if(isAB){
+    $('sw-ey').textContent=label==='Sens A'?T('abPhaseA'):label==='Sens B'?T('abPhaseB'):label;
+    $('sw-sn').textContent='???';
+    $('sw-tg').textContent='GRID';
+    const _swCm=$('sw-cm');if(_swCm)_swCm.textContent='—';
+  } else {
+    $('sw-ey').textContent=label==='LOW'?T('eyLow'):label==='HIGH'?T('eyHigh'):T('eyMid');
+    $('sw-sn').textContent=sens.toFixed(3);
+    $('sw-tg').textContent=T('tag'+['F','G','T'][['flick','grid','track'].indexOf(mode)]);
+    const _swCm=$('sw-cm');if(_swCm)_swCm.textContent=cm360(sens,gD()).toFixed(1)+' cm/360°';
+  }
   const dots=[];
-  for(let r=0;r<cfg.repeats;r++)MODES.forEach(m=>{dots.push(m,m,m);});
+  if(isAB){
+    dots.push('grid','grid');
+  } else {
+    for(let r=0;r<cfg.repeats;r++)MODES.forEach(m=>{dots.push(m,m,m);});
+  }
   const dotHtml=dots.map((m,i)=>{
     const done=i<phIdx-1,isAct=i===phIdx-1;
     const col=done?'rgba(255,255,255,.25)':isAct?'var(--a)':'rgba(255,255,255,.08)';
