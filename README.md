@@ -5,7 +5,7 @@
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Site-e8ff47?style=for-the-badge&labelColor=070708&color=e8ff47&logoColor=black)](https://rasne-dev.github.io/SensFinder)
 [![License: MIT](https://img.shields.io/badge/License-MIT-555?style=for-the-badge&labelColor=070708)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.2.6-e8ff47?style=for-the-badge&labelColor=070708)](https://github.com/rasne-dev/SensFinder/releases)
+[![Version](https://img.shields.io/badge/version-1.2.7-e8ff47?style=for-the-badge&labelColor=070708)](https://github.com/rasne-dev/SensFinder/releases)
 [![No Dependencies](https://img.shields.io/badge/Zero%20Dependencies-Single%20File-555?style=for-the-badge&labelColor=070708)]()
 
 ---
@@ -71,7 +71,7 @@ Don't know your current sensitivity? Use the built-in **mousepad calibration**:
 1. Click **"Calibrate via 360° movement"**
 2. Place your mouse at one edge of your pad
 3. Slide to the opposite edge
-4. Press **ESC** — your sensitivity is estimated automatically
+4. Press **Left Click** or **ESC** — your sensitivity is estimated automatically
 
 ---
 
@@ -252,7 +252,7 @@ Her tur sonunda ilerleme `localStorage`'a kaydedilir. Tarayıcıyı kapatıp aç
 Mevcut hassasiyetini bilmiyorsan:
 1. **"360° mousepad hareketi ile kalibre et"** butonuna tıkla
 2. Fareyi pad'in bir kenarına koy, karşı kenara sürükle
-3. **ESC** — hassasiyet otomatik hesaplanır
+3. **Sol Tık** veya **ESC** — hassasiyet otomatik hesaplanır
 
 ---
 

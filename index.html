@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="version" content="1.2.6">
+<meta name="version" content="1.2.7">
 <title>SensFinder — CS2 & Valorant</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -184,7 +184,7 @@ button:active{transform:scale(0.98);}
 /* ── v1.2.1: erişilebilirlik, mobil uyum, hareket azaltma (eklemeli geçersiz kılmalar) ── */
 :root{--td:#8a8aa6;}                       /* eski #3a3a52 koyu zeminde okunamıyordu (kontrast ~1.8:1) */
 .menu:focus{outline:none;}
-.hist-item:focus-visible,.lbtn:focus-visible,.sb-btn:focus-visible,.tab:focus-visible,.sbtn:focus-visible,.cbtn:focus-visible,.clr-dot:focus-visible,#lock-ov:focus-visible{outline:2px solid var(--a);outline-offset:2px;}
+.hist-item:focus-visible,.lbtn:focus-visible,.sb-btn:focus-visible,.tab:focus-visible,.sbtn:focus-visible,.cbtn:focus-visible,.clr-dot:focus-visible,#lock-ov:focus-visible,.rr-main:focus-visible,.rr-cv:focus-visible{outline:2px solid var(--a);outline-offset:2px;}
 /* en küçük etiketler: okunabilir boyut + en az ~4.5:1 kontrast */
 .slbl,.flbl,.spvl,.rs-l,.rc-l,.conf-lbl,.sb-l,.sb-s,.pm-sl,.rr-eye,.ft-ti,.mt-sub{font-size:10px!important;}
 .slbl,.spvl,.rs-l,.rc-l,.conf-lbl,.sb-l,.sb-s,.pm-sl,.rh-n,.mb-tag,.mb-conf,.mt-sub,#kb-hint,#est-dur,#rr-cp-hint{color:rgba(255,255,255,.55)!important;}
@@ -241,7 +241,7 @@ button:active{transform:scale(0.98);}
   <div class="sw-cd" id="sw-cd">3</div>
 </div></div>
 
-<div id="cov" role="dialog" aria-modal="true" aria-labelledby="cal-ti"><div class="cal-box">
+<div id="cov" role="dialog" aria-modal="true" aria-labelledby="cal-ti" onclick="if(!document.pointerLockElement)finCalib()" style="cursor:pointer;"><div class="cal-box">
   <div class="cal-ti" id="cal-ti">Calibration</div>
   <div style="font-size:24px;margin:12px 0;">🖱️ ↔️</div>
   <div class="cal-de" id="cal-de">...</div>
@@ -327,16 +327,16 @@ button:active{transform:scale(0.98);}
     <div style="display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap;">
       <div style="display:flex;align-items:center;gap:4px;">
         <span class="flbl" style="margin-bottom:0;font-size:7px;" id="l-xh-ti">Crosshair:</span>
-        <button type="button" class="lbtn on" id="btn-xh-cross" onclick="setXhStyle('cross')">✚ Plus</button>
-        <button type="button" class="lbtn" id="btn-xh-dot" onclick="setXhStyle('dot')">• Dot</button>
-        <button type="button" class="lbtn" id="btn-xh-compact" onclick="setXhStyle('compact')">✛ Mini</button>
+        <button type="button" class="lbtn on" id="btn-xh-cross" onclick="setXhStyle('cross')">✚ <span id="l-xh-p-cross">Artı</span></button>
+        <button type="button" class="lbtn" id="btn-xh-dot" onclick="setXhStyle('dot')">• <span id="l-xh-p-dot">Nokta</span></button>
+        <button type="button" class="lbtn" id="btn-xh-compact" onclick="setXhStyle('compact')">✛ <span id="l-xh-p-mini">Kısa</span></button>
         <button type="button" class="lbtn" id="btn-xh-custom" onclick="toggleXhCustom()" title="Özel Nişangâh Ayarları">⚙️</button>
       </div>
       <div style="display:flex;align-items:center;gap:4px;">
         <span class="flbl" style="margin-bottom:0;font-size:7px;" id="l-snd-ti">Sound:</span>
-        <button type="button" class="lbtn on" id="btn-snd-laser" onclick="setHitSound('laser')">Beep</button>
-        <button type="button" class="lbtn" id="btn-snd-pop" onclick="setHitSound('pop')">Pop</button>
-        <button type="button" class="lbtn" id="btn-snd-bell" onclick="setHitSound('bell')">Bell</button>
+        <button type="button" class="lbtn on" id="btn-snd-laser" onclick="setHitSound('laser')">Bip</button>
+        <button type="button" class="lbtn" id="btn-snd-pop" onclick="setHitSound('pop')">Tok</button>
+        <button type="button" class="lbtn" id="btn-snd-bell" onclick="setHitSound('bell')">Çan</button>
       </div>
     </div>
     <div id="xh-custom-panel" style="display:none;margin-top:8px;padding:8px 10px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.07);">
@@ -417,8 +417,8 @@ button:active{transform:scale(0.98);}
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
     <span class="slbl" id="hist-l" style="margin-bottom:0;">Recent Results</span>
     <div style="display:flex;gap:4px;">
-      <button class="sb-btn" id="btn-export-json" onclick="exportDataJSON()" style="padding:2px 6px;font-size:7px;" title="JSON Export">💾</button>
-      <button class="sb-btn" id="btn-import-json" onclick="$('inp-import-file').click()" style="padding:2px 6px;font-size:7px;" title="JSON Import">📥</button>
+      <button class="sb-btn" id="btn-export-json" onclick="exportDataJSON()" style="padding:2px 6px;font-size:7px;" title="Yedekle" aria-label="Yedekle">💾</button>
+      <button class="sb-btn" id="btn-import-json" onclick="$('inp-import-file').click()" style="padding:2px 6px;font-size:7px;" title="İçe Aktar" aria-label="İçe Aktar">📥</button>
       <input type="file" id="inp-import-file" accept=".json" style="display:none;" onchange="importDataJSON(event)">
       <button class="sb-btn" id="hist-clr" onclick="clearHistLog()" style="padding:2px 6px;font-size:7px;">Clear</button>
     </div>
@@ -452,16 +452,16 @@ button:active{transform:scale(0.98);}
 <!-- ROUND RESULT -->
 <div class="menu" id="rr" role="dialog" aria-modal="true" aria-labelledby="rr-ey" style="display:none;">
   <span class="rr-eye" id="rr-ey">Round 1 Result</span>
-  <div class="rr-main" id="rr-m" title="Click to copy" style="cursor:pointer;" onclick="copyMainSens()">2.750</div>
+  <div class="rr-main" id="rr-m" role="button" tabindex="0" title="Click to copy" style="cursor:pointer;" onclick="copyMainSens()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();copyMainSens();}">2.750</div>
   <div class="rr-unit" id="rr-u">CS2 SENSITIVITY</div>
   <div style="font-family:var(--mono);font-size:7px;letter-spacing:.12em;color:rgba(255,255,255,.18);text-transform:uppercase;margin-top:-10px;margin-bottom:12px;text-align:center;" id="rr-cp-hint">↑ click to copy</div>
-  <div class="rr-stats" style="grid-template-columns:repeat(4,1fr);">
+  <div class="rr-stats">
     <div class="rs"><span class="rs-l">eDPI</span><span class="rs-v" id="rr-e">—</span></div>
     <div class="rs"><span class="rs-l">cm/360°</span><span class="rs-v" id="rr-cm">—</span></div>
     <div class="rs"><span class="rs-l" id="rr-al">Accuracy</span><span class="rs-v" id="rr-a">—</span></div>
     <div class="rs"><span class="rs-l" id="rr-rl">Reflex</span><span class="rs-v" id="rr-r">—</span></div>
   </div>
-  <div class="rr-cv" id="rr-cv-card" style="cursor:pointer;" title="Click to copy equivalent sensitivity" onclick="copyEquivalent()"><span class="rc-l" id="rr-cl">Equivalent</span><div class="rc-v" id="rr-cv">—</div></div>
+  <div class="rr-cv" id="rr-cv-card" role="button" tabindex="0" style="cursor:pointer;" title="Click to copy equivalent sensitivity" onclick="copyEquivalent()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();copyEquivalent();}"><span class="rc-l" id="rr-cl">Equivalent</span><div class="rc-v" id="rr-cv">—</div></div>
   <button type="button" class="sb-btn" id="btn-rr-conv" onclick="openConvModal()" style="width:100%;margin-bottom:8px;padding:7px 10px;display:flex;align-items:center;justify-content:center;gap:6px;" title="Apex, OW2, R6, COD">
     <span>🌐</span> <span id="l-rr-conv-btn">Tüm Oyunlara Dönüştür (Apex, OW2, R6, COD...)</span>
   </button>
@@ -495,8 +495,9 @@ button:active{transform:scale(0.98);}
     <div class="ft-it"><span class="ft-b">↑</span><span id="ft-un"></span></div>
   </div>
   <button class="sbtn" onclick="startNextRound()"><span id="ln">▶ Next Round (More Precise)</span></button>
-  <div style="display:flex;gap:6px;margin-top:7px;">
+  <div style="display:flex;gap:6px;margin-top:7px;flex-wrap:wrap;">
     <button class="sbtn g" style="margin-top:0;flex:1;" id="share-btn" onclick="shareResult()"><span id="lsh">📋 Share result</span></button>
+    <button class="sbtn g" style="margin-top:0;flex:1;" id="img-btn" onclick="downloadResultCard()"><span id="limg">🖼️ Görsel Kart</span></button>
     <button class="sbtn g" style="margin-top:0;flex:1;" id="cmd-btn" onclick="copyConsoleCmd()"><span id="lcmd">💻 Console Cmd</span></button>
   </div>
   <button class="sbtn g" onclick="testResultInPractice()"><span id="l-try-prac">🎯 Try This Sens in Free Warmup</span></button>
@@ -560,11 +561,11 @@ button:active{transform:scale(0.98);}
     </div>
     <div style="display:flex;flex-direction:column;gap:14px;">
       <div>
-        <span class="flbl" id="l-w-size">Hedef Boyutu (Target Size)</span>
+        <span class="flbl" id="l-w-size">Hedef Boyutu</span>
         <div style="display:flex;gap:5px;">
-          <button type="button" class="lbtn" id="btn-ws-sm" onclick="setWarmupSize('sm')">Küçük (0.16)</button>
-          <button type="button" class="lbtn on" id="btn-ws-md" onclick="setWarmupSize('md')">Standart (0.26)</button>
-          <button type="button" class="lbtn" id="btn-ws-lg" onclick="setWarmupSize('lg')">Büyük (0.38)</button>
+          <button type="button" class="lbtn" id="btn-ws-sm" onclick="setWarmupSize('sm')">Küçük</button>
+          <button type="button" class="lbtn on" id="btn-ws-md" onclick="setWarmupSize('md')">Standart</button>
+          <button type="button" class="lbtn" id="btn-ws-lg" onclick="setWarmupSize('lg')">Büyük</button>
         </div>
       </div>
       <div>
@@ -666,18 +667,18 @@ const LS={
 let _uiRestored=false; // kullanıcı arayüz tercihlerinin (DPI/oyun/sens) kalıcılığı için
 // ─── i18n ───
 const L={
-  tr:{noMouse:'⚠️ Bu test fare (pointer lock) gerektirir; dokunmatik cihazlarda çalışmayabilir. Bir bilgisayarda aç.',
+  tr:{noMouse:'⚠️ Bu test fiziksel fare gerektirir; dokunmatik ekranlarda çalışmaz. Lütfen bilgisayarda açın.',
     warnSens:(mn,mx,u)=>`Hassasiyet ${mn}–${mx} aralığında olmalı (kullanılan: ${u})`,warnDpi:'DPI 100–32000 aralığında olmalı',warnFov:'FOV 60–120 aralığında olmalı',
     cmLbl:'cm/360° → sens',
     sub:'Hassasiyet Bulucusu · CS2 & Valorant',game:'Oyun',dpi:'Mouse DPI',fov:'FOV',sens:'Mevcut Hassasiyet',
     calib:'360° mousepad hareketi ile kalibre et',start:'TESTİ BAŞLAT',
     rLbl:'Tur',phLbl:'Aşama',scLbl:'Puan',piLbl:'İlerleme',
-    calTi:'KALİBRASYON',calDe:'3D alanda tam 360° dönene kadar farenizi yatayda kaydırın.<br>Bitirmek için <strong>ESC</strong> tuşuna basın.',
+    calTi:'KALİBRASYON',calDe:'Farenizi mousepad\'in bir kenarından diğerine (tam 360° dönmek istediğiniz mesafe kadar) yatayda kaydırın.<br>Bitirmek için <strong>Sol Tık</strong> veya <strong>ESC</strong> tuşuna basın.',
     eyLow:'Test: DÜŞÜK',eyHigh:'Test: YÜKSEK',eyMid:'Doğrulama',
     tagF:'Flick',tagG:'Gridshot',tagT:'Takip',
     rrEy:(r)=>`Tur ${r} Sonucu`,rrU:(g)=>`${g} HASSASİYETİ`,rrCl:(g)=>`${g} Eşdeğeri`,
     rrAl:'İsabet',confL:'Güven',rhL:'Geçmiş',perMode:'Mod Bazlı',
-    ftTi:'Oyun İçi İnce Ayar',ftOv:'Hedefi aşıyorsan (overshooting) — %5–10 azalt',ftUn:'Hedefe yetişemiyorsan — %5–10 artır',
+    ftTi:'Oyun İçi İnce Ayar',ftOv:'Hedefi aşıyorsan — %5–10 azalt',ftUn:'Hedefe yetişemiyorsan — %5–10 artır',
     nextR:'▶ Sonraki Tur (Daha Hassas)',done:'✓ Tamamlandı',
     pmTi:'Durakladı',pmSu:'Test askıya alındı',pmR:'Tur',pmB:'En iyi şu ana kadar',pmPh:'Aşama',
     resume:'▶ Devam Et',early:'✓ Bitir & Sonuçları Göster',quit:'✕ Çık',
@@ -692,6 +693,8 @@ const L={
     kbHint:'⌨ Boşluk başlat · M ses · F tam ekran · ESC duraklat',
     estDur:(m)=>`~${m} dk sürer (3 mod × isabet/hız testi)`,
     shareBtn:'📋 Sonucu paylaş',
+    imgBtn:'🖼️ Görsel Kart',
+    imgSaved:'✓ Görsel İndirildi!',
     cmdBtn:'💻 Konsol Komutu',
     shared:'✓ Kopyalandı!',
     lockTi:'TIKLA VE OYNA',
@@ -704,16 +707,19 @@ const L={
     sndTi:'Ses:',
     xhcTi:'Renk:',
     tcTi:'Hedef:',
+    xhPCross:'Artı',xhPDot:'Nokta',xhPMini:'Kısa',
+    sndLaser:'Bip',sndPop:'Tok',sndBell:'Çan',
+    escPause:'ESC duraklat',escCancel:'ESC iptal',
     durStd:'⏱️ Standart (12s/faz)',
     durFast:'⚡ Hızlı Mod (8s/faz)',
     tryPrac:'🎯 Bu Sens ile Serbest Isınmada Dene',
-    webglErr:'⚠️ 3D grafik motoru başlatılamadı. Tarayıcınızın donanım hızlandırma ayarını ve grafik sürücünüzü kontrol edin.',
+    webglErr:'⚠️ 3D sahne başlatılamadı. Tarayıcınızda donanım hızlandırmanın açık olduğundan emin olun.',
     pracF:'🎯 Flick Isınma',
     pracG:'⚡ Grid Isınma',
     pracT:'🔄 Takip Isınma',
     pracBar:'Serbest Isınma · [ / ] Hassasiyet ± · 1/2/3 Mod · ESC Çık',
     histLoadHint:'Bu hassasiyeti yüklemek için tıkla',
-    grTi:'Nişan Stili (Aim Style)',
+    grTi:'Nişan Stili',
     grWrist:'🖐️ Bilek',
     grArm:'💪 Kol',
     grHybrid:'🤝 Hibrit',
@@ -748,12 +754,12 @@ const L={
     warmupCfgTi:'Özel Isınma Ayarları',
     warmupCfgSu:'Serbest Alıştırma Parametreleri',
     wSize:'Hedef Boyutu',
-    wSpeed:'Hedef Hızı (Tracking & Grid)',
+    wSpeed:'Hedef Hızı (Takip & Grid)',
     wCount:'Gridshot Hedef Sayısı',
     wDur:'Isınma Süresi',
-    wsSm:'Küçük (0.16)',
-    wsMd:'Standart (0.26)',
-    wsLg:'Büyük (0.38)',
+    wsSm:'Küçük',
+    wsMd:'Standart',
+    wsLg:'Büyük',
     wspdSlow:'Yavaş (0.7x)',
     wspdNorm:'Standart (1.0x)',
     wspdFast:'Hızlı (1.4x)',
@@ -770,10 +776,11 @@ const L={
     histAvg:'Ort',
     histMin:'Min',
     histMax:'Max',
-    expBtn:'💾 Yedekle (JSON)',
+    expBtn:'💾 Yedekle',
     impBtn:'📥 İçe Aktar',
     impOk:'✓ Veriler ve geçmiş başarıyla içe aktarıldı!',
-    impErr:'⚠️ Geçersiz JSON veya bozuk dosya formatı.',
+    impErr:'⚠️ Seçilen yedek dosyası okunamadı veya geçersiz.',
+    expErr:'⚠️ Yedek dosyası oluşturulamadı.',
     wSummaryTi:'Isınma Özeti',
     wSummarySu:'Performans Metrikleri',
     wMetricAcc:'İsabet Oranı',
@@ -806,13 +813,13 @@ const L={
     xhGap:'Boşluk',
     xhDot:'Merkez Nokta',
     shareTxt:(g,s,cm,c,og,os,d,r)=>`🎯 SensFinder Sonucu:\n🎮 ${g}: ${s} (${d} DPI · ${cm} cm/360°)\n🔄 ${og} Eşdeğeri: ${os}\n⭐ Güven: %${c}${r?`\n⚡ Ortalama Tepki: ${r}ms`:''}\nhttps://rasne-dev.github.io/SensFinder/?game=${g==='Valorant'?'val':'cs2'}&dpi=${d}&sens=${s}`,},
-  en:{noMouse:'⚠️ This test needs a mouse (pointer lock) and may not work on touch devices. Open it on a computer.',
+  en:{noMouse:'⚠️ This test requires a physical mouse and does not work on touchscreens. Please open it on a computer.',
     warnSens:(mn,mx,u)=>`Sensitivity must be between ${mn} and ${mx} (using: ${u})`,warnDpi:'DPI must be between 100 and 32000',warnFov:'FOV must be between 60 and 120',
     cmLbl:'cm/360° → sens',
     sub:'Sensitivity Finder · CS2 & Valorant',game:'Game',dpi:'Mouse DPI',fov:'FOV',sens:'Current Sensitivity',
     calib:'Calibrate via 360° mousepad movement',start:'START TEST',
     rLbl:'Round',phLbl:'Phase',scLbl:'Score',piLbl:'Progress',
-    calTi:'CALIBRATION',calDe:'Drag your mouse horizontally until you complete a full 360° turn in the 3D space.<br>Press <strong>ESC</strong> to finish.',
+    calTi:'CALIBRATION',calDe:'Slide your mouse horizontally from one edge of your pad to the other (the distance you want for a full 360° turn).<br>Press <strong>Left Click</strong> or <strong>ESC</strong> to finish.',
     eyLow:'Testing: LOW',eyHigh:'Testing: HIGH',eyMid:'Verification',
     tagF:'Flick',tagG:'Gridshot',tagT:'Tracking',
     rrEy:(r)=>`Round ${r} Result`,rrU:(g)=>`${g} SENSITIVITY`,rrCl:(g)=>`${g} Equivalent`,
@@ -833,6 +840,8 @@ const L={
     estDur:(m)=>`~${m} min (3 modes × accuracy/speed tests)`,
     shareTxt:(g,s,cm,c,og,os,d,r)=>`🎯 SensFinder Result:\n🎮 ${g}: ${s} (${d} DPI · ${cm} cm/360°)\n🔄 ${og} Equivalent: ${os}\n⭐ Confidence: ${c}%${r?`\n⚡ Avg Reflex: ${r}ms`:''}\nhttps://rasne-dev.github.io/SensFinder/?game=${g==='Valorant'?'val':'cs2'}&dpi=${d}&sens=${s}`,
     shareBtn:'📋 Share result',
+    imgBtn:'🖼️ Image Card',
+    imgSaved:'✓ Image Saved!',
     cmdBtn:'💻 Console Cmd',
     shared:'✓ Copied!',
     lockTi:'CLICK TO PLAY',
@@ -845,10 +854,13 @@ const L={
     sndTi:'Sound:',
     xhcTi:'Color:',
     tcTi:'Target:',
+    xhPCross:'Plus',xhPDot:'Dot',xhPMini:'Mini',
+    sndLaser:'Beep',sndPop:'Pop',sndBell:'Bell',
+    escPause:'ESC pause',escCancel:'ESC cancel',
     durStd:'⏱️ Standard (12s/phase)',
     durFast:'⚡ Fast Mode (8s/phase)',
     tryPrac:'🎯 Try This Sens in Free Warmup',
-    webglErr:'⚠️ 3D graphics engine could not start. Please check your browser hardware acceleration and graphics drivers.',
+    webglErr:'⚠️ Could not start the 3D view. Please make sure hardware acceleration is enabled in your browser.',
     pracF:'🎯 Flick Warmup',
     pracG:'⚡ Grid Warmup',
     pracT:'🔄 Track Warmup',
@@ -892,9 +904,9 @@ const L={
     wSpeed:'Target Speed (Tracking & Grid)',
     wCount:'Gridshot Target Count',
     wDur:'Warmup Duration',
-    wsSm:'Small (0.16)',
-    wsMd:'Standard (0.26)',
-    wsLg:'Large (0.38)',
+    wsSm:'Small',
+    wsMd:'Standard',
+    wsLg:'Large',
     wspdSlow:'Slow (0.7x)',
     wspdNorm:'Standard (1.0x)',
     wspdFast:'Fast (1.4x)',
@@ -911,10 +923,11 @@ const L={
     histAvg:'Avg',
     histMin:'Min',
     histMax:'Max',
-    expBtn:'💾 Backup (JSON)',
+    expBtn:'💾 Backup',
     impBtn:'📥 Import',
     impOk:'✓ Data and history imported successfully!',
-    impErr:'⚠️ Invalid JSON or corrupt file format.',
+    impErr:'⚠️ Could not read the selected backup file.',
+    expErr:'⚠️ Could not create backup file.',
     wSummaryTi:'Warmup Summary',
     wSummarySu:'Performance Metrics',
     wMetricAcc:'Accuracy',
@@ -982,6 +995,12 @@ function applyI18n(){
   const _sndTi=$('l-snd-ti');if(_sndTi)_sndTi.textContent=T('sndTi');
   const _xhcTi=$('l-xhc-ti');if(_xhcTi)_xhcTi.textContent=T('xhcTi');
   const _tcTi=$('l-tc-ti');if(_tcTi)_tcTi.textContent=T('tcTi');
+  const _xhPC=$('l-xh-p-cross');if(_xhPC)_xhPC.textContent=T('xhPCross');
+  const _xhPD=$('l-xh-p-dot');if(_xhPD)_xhPD.textContent=T('xhPDot');
+  const _xhPM=$('l-xh-p-mini');if(_xhPM)_xhPM.textContent=T('xhPMini');
+  const _sLas=$('btn-snd-laser');if(_sLas)_sLas.textContent=T('sndLaser');
+  const _sPop=$('btn-snd-pop');if(_sPop)_sPop.textContent=T('sndPop');
+  const _sBel=$('btn-snd-bell');if(_sBel)_sBel.textContent=T('sndBell');
   const _dStd=$('btn-dur-std');if(_dStd)_dStd.textContent=T('durStd');
   const _dFast=$('btn-dur-fast');if(_dFast)_dFast.textContent=T('durFast');
   const _tryP=$('l-try-prac');if(_tryP)_tryP.textContent=T('tryPrac');
@@ -1052,6 +1071,7 @@ function applyI18n(){
   updEstDur();
   $('ln').textContent=T('nextR');$('ld2').textContent=T('done');
   const _lshEl=$('lsh');if(_lshEl)_lshEl.textContent=T('shareBtn');
+  const _limgEl=$('limg');if(_limgEl)_limgEl.textContent=T('imgBtn');
   const _lcmdEl=$('lcmd');if(_lcmdEl)_lcmdEl.textContent=game==='cs2'?T('cmdBtn'):`📋 ${T('copyVal')}`;
   const _ltEl=$('lock-ti');if(_ltEl)_ltEl.textContent=T('lockTi');
   const _lsEl=$('lock-su');if(_lsEl)_lsEl.textContent=T('lockSu');
@@ -1066,9 +1086,9 @@ function applyI18n(){
 
 // ─── GAME & GRIP CFG ───
 const GC={
-  cs2:{name:'CS2',opp:'Valorant',yaw:.022,sensMin:.1,sensMax:10,sensD:2.5,fovD:90,convF:.022/.07,minSpan:0.05,
+  cs2:{name:'CS2',opp:'Valorant',yaw:.022,sensMin:.05,sensMax:10,sensD:2.5,fovD:90,convF:.022/.07,minSpan:0.05,
        a:'#e8ff47',a2:'#47ffb8',ag:'rgba(232,255,71,.15)',tc:0xff2233,te:0x550008,ti:.6,lc:0xff1122,gc:0x111111},
-  val:{name:'Valorant',opp:'CS2',yaw:.07,sensMin:.1,sensMax:2,sensD:.4,fovD:103,convF:.07/.022,minSpan:0.015,
+  val:{name:'Valorant',opp:'CS2',yaw:.07,sensMin:.01,sensMax:2,sensD:.4,fovD:103,convF:.07/.022,minSpan:0.015,
        a:'#c084fc',a2:'#818cf8',ag:'rgba(192,132,252,.15)',tc:0xff2233,te:0x550008,ti:.6,lc:0xff1122,gc:0x111122}
 };
 const GRIP_CFG={
@@ -1090,7 +1110,7 @@ function setGame(g, force=false){
   const r=document.documentElement.style;
   r.setProperty('--a',c.a);r.setProperty('--a2',c.a2);r.setProperty('--ag',c.ag);
   $('if').value=LS.get('sf_fov_'+g)||LS.get('sf_fov')||c.fovD;
-  const si=$('is');si.max=c.sensMax;si.step=g==='val'?.01:.05;
+  const si=$('is');si.min=c.sensMin;si.max=c.sensMax;si.step=g==='val'?.01:.05;
   if(!force && prevGame && prevGame!==g){
     const curSens=parseFloat(si.value);
     if(!isNaN(curSens)&&curSens>0){
@@ -1287,7 +1307,15 @@ function getUniversalConversions(s,g,dpi){
     {id:'fn',name:'Fortnite (%)',sens:(baseCS2*3.9604).toFixed(1)+'%',edpi:Math.round(baseCS2*3.9604*dpi),icon:'🪂'}
   ];
 }
+let _lastModalFocus=null;
+function _saveModalFocus(){if(document.activeElement&&document.activeElement!==document.body)_lastModalFocus=document.activeElement;}
+function _restoreModalFocus(){if(_lastModalFocus&&typeof _lastModalFocus.focus==='function'){try{_lastModalFocus.focus();}catch(e){}}_lastModalFocus=null;}
+function _anyModalOpen(){
+  return ['res-modal','conv-modal','warmup-modal','wsummary-modal','ab-modal'].some(id=>$(id)?.style.display==='flex')
+    ||$('cov')?.classList.contains('on')||$('sov')?.classList.contains('on')||$('lock-ov')?.classList.contains('on');
+}
 function openConvModal(){
+  _saveModalFocus();
   const s=gS(),g=game,d=gD();
   const list=getUniversalConversions(s,g,d);
   const cm=cm360(s,d);
@@ -1314,6 +1342,7 @@ function openConvModal(){
 }
 function closeConvModal(){
   $('conv-modal').style.display='none';
+  _restoreModalFocus();
 }
 function copyConvItem(btn,val){
   const cleanVal=String(val).replace('%','');
@@ -1353,6 +1382,7 @@ function setWarmupDur(dur){
   [30,60,0].forEach(k=>{const b=$('btn-wdur-'+k);if(b){b.classList.toggle('on',k===dur);b.setAttribute('aria-pressed',String(k===dur));}});
 }
 function openWarmupModal(){
+  _saveModalFocus();
   setWarmupSize(_warmupCfg.size);
   setWarmupSpeed(_warmupCfg.speed);
   setWarmupCount(_warmupCfg.count);
@@ -1362,6 +1392,7 @@ function openWarmupModal(){
 }
 function closeWarmupModal(){
   $('warmup-modal').style.display='none';
+  _restoreModalFocus();
 }
 
 function renderHistLog(){
@@ -1492,7 +1523,7 @@ function exportDataJSON(){
     URL.revokeObjectURL(url);
     showFB('✓ '+T('expBtn'),true,2000);
   }catch(e){
-    alert('Export error: '+e.message);
+    showFB(T('expErr'),false,2800);
   }
 }
 
@@ -2072,8 +2103,8 @@ function setTargetColor(col){
   updTC();
 }
 
-function openResModal(){const m=$('res-modal');if(m){m.style.display='flex';setTimeout(()=>m.querySelector('button')?.focus(),50);}}
-function closeResModal(){const m=$('res-modal');if(m)m.style.display='none';}
+function openResModal(){_saveModalFocus();const m=$('res-modal');if(m){m.style.display='flex';setTimeout(()=>m.querySelector('button')?.focus(),50);}}
+function closeResModal(){const m=$('res-modal');if(m)m.style.display='none';_restoreModalFocus();}
 
 function _getAC(){
   if(!_ac){try{
@@ -2202,19 +2233,17 @@ document.addEventListener('mousemove',e=>{
   if(isCalib){
     calMov+=e.movementX;
     const absCal=Math.abs(calMov);
-    const totalDeg=absCal*GC[game].yaw*gS();
-    const is360Reached=totalDeg>=360;
-    const rotDeg=is360Reached?360:Math.round(totalDeg);
+    const swipeCm=(absCal/gD())*2.54;
+    const isReady=absCal>500;
     const liveSens=absCal>50?(360/(GC[game].yaw*absCal)):0;
-    const liveCm=liveSens>0?cm360(liveSens,gD()):0;
     const liveEl=$('cal-live');
     if(liveEl){
-      const statusText=is360Reached
-        ?`<span style="color:var(--a2);font-weight:700;">✓ ${lang==='tr'?'Tamamlandı (ESC)':'Completed (ESC)'}</span>`
-        :`<span style="font-weight:700;color:var(--tb);">${rotDeg}°</span> / 360°`;
+      const statusBadge=isReady
+        ?`<span style="color:var(--a2);font-weight:700;">✓ ${lang==='tr'?'Hazır (Sol Tık / ESC)':'Ready (Click / ESC)'}</span>`
+        :`<span style="color:rgba(255,255,255,.5);">${lang==='tr'?'Kaydırmaya devam edin...':'Keep sliding...'}</span>`;
       liveEl.innerHTML=liveSens>0
-        ?`<div>${lang==='tr'?'3D Dönüş Açısı':'3D Rotation'}: ${statusText}</div>`
-         +`<div style="margin-top:4px;font-size:11px;">${lang==='tr'?'Tahmini Sens (360° için)':'Est. Sens (for 360°)'}: <span style="font-weight:700">${liveSens.toFixed(3)}</span> (${liveCm.toFixed(1)} cm/360°)</div>`
+        ?`<div>${lang==='tr'?'Kaydırma Mesafesi':'Swipe Distance'}: <span style="font-weight:700;color:var(--tb);">${swipeCm.toFixed(1)} cm</span> · ${statusBadge}</div>`
+         +`<div style="margin-top:4px;font-size:11px;">${lang==='tr'?'Bu mesafe = 360° için Sens':'Sens for 360°'}: <span style="font-weight:700;color:var(--a);">${liveSens.toFixed(3)}</span></div>`
         :'...';
     }
     const scale=GC[game].yaw*gS()*(Math.PI/180);
@@ -2255,7 +2284,12 @@ document.addEventListener('mousemove',e=>{
   }
 });
 document.addEventListener('mousedown',e=>{
-  if(e.button!==0||isCalib)return;
+  if(e.button!==0)return;
+  if(isCalib){
+    if(document.pointerLockElement)document.exitPointerLock();
+    else finCalib();
+    return;
+  }
   if(!active||!renderer||document.pointerLockElement!==renderer.domElement)return;
   if(cMode==='track'||isPaused||_endEarly||_quitEarly)return;
   if(phaseScoreActive){
@@ -2355,12 +2389,10 @@ window.addEventListener('keydown',e=>{
   if((e.key==='m'||e.key==='M')&&!isInput){toggleSfx(e.shiftKey);return;}
   if(isPractice&&active){
     if(e.key==='1'||e.key==='2'||e.key==='3'){
-      const m=['flick','grid','track'][parseInt(e.key)-1];
-      cMode=m;curScore=0;hits=0;miss=0;_trackFrames=0;_trackOnFrames=0;_streak=0;
-      $('hpill').textContent=T('tag'+['F','G','T'][parseInt(e.key)-1]);
-      $('hl-sc').textContent=m==='track'?(lang==='tr'?'Takip Puanı':'Track Score'):T('scLbl');
-      $('hv-sc').textContent='0';
-      setupT(m,'FREE');schedJ(m,'FREE');
+      const idx=parseInt(e.key)-1;
+      const m=['flick','grid','track'][idx];
+      if(cMode!==m)startPractice(m);
+      showFB(T('tag'+['F','G','T'][idx]),true,600);
       return;
     }
     if(e.key==='['||e.key===']'||e.key==='ArrowDown'||e.key==='ArrowUp'){
@@ -2372,11 +2404,12 @@ window.addEventListener('keydown',e=>{
       updPv();
       $('hv-s').textContent=curTS.toFixed(3);
       $('hv-cm').textContent=cm360(curTS,gD()).toFixed(1);
+      showFB(curTS.toFixed(3),true,450);
       return;
     }
   }
   if(e.key==='Escape'){
-    if(isCalib){return;} // browser lock'u zaten bırakır → pointerlockchange → finCalib
+    if(isCalib){if(!document.pointerLockElement)finCalib();return;}
     if(isPractice){quitToMenu();return;}
     if(_isABTest){cancelABTest();return;}
     if($('res-modal')?.style.display==='flex'){closeResModal();return;}
@@ -2385,7 +2418,9 @@ window.addEventListener('keydown',e=>{
     if($('wsummary-modal')?.style.display==='flex'){closeWarmupSummary();return;}
     if($('ab-modal')?.style.display==='flex'){closeABModal();return;}
     if($('sov')?.classList.contains('on')){quitToMenu();return;}
+    if($('lock-ov')?.classList.contains('on')){pauseG();return;}
     if(isPaused){resumeGame();return;}
+    if(active&&!isPaused){pauseG();return;}
     if($('rr').style.display==='block'){
       showMenu('mm');checkSaved();applyI18n();renderHistLog();
       return;
@@ -2394,13 +2429,13 @@ window.addEventListener('keydown',e=>{
   // Klavyeyle odaklanmış butona/role=button öğesine basılan Space o öğeyi etkinleştirmeli, testi başlatmamalı
   const _ae=document.activeElement;
   const _onBtn=!!(_ae&&(_ae.tagName==='BUTTON'||(_ae.getAttribute&&_ae.getAttribute('role')==='button')));
-  if((e.code==='Space'||e.key===' ')&&!isInput&&!_onBtn){
-    if($('mm').style.display!=='none'&&!active&&!isPaused&&!isCalib&&$('res-modal')?.style.display!=='flex'&&$('conv-modal')?.style.display!=='flex'&&$('warmup-modal')?.style.display!=='flex'&&!$('cov')?.classList.contains('on')){
+  if((e.code==='Space'||e.key===' ')&&!isInput&&!_onBtn&&!_anyModalOpen()){
+    if($('mm').style.display!=='none'&&!active&&!isPaused&&!isCalib){
       e.preventDefault();
       startFresh();
       return;
     }
-    if($('rr').style.display==='block'){
+    if($('rr').style.display==='block'&&!active&&!isPaused){
       e.preventDefault();
       startNextRound();
       return;
@@ -2417,10 +2452,18 @@ function showFB(t,g,dur=280){
   }
 }
 
-// ─── PAUSE ───
-let _pauseRes=null,_endEarly=false,_quitEarly=false;
+// ─── PAUSE & LOCK CLEANUP ───
+let _pauseRes=null,_endEarly=false,_quitEarly=false,_pendingLockFn=null;
+function _clearPendingLock(){
+  if(_pendingLockFn){
+    document.removeEventListener('pointerlockchange',_pendingLockFn);
+    _pendingLockFn=null;
+  }
+}
 
 function pauseG(){
+  _clearPendingLock();
+  const lkOv=$('lock-ov');if(lkOv)lkOv.classList.remove('on');
   isPaused=true;active=false;clearTimeout(_jt);
   let wSum=0,best=0;
   MODES.forEach(m=>{
@@ -2438,6 +2481,7 @@ function pauseG(){
 }
 function resumeGame(){
   if(!isPaused)return;isPaused=false;hideAll();
+  _clearPendingLock();
   gridLastHitTime=Date.now();_flickSpawnTime=performance.now();
   if(cMode==='track'&&tM){const sp=Math.hypot(tVX,tVY);if(sp<0.01){const ang=Math.random()*Math.PI*2;tVX=Math.cos(ang)*.032;tVY=Math.sin(ang)*.022;}}
   if(renderer&&document.pointerLockElement===renderer.domElement){
@@ -2448,18 +2492,20 @@ function resumeGame(){
     // Lock düşmüşse (örn. kullanıcı tab değiştirmişti) yeniden al
     function onLock(){
       if(document.pointerLockElement===renderer.domElement){
-        document.removeEventListener('pointerlockchange',onLock);
+        _clearPendingLock();
         _lockAcquiredAt=performance.now();
         gridLastHitTime=Date.now();_flickSpawnTime=performance.now();
         active=true;schedJ(cMode,curLabel);
         if(_pauseRes){_pauseRes();_pauseRes=null;}
       }
     }
+    _pendingLockFn=onLock;
     document.addEventListener('pointerlockchange',onLock);
     safeRequestPointerLock(renderer.domElement);
     setTimeout(()=>{
-      if(!active){
-        document.removeEventListener('pointerlockchange',onLock);
+      if(isPaused||_quitEarly||_endEarly)return;
+      if(!active&&document.pointerLockElement===renderer?.domElement){
+        _clearPendingLock();
         _lockAcquiredAt=performance.now();
         gridLastHitTime=Date.now();_flickSpawnTime=performance.now();
         active=true;schedJ(cMode,curLabel);if(_pauseRes){_pauseRes();_pauseRes=null;}
@@ -2471,13 +2517,16 @@ function resumeGame(){
   }
 }
 function endEarly(){
+  _clearPendingLock();
   isPaused=false;_endEarly=true;active=false;phaseScoreActive=false;clearTimeout(_jt);
   if(window._sovCd){clearInterval(window._sovCd);window._sovCd=null;}
   const sovEl=$('sov');if(sovEl)sovEl.classList.remove('on');
+  const lkOv=$('lock-ov');if(lkOv)lkOv.classList.remove('on');
   if(_pauseRes){_pauseRes();_pauseRes=null;}
   if(_resT){_resT(Math.floor(curScore));_resT=null;}
 }
-function quitToMenu(){
+function quitToMenu(targetMenu='mm'){
+  _clearPendingLock();
   _quitEarly=true;isPractice=false;_isABTest=false;
   isPaused=false;active=false;_endEarly=true;phaseScoreActive=false;
   clearTimeout(_jt);
@@ -2499,10 +2548,12 @@ function quitToMenu(){
   const sovEl=$('sov');if(sovEl)sovEl.classList.remove('on');
   const lkOv=$('lock-ov');if(lkOv)lkOv.classList.remove('on');
   const covEl=$('cov');if(covEl)covEl.classList.remove('on');
-  showMenu('mm');
-  checkSaved();
-  applyI18n();
-  renderHistLog();
+  showMenu(targetMenu);
+  if(targetMenu==='mm'){
+    checkSaved();
+    applyI18n();
+    renderHistLog();
+  }
 }
 function waitResume(){return new Promise(r=>{_pauseRes=r;});}
 
@@ -2510,6 +2561,7 @@ let _warmupInterval=null;
 function startPractice(mode){
   const ac=_getAC();if(ac&&ac.state==='suspended')ac.resume();
   if(!renderer&&!initThree())return;
+  _clearPendingLock();
   hideAll();
   isPractice=true;_quitEarly=false;_endEarly=false;isPaused=false;_streak=0;_maxStreak=0;_hitTimes=[];
   cMode=mode;curTS=gS();curScore=0;hits=0;miss=0;onT=false;
@@ -2530,11 +2582,13 @@ function startPractice(mode){
   if(dur>0){
     let rem=dur;
     if(timerEl){timerEl.textContent=rem.toFixed(1)+'s';timerEl.style.color='var(--tb)';}
-    const startT=performance.now();
+    let lastTick=performance.now();
     _warmupInterval=setInterval(()=>{
-      if(!active||!isPractice||isPaused)return;
-      const el=(performance.now()-startT)/1000;
-      rem=Math.max(0,dur-el);
+      const now=performance.now();
+      const dt=(now-lastTick)/1000;
+      lastTick=now;
+      if(!active||!isPractice||isPaused||document.pointerLockElement!==renderer?.domElement)return;
+      rem=Math.max(0,rem-dt);
       if(timerEl){
         timerEl.textContent=rem.toFixed(1)+'s';
         timerEl.style.color=rem<=5?'#ff4455':'var(--tb)';
@@ -2543,11 +2597,10 @@ function startPractice(mode){
         clearInterval(_warmupInterval);_warmupInterval=null;
         const tot=(hits+miss);
         const accPct=tot>0?Math.round(hits/tot*100):(cMode==='track'?Math.round(_trackFrames>0?_trackOnFrames/_trackFrames*100:0):0);
-        const fbMsg=T('wDone',accPct,hits,Math.floor(curScore));
         const avgRfx=_hitTimes.length>0?Math.round(_hitTimes.reduce((a,b)=>a+b,0)/_hitTimes.length):null;
         const scFinal=Math.floor(curScore);
         quitToMenu();
-        showWarmupSummary(accPct,hits,miss,tot,_maxStreak,avgRfx,scFinal);
+        showWarmupSummary(accPct,hits,miss,tot,_maxStreak,avgRfx,scFinal,dur);
       }
     },100);
   } else {
@@ -2559,18 +2612,27 @@ function startPractice(mode){
   setupT(mode,'FREE');
   active=true;
   schedJ(mode,'FREE');
-  safeRequestPointerLock(renderer.domElement);
+  if(document.pointerLockElement!==renderer.domElement){
+    safeRequestPointerLock(renderer.domElement);
+    setTimeout(()=>{
+      if(isPractice&&document.pointerLockElement!==renderer?.domElement){
+        const lkOv=$('lock-ov');if(lkOv)lkOv.classList.add('on');
+      }
+    },300);
+  }
 }
 
-function showWarmupSummary(accPct,h,m,tot,bestStreak,avgRfx,sc){
+function showWarmupSummary(accPct,h,m,tot,bestStreak,avgRfx,sc,durSec=0){
+  _saveModalFocus();
   const isTrk=cMode==='track';
   $('wsum-l-acc').textContent=isTrk?T('wMetricTrackAcc'):T('wMetricAcc');
   $('wsum-l-hits').textContent=isTrk?T('wMetricTrackTime'):T('wMetricHits');
   $('wsum-v-acc').textContent=`%${accPct}`;
   if(isTrk){
-    const onSec=(_trackOnFrames/60).toFixed(1);
-    const totSec=Math.max(0.1,_trackFrames/60).toFixed(1);
-    $('wsum-v-hits').textContent=`${onSec}s / ${totSec}s`;
+    const totS=durSec>0?durSec:Math.max(0.1,_trackFrames/60);
+    const ratio=_trackFrames>0?(_trackOnFrames/_trackFrames):0;
+    const onSec=(totS*ratio).toFixed(1);
+    $('wsum-v-hits').textContent=`${onSec}s / ${totS.toFixed(1)}s`;
   } else {
     $('wsum-v-hits').textContent=`${h} / ${m}`;
   }
@@ -2578,23 +2640,27 @@ function showWarmupSummary(accPct,h,m,tot,bestStreak,avgRfx,sc){
   $('wsum-v-reflex').textContent=avgRfx?`${avgRfx} ms`:'—';
   $('wsum-v-score').textContent=sc;
   $('wsummary-modal').style.display='flex';
+  setTimeout(()=>$('wsummary-modal')?.querySelector('button')?.focus(),50);
 }
 function closeWarmupSummary(){
   $('wsummary-modal').style.display='none';
+  _restoreModalFocus();
 }
 
 // ─── A/B BLIND COMPARISON TEST ───
-let _abSensA=0,_abSensB=0,_abSwapped=false;
+let _abSensA=0,_abSensB=0,_abSwapped=false,_abFromMenu='rr';
 let _abResA={acc:0,hits:0,miss:0,score:0},_abResB={acc:0,hits:0,miss:0,score:0};
 let _abWinnerSens=null,_isABTest=false,_abInterval=null;
 
 function cancelABTest(){
   _isABTest=false;
   if(_abInterval){clearInterval(_abInterval);_abInterval=null;}
-  quitToMenu();
+  quitToMenu(_abFromMenu||'rr');
 }
 
 function openABModal(){
+  _saveModalFocus();
+  _abFromMenu=$('rr').style.display==='block'?'rr':'mm';
   const sNew=_lastResult?.sens||gS();
   const histArr=loadHistLog();
   let sOld=0;
@@ -2620,20 +2686,24 @@ function openABModal(){
 }
 function closeABModal(){
   $('ab-modal').style.display='none';
+  _restoreModalFocus();
 }
 
 function applyABWinner(){
   if(_abWinnerSens){
     $('is').value=_abWinnerSens.toFixed(3);
     updPv();
+    if($('rr').style.display==='block'&&$('rr-m')){
+      $('rr-m').textContent=_abWinnerSens.toFixed(3);
+    }
     showFB(T('abApplied'),true,2000);
   }
   closeABModal();
 }
 
 function startABTest(){
-  closeABModal();
-  _isABTest=true;
+  $('ab-modal').style.display='none';
+  _isABTest=true;isPractice=false;_quitEarly=false;_endEarly=false;isPaused=false;
   const testSens=async(sens,label,phaseIdx)=>{
     return new Promise((resolve,reject)=>{
       curLabel=label;
@@ -2645,7 +2715,7 @@ function startABTest(){
         if(!_isABTest){reject(new Error('AB cancelled'));return;}
         curTS=sens;curScore=0;hits=0;miss=0;onT=false;phaseScoreActive=true;_streak=0;
         $('hv-s').textContent='???';$('hv-cm').textContent='—';$('hv-sc').textContent='0';
-        $('bbar').textContent=`${label==='Sens A'?T('abPhaseA'):T('abPhaseB')} · ESC cancel`;
+        $('bbar').textContent=`${label==='Sens A'?T('abPhaseA'):T('abPhaseB')} · ${T('escCancel')}`;
         setupT('grid',label);schedJ('grid',label);
         const dur=15;
         let rem=dur;
@@ -2658,7 +2728,7 @@ function startABTest(){
           const now=performance.now();
           const dt=(now-lastTick)/1000;
           lastTick=now;
-          if(!active||isPaused)return;
+          if(!active||isPaused||document.pointerLockElement!==renderer?.domElement)return;
           rem=Math.max(0,rem-dt);
           const pct=Math.min(100,Math.max(0,(1-rem/dur)*100));
           $('pb').style.width=pct+'%';
@@ -2697,7 +2767,7 @@ function startABTest(){
       if(!_isABTest)return;
 
       _isABTest=false;
-      quitToMenu();
+      quitToMenu(_abFromMenu||'rr');
       $('ab-result-box').style.display='block';
       $('ab-m-start').style.display='none';
       const labelSensA=_abSwapped?T('abOldSens'):T('abNewSens');
@@ -2742,7 +2812,7 @@ function startCalib(){
   if(camera)camera.quaternion.setFromEuler(new THREE.Euler(0,0,0,'YXZ'));
   const liveEl=$('cal-live');if(liveEl)liveEl.textContent='...';
   hideAll();$('cov').classList.add('on');
-  setTimeout(()=>safeRequestPointerLock(renderer.domElement),200);
+  safeRequestPointerLock(renderer.domElement);
 }
 function finCalib(){
   isCalib=false;$('cov').classList.remove('on');showMenu('mm');
@@ -3068,17 +3138,18 @@ function startRound(){
     function _onRoundLock(){
       if(document.pointerLockElement===renderer.domElement&&!_rlDone){
         _rlDone=true;
-        document.removeEventListener('pointerlockchange',_onRoundLock);
+        _clearPendingLock();
         _runLoop();
       }
     }
+    _pendingLockFn=_onRoundLock;
     document.addEventListener('pointerlockchange',_onRoundLock);
     safeRequestPointerLock(renderer.domElement);
     setTimeout(()=>{
       if(!_rlDone){
         _rlDone=true;
-        document.removeEventListener('pointerlockchange',_onRoundLock);
-        if(!active)_runLoop();
+        _clearPendingLock();
+        if(!active&&!isPaused&&!_quitEarly&&!_endEarly)_runLoop();
       }
     },1000);
   }
@@ -3129,6 +3200,166 @@ function shareResult(){
   }).catch(()=>{});
 }
 
+function downloadResultCard(){
+  if(!_lastResult)return;
+  try{
+    const W=1200,H=630;
+    const cv=document.createElement('canvas');
+    cv.width=W;cv.height=H;
+    const ctx=cv.getContext('2d');
+    const isVal=game==='val';
+    const accCol=isVal?'#c084fc':'#e8ff47';
+    const accGlow=isVal?'rgba(192,132,252,0.18)':'rgba(232,255,71,0.18)';
+
+    // Arka plan ve ızgara
+    const bgGrad=ctx.createLinearGradient(0,0,W,H);
+    bgGrad.addColorStop(0,'#070709');
+    bgGrad.addColorStop(1,'#111119');
+    ctx.fillStyle=bgGrad;
+    ctx.fillRect(0,0,W,H);
+
+    ctx.strokeStyle='rgba(255,255,255,0.03)';
+    ctx.lineWidth=1;
+    for(let x=0;x<W;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+    for(let y=0;y<H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+
+    // Dış çerçeve ve üst vurgu çizgisi
+    ctx.strokeStyle='rgba(255,255,255,0.12)';
+    ctx.lineWidth=2;
+    ctx.strokeRect(28,28,W-56,H-56);
+    ctx.fillStyle=accCol;
+    ctx.fillRect(28,28,180,4);
+
+    // Başlık & Logo
+    ctx.textBaseline='top';
+    ctx.font='900 44px Barlow, sans-serif';
+    ctx.fillStyle='#eeeef8';
+    ctx.fillText('SENS',64,62);
+    const sensW=ctx.measureText('SENS').width;
+    ctx.fillStyle=accCol;
+    ctx.fillText('FINDER',64+sensW,62);
+
+    ctx.font='500 13px "DM Mono", monospace';
+    ctx.fillStyle='rgba(255,255,255,0.45)';
+    ctx.fillText(lang==='tr'?'CS2 & VALORANT HASSASİYET BULUCU':'CS2 & VALORANT SENSITIVITY FINDER',64,116);
+
+    // Sağ üst güven rozeti
+    const confVal=Math.round(_lastResult.conf||0);
+    const badgeTxt=`${lang==='tr'?'TUR':'ROUND'} ${curRound}  ·  ${lang==='tr'?'GÜVEN':'CONFIDENCE'} %${confVal}`;
+    ctx.font='500 15px "DM Mono", monospace';
+    const bw=ctx.measureText(badgeTxt).width+36;
+    ctx.fillStyle=accGlow;
+    ctx.fillRect(W-64-bw,66,bw,38);
+    ctx.strokeStyle=accCol;
+    ctx.lineWidth=1.5;
+    ctx.strokeRect(W-64-bw,66,bw,38);
+    ctx.fillStyle=accCol;
+    ctx.fillText(badgeTxt,W-64-bw+18,77);
+
+    // Sol Ana Hassasiyet Bloğu
+    ctx.font='500 15px "DM Mono", monospace';
+    ctx.fillStyle=accCol;
+    ctx.fillText(T('rrU',_lastResult.game),64,174);
+
+    ctx.font='900 132px Barlow, sans-serif';
+    ctx.fillStyle='#eeeef8';
+    ctx.fillText(_lastResult.sens.toFixed(3),60,196);
+
+    // Eşdeğer Oyun Kartı
+    ctx.fillStyle='rgba(255,255,255,0.03)';
+    ctx.fillRect(64,352,440,86);
+    ctx.strokeStyle=accCol;
+    ctx.lineWidth=1.5;
+    ctx.strokeRect(64,352,440,86);
+    ctx.font='500 13px "DM Mono", monospace';
+    ctx.fillStyle='rgba(255,255,255,0.5)';
+    ctx.fillText(T('rrCl',_lastResult.oppGame).toUpperCase(),84,370);
+    ctx.font='700 34px "DM Mono", monospace';
+    ctx.fillStyle=accCol;
+    ctx.fillText(String(_lastResult.oppSens),84,392);
+
+    // 4 İstatistik Kutusu (Alt Sol/Orta)
+    const stats=[
+      {l:'eDPI',v:String(Math.round(_lastResult.sens*_lastResult.dpi))},
+      {l:'cm/360°',v:_lastResult.cm.toFixed(1)+' cm'},
+      {l:'MOUSE DPI',v:String(_lastResult.dpi)},
+      {l:lang==='tr'?'TEPKİ / İSABET':'REFLEX / ACC',v:_lastResult.reflex?(_lastResult.reflex+' ms'):($('rr-a')?.textContent||'—')}
+    ];
+    stats.forEach((st,i)=>{
+      const sx=64+i*272,sy=466,sw=256,sh=88;
+      ctx.fillStyle='rgba(0,0,0,0.45)';
+      ctx.fillRect(sx,sy,sw,sh);
+      ctx.strokeStyle='rgba(255,255,255,0.1)';
+      ctx.lineWidth=1;
+      ctx.strokeRect(sx,sy,sw,sh);
+      ctx.font='500 12px "DM Mono", monospace';
+      ctx.fillStyle='rgba(255,255,255,0.48)';
+      ctx.fillText(st.l,sx+18,sy+18);
+      ctx.font='700 26px "DM Mono", monospace';
+      ctx.fillStyle='#eeeef8';
+      ctx.fillText(st.v,sx+18,sy+44);
+    });
+
+    // Sağ Mod Bazlı Analiz Bloğu
+    const rx=560,ry=174,rw=576,rh=264;
+    ctx.fillStyle='rgba(0,0,0,0.4)';
+    ctx.fillRect(rx,ry,rw,rh);
+    ctx.strokeStyle='rgba(255,255,255,0.09)';
+    ctx.lineWidth=1;
+    ctx.strokeRect(rx,ry,rw,rh);
+
+    ctx.font='500 14px "DM Mono", monospace';
+    ctx.fillStyle=accCol;
+    ctx.fillText((lang==='tr'?'MOD BAZLI PERFORMANS ANALİZİ':'PER-MODE PERFORMANCE BREAKDOWN'),rx+24,ry+22);
+
+    const analysis=lastAnalysis||currentAnalysis(_lastResult.sens);
+    const modeLabels={flick:'FLICK',grid:'GRIDSHOT',track:lang==='tr'?'TAKİP':'TRACKING'};
+    MODES.forEach((m,idx)=>{
+      const my=ry+66+idx*60;
+      const mVal=(analysis.mids?.[m]??modeMid(m)).toFixed(3);
+      const mConf=Math.round(analysis.confs?.[m]??modeRangeConf(m));
+      ctx.font='500 14px "DM Mono", monospace';
+      ctx.fillStyle='rgba(255,255,255,0.7)';
+      ctx.fillText(modeLabels[m],rx+24,my);
+      ctx.fillStyle=accCol;
+      ctx.fillText(`${mVal} (${mConf}%)`,rx+rw-145,my);
+
+      // Bar
+      const bx=rx+135,by=my+3,bwMax=rw-295,bh=10;
+      ctx.fillStyle='rgba(255,255,255,0.07)';
+      ctx.fillRect(bx,by,bwMax,bh);
+      ctx.fillStyle=accCol;
+      ctx.fillRect(bx,by,Math.max(6,bwMax*(mConf/100)),bh);
+    });
+
+    // Alt bilgi
+    ctx.font='400 13px "DM Mono", monospace';
+    ctx.fillStyle='rgba(255,255,255,0.38)';
+    ctx.fillText('rasne-dev.github.io/SensFinder',64,572);
+
+    cv.toBlob(blob=>{
+      if(!blob)return;
+      if(navigator.clipboard&&window.ClipboardItem){
+        try{navigator.clipboard.write([new ClipboardItem({'image/png':blob})]).catch(()=>{});}catch(_){}
+      }
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url;
+      a.download=`sensfinder-${game}-${_lastResult.sens.toFixed(3)}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      const el=$('limg');
+      if(el){
+        const orig=el.textContent;
+        el.textContent=T('imgSaved');
+        setTimeout(()=>{el.textContent=orig;},1800);
+      }
+    },'image/png');
+  }catch(e){}
+}
+
 function copyConsoleCmd(){
   if(!_lastResult)return;
   const cmd=game==='cs2'?`sensitivity ${_lastResult.sens.toFixed(3)}`:_lastResult.sens.toFixed(3);
@@ -3173,7 +3404,7 @@ function runH(sens,label,mode,phIdx,totalPhases,cfg){
       $('hv-cm').textContent=cm360(sens,gD()).toFixed(1);$('hv-sc').textContent='0';
       const timerEl=$('hud-timer');
       if(timerEl){timerEl.textContent=((cfg.activeDur+cfg.warmupDur)).toFixed(1)+'s';timerEl.style.color='var(--tb)';}
-      $('bbar').textContent=`${label==='LOW'?T('eyLow'):label==='HIGH'?T('eyHigh'):T('eyMid')} · ESC pause`;
+      $('bbar').textContent=`${label==='LOW'?T('eyLow'):label==='HIGH'?T('eyHigh'):T('eyMid')} · ${T('escPause')}`;
 
       const start=performance.now(),dur=(cfg.activeDur+cfg.warmupDur)*1000,warm=cfg.warmupDur*1000;
       let _pausedAt=0,_totalPaused=0;
@@ -3208,7 +3439,7 @@ function runH(sens,label,mode,phIdx,totalPhases,cfg){
         }
 
         if(!phaseScoreActive)$('bbar').textContent=T('warmup')+` ${Math.ceil((warm-el)/1000)}s`;
-        else $('bbar').textContent=`${label==='LOW'?T('eyLow'):label==='HIGH'?T('eyHigh'):T('eyMid')} · ESC pause`;
+        else $('bbar').textContent=`${label==='LOW'?T('eyLow'):label==='HIGH'?T('eyHigh'):T('eyMid')} · ${T('escPause')}`;
         
         if(el>=dur){phaseScoreActive=false;_resT=null;resolve(Math.floor(curScore));}
         else requestAnimationFrame(_tick);
@@ -3225,6 +3456,7 @@ function requestGameLock(){
 }
 
 function showSOv(sens,label,mode,phIdx,totalPhases,cfg,cb){
+  _clearPendingLock();
   const isAB=_isABTest||label==='Sens A'||label==='Sens B';
   if(isAB){
     $('sw-ey').textContent=label==='Sens A'?T('abPhaseA'):label==='Sens B'?T('abPhaseB'):label;
@@ -3276,15 +3508,16 @@ function showSOv(sens,label,mode,phIdx,totalPhases,cfg,cb){
       if(renderer&&document.pointerLockElement!==renderer.domElement){
         function _sovLock(){
           if(document.pointerLockElement===renderer.domElement){
-            document.removeEventListener('pointerlockchange',_sovLock);
+            _clearPendingLock();
             const lkOv=$('lock-ov');if(lkOv)lkOv.classList.remove('on');
             _lockAcquiredAt=performance.now();active=true;cb();
           }
         }
+        _pendingLockFn=_sovLock;
         document.addEventListener('pointerlockchange',_sovLock);
         safeRequestPointerLock(renderer.domElement);
         setTimeout(()=>{
-          if(document.pointerLockElement!==renderer.domElement){
+          if(document.pointerLockElement!==renderer.domElement&&!isPaused&&!_quitEarly&&!_endEarly){
             const lkOv=$('lock-ov');if(lkOv)lkOv.classList.add('on');
           }
         },300);
