@@ -5,7 +5,7 @@
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Site-e8ff47?style=for-the-badge&labelColor=070708&color=e8ff47&logoColor=black)](https://rasne-dev.github.io/SensFinder)
 [![License: MIT](https://img.shields.io/badge/License-MIT-555?style=for-the-badge&labelColor=070708)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.2.7-e8ff47?style=for-the-badge&labelColor=070708)](https://github.com/rasne-dev/SensFinder/releases)
+[![Version](https://img.shields.io/badge/version-1.2.8-e8ff47?style=for-the-badge&labelColor=070708)](https://github.com/rasne-dev/SensFinder/releases)
 [![No Dependencies](https://img.shields.io/badge/Zero%20Dependencies-Single%20File-555?style=for-the-badge&labelColor=070708)]()
 
 ---
@@ -57,10 +57,20 @@ Run as many rounds as you want. Each one narrows the range further. Your progres
 |---|---|---|
 | Yaw constant | 0.022 | 0.07 |
 | Default FOV | 90 | 103 |
-| Sensitivity range | 0.1 – 10 | 0.1 – 2.0 |
+| Sensitivity range | 0.05 – 10 | 0.01 – 2.0 |
 | Theme | Yellow-green | Purple |
 
-Cross-game conversion is shown automatically on every result screen.
+Cross-game conversion (plus a Universal Converter modal for **Apex Legends, Overwatch 2, Call of Duty, Rainbow Six Siege, and Fortnite**) and **Scoped / ADS multiplier** recommendations are shown on every result screen.
+
+---
+
+## ✨ Key Features
+
+- **Grip Style Adaptation:** Choose Wrist, Arm, Hybrid, or Unknown (kinematic detection) to tailor starting ranges, target spread, and discipline weights.
+- **A/B Blind Comparison Test:** Directly compare your previous sensitivity against SensFinder's recommendation without seeing which is which.
+- **Customizable Free Warmup:** Practice Flick, Gridshot, or Tracking anytime with adjustable target size, speed, count, and duration.
+- **Graphics Quality Presets:** Switch between **High** and **Performance (FPS+)** presets for maximum frame rates on lower-end hardware.
+- **Customization & Data Portability:** Crosshair builder, hit-sound presets, colorblind-friendly target colors, **PNG result card** export, and **JSON backup/import**.
 
 ---
 
@@ -71,7 +81,7 @@ Don't know your current sensitivity? Use the built-in **mousepad calibration**:
 1. Click **"Calibrate via 360° movement"**
 2. Place your mouse at one edge of your pad
 3. Slide to the opposite edge
-4. Press **Left Click** or **ESC** — your sensitivity is estimated automatically
+4. Press **Left Click** to save your estimated sensitivity (or press **ESC** to cancel without overwriting)
 
 ---
 
@@ -252,7 +262,17 @@ Her tur sonunda ilerleme `localStorage`'a kaydedilir. Tarayıcıyı kapatıp aç
 Mevcut hassasiyetini bilmiyorsan:
 1. **"360° mousepad hareketi ile kalibre et"** butonuna tıkla
 2. Fareyi pad'in bir kenarına koy, karşı kenara sürükle
-3. **Sol Tık** veya **ESC** — hassasiyet otomatik hesaplanır
+3. **Sol Tık** ile hesaplanan hassasiyeti kaydet (mevcut ayarını değiştirmeden iptal etmek için **ESC**'ye bas)
+
+---
+
+## Öne Çıkan Özellikler
+
+- **Tutuş Stili Uyumu:** Bilek, Kol, Hibrit veya Bilmiyorum (kinematik tespit) profilleriyle test ağırlıklarını ve hedef yayılımını özelleştir.
+- **Dürbün (ADS / Scoped) & Çoklu Oyun Dönüştürücü:** Sonuç ekranında CS2/Valorant dürbün çarpanı önerileri ile Apex, OW2, CoD, R6 ve Fortnite karşılıklarını tek tıkla kopyala.
+- **A/B Kör Karşılaştırma & Serbest Isınma:** Eski ve yeni hassasiyeti gizli A/B testiyle kıyasla ya da hedef boyutu, hızı ve süresi ayarlanabilir serbest ısınma modlarını kullan.
+- **Grafik Performans Önayarları:** Tercihler bölümünden **Yüksek** veya **Performans (FPS+)** modunu seçerek düşük donanımda akıcı FPS elde et.
+- **Görsel Kart & Yedekleme:** Sonuçlarını **PNG görsel kart** olarak indir ve tüm geçmiş/tercihlerini **JSON** ile yedekle.
 
 ---
 

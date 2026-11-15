@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="version" content="1.2.7">
+<meta name="version" content="1.2.8">
 <title>SensFinder — CS2 & Valorant</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -205,13 +205,15 @@ button:active{transform:scale(0.98);}
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important;}
 }
+body.perf-mode::after{display:none!important;}
+body.perf-mode .menu,body.perf-mode #hud,body.perf-mode #pi,body.perf-mode #cov,body.perf-mode #sov,body.perf-mode #lock-ov{backdrop-filter:none!important;}
 </style>
 </head>
 <body>
 <div id="rc"></div>
 <div id="xh"><div class="xh-arm xh-top"></div><div class="xh-arm xh-bottom"></div><div class="xh-arm xh-left"></div><div class="xh-arm xh-right"></div><div class="xh-dot"></div></div>
 <div id="pw"><div id="pb"></div></div>
-<div id="fb"></div>
+<div id="fb" role="status" aria-live="polite"></div>
 
 <div id="hud">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
@@ -241,7 +243,7 @@ button:active{transform:scale(0.98);}
   <div class="sw-cd" id="sw-cd">3</div>
 </div></div>
 
-<div id="cov" role="dialog" aria-modal="true" aria-labelledby="cal-ti" onclick="if(!document.pointerLockElement)finCalib()" style="cursor:pointer;"><div class="cal-box">
+<div id="cov" role="dialog" aria-modal="true" aria-labelledby="cal-ti" onclick="if(isCalib&&!document.pointerLockElement){if(calMov===0&&renderer&&renderer.domElement)safeRequestPointerLock(renderer.domElement);else finCalib();}" style="cursor:pointer;"><div class="cal-box">
   <div class="cal-ti" id="cal-ti">Calibration</div>
   <div style="font-size:24px;margin:12px 0;">🖱️ ↔️</div>
   <div class="cal-de" id="cal-de">...</div>
@@ -285,7 +287,7 @@ button:active{transform:scale(0.98);}
         <label class="flbl" id="lf" for="if" style="margin-bottom:0;">FOV</label>
         <button type="button" class="lbtn" style="padding:1px 5px;font-size:7px;" onclick="openResModal()" id="btn-res-guide">4:3 / 16:9 ℹ️</button>
       </div>
-      <input class="fi" type="number" id="if" value="90" min="60" max="120" style="margin-top:5px;" oninput="updateCameraFov();LS.set('sf_fov_'+game,this.value);">
+      <input class="fi" type="number" id="if" value="90" min="60" max="120" style="margin-top:5px;" oninput="onFovInput()" onfocus="this.select()">
     </div>
   </div>
   <div class="sg">
@@ -316,7 +318,7 @@ button:active{transform:scale(0.98);}
     <div id="inp-warn" role="alert" style="display:none;font-family:var(--mono);font-size:10px;line-height:1.5;color:#ff8899;margin-top:7px;"></div>
     <div style="display:flex;gap:8px;align-items:center;margin-top:9px;">
       <label class="flbl" id="l-cm-in" for="cm-in" style="margin-bottom:0;white-space:nowrap;">cm/360° → sens</label>
-      <input class="fi" type="number" id="cm-in" min="1" max="500" step="0.5" placeholder="30" oninput="applyCmInput()" onfocus="this.select()" style="padding:6px 10px;font-size:13px;">
+      <input class="fi" type="number" id="cm-in" min="1" max="500" step="0.5" placeholder="30" oninput="applyCmInput()" onblur="updPv()" onfocus="this.select()" style="padding:6px 10px;font-size:13px;">
     </div>
   </div>
   <div class="sg" style="margin-bottom:13px;padding:10px 12px;">
@@ -386,6 +388,13 @@ button:active{transform:scale(0.98);}
         <button type="button" class="clr-dot" id="btn-tc-ffe600" style="background:#ffe600;" onclick="setTargetColor('#ffe600')" aria-label="Yellow Target (Colorblind Friendly)"></button>
         <button type="button" class="clr-dot" id="btn-tc-ff2a85" style="background:#ff2a85;" onclick="setTargetColor('#ff2a85')" aria-label="Magenta Target"></button>
         <button type="button" class="clr-dot" id="btn-tc-00e5ff" style="background:#00e5ff;" onclick="setTargetColor('#00e5ff')" aria-label="Cyan Target"></button>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:7px;padding-top:7px;border-top:1px solid rgba(255,255,255,.05);flex-wrap:wrap;">
+      <span class="flbl" style="margin-bottom:0;font-size:7px;" id="l-gfx-ti">Grafik:</span>
+      <div style="display:flex;align-items:center;gap:4px;">
+        <button type="button" class="lbtn on" id="btn-gfx-high" onclick="setGfxQuality('high')" aria-pressed="true">✨ <span id="l-gfx-high">Yüksek</span></button>
+        <button type="button" class="lbtn" id="btn-gfx-perf" onclick="setGfxQuality('perf')" aria-pressed="false">⚡ <span id="l-gfx-perf">Performans (FPS+)</span></button>
       </div>
     </div>
   </div>
@@ -491,14 +500,15 @@ button:active{transform:scale(0.98);}
     <span class="ft-ti" id="ft-ti">In-Game Fine Tuning</span>
     <div class="ft-it"><span class="ft-b">◎</span><span id="ft-gr"></span></div>
     <div class="ft-it"><span class="ft-b">⇄</span><span id="ft-aim"></span></div>
+    <div class="ft-it"><span class="ft-b">🔭</span><span id="ft-ads"></span></div>
     <div class="ft-it"><span class="ft-b">↓</span><span id="ft-ov"></span></div>
     <div class="ft-it"><span class="ft-b">↑</span><span id="ft-un"></span></div>
   </div>
   <button class="sbtn" onclick="startNextRound()"><span id="ln">▶ Next Round (More Precise)</span></button>
   <div style="display:flex;gap:6px;margin-top:7px;flex-wrap:wrap;">
-    <button class="sbtn g" style="margin-top:0;flex:1;" id="share-btn" onclick="shareResult()"><span id="lsh">📋 Share result</span></button>
-    <button class="sbtn g" style="margin-top:0;flex:1;" id="img-btn" onclick="downloadResultCard()"><span id="limg">🖼️ Görsel Kart</span></button>
-    <button class="sbtn g" style="margin-top:0;flex:1;" id="cmd-btn" onclick="copyConsoleCmd()"><span id="lcmd">💻 Console Cmd</span></button>
+    <button class="sbtn g" style="margin-top:0;flex:1;min-width:110px;" id="share-btn" onclick="shareResult()"><span id="lsh">📋 Share result</span></button>
+    <button class="sbtn g" style="margin-top:0;flex:1;min-width:110px;" id="img-btn" onclick="downloadResultCard()"><span id="limg">🖼️ Görsel Kart</span></button>
+    <button class="sbtn g" style="margin-top:0;flex:1;min-width:110px;" id="cmd-btn" onclick="copyConsoleCmd()"><span id="lcmd">💻 Console Cmd</span></button>
   </div>
   <button class="sbtn g" onclick="testResultInPractice()"><span id="l-try-prac">🎯 Try This Sens in Free Warmup</span></button>
   <button class="sbtn g" onclick="showMenu('mm');checkSaved();applyI18n();renderHistLog();"><span id="ld2">✓ Done</span></button>
@@ -542,6 +552,7 @@ button:active{transform:scale(0.98);}
       <button class="sb-btn" onclick="closeConvModal()" aria-label="Close" style="padding:4px 8px;font-size:12px;line-height:1;">✕</button>
     </div>
     <div id="conv-m-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+    <div id="conv-ads-list" style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;gap:6px;"></div>
     <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);padding:8px 10px;font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.5);margin-top:12px;" id="conv-m-note">
       💡 Tüm değerler mevcut cm/360° dönüş mesafeniz temel alınarak hesaplanmıştır. Fare kas hafızanız oyunlar arasında birebir korunur.
     </div>
@@ -642,7 +653,7 @@ button:active{transform:scale(0.98);}
     </div>
     <div id="ab-result-box" style="display:none;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.08);padding:12px;margin-bottom:16px;">
       <div style="font-size:12px;font-weight:700;color:var(--a);margin-bottom:8px;" id="ab-res-title">A/B Karşılaştırma Sonucu</div>
-      <div style="display:flex;justify-content:space-around;font-family:var(--mono);font-size:11px;margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-around;gap:8px;flex-wrap:wrap;font-family:var(--mono);font-size:11px;margin-bottom:10px;">
         <div id="ab-stat-a" style="text-align:center;">Sens A: %0</div>
         <div id="ab-stat-b" style="text-align:center;">Sens B: %0</div>
       </div>
@@ -668,7 +679,7 @@ let _uiRestored=false; // kullanıcı arayüz tercihlerinin (DPI/oyun/sens) kal�
 // ─── i18n ───
 const L={
   tr:{noMouse:'⚠️ Bu test fiziksel fare gerektirir; dokunmatik ekranlarda çalışmaz. Lütfen bilgisayarda açın.',
-    warnSens:(mn,mx,u)=>`Hassasiyet ${mn}–${mx} aralığında olmalı (kullanılan: ${u})`,warnDpi:'DPI 100–32000 aralığında olmalı',warnFov:'FOV 60–120 aralığında olmalı',
+    warnSens:(mn,mx,u)=>`Hassasiyet ${mn}–${mx} aralığında olmalı (kullanılan: ${u})`,warnDpi:'DPI 100–32000 aralığında olmalı',warnFov:'FOV 60–120 aralığında olmalı',warnCm:(u)=>`cm/360° karşılığı hassasiyet sınırları dışında (kullanılan: ${u})`,
     cmLbl:'cm/360° → sens',
     sub:'Hassasiyet Bulucusu · CS2 & Valorant',game:'Oyun',dpi:'Mouse DPI',fov:'FOV',sens:'Mevcut Hassasiyet',
     calib:'360° mousepad hareketi ile kalibre et',start:'TESTİ BAŞLAT',
@@ -812,9 +823,19 @@ const L={
     xhThick:'Kalınlık',
     xhGap:'Boşluk',
     xhDot:'Merkez Nokta',
+    gfxTi:'Grafik:',
+    gfxHigh:'Yüksek',
+    gfxPerf:'Performans (FPS+)',
+    adsSecTi:'Dürbün / ADS Çarpanları',
+    adsStdLbl:'Standart (Varsayılan)',
+    adsZeroLbl:'%0 Merkez Eşleşmesi',
+    adsCsEqLbl:'CS2 0.8189 Eşdeğeri',
+    adsApexLbl:'1x Optik ADS (Varsayılan)',
+    ftAdsCs2:(dg)=>`Dürbün (CS2): zoom_sensitivity_ratio ${dg==='wrist'?'0.818933 (%0 merkez eşleşmesi — bilek mikro nişan)':'1.00 (standart) veya 0.818933 (%0 merkez eşleşmesi)'}`,
+    ftAdsVal:(dg)=>`Dürbün (Valorant): Scoped çarpanı ${dg==='wrist'?'0.819 (CS2 AWP hissi) veya 0.747 (Operator %0 eşleşme)':'1.00 (standart) veya 0.873 (Rifle 1.25x %0 eşleşme)'}`,
     shareTxt:(g,s,cm,c,og,os,d,r)=>`🎯 SensFinder Sonucu:\n🎮 ${g}: ${s} (${d} DPI · ${cm} cm/360°)\n🔄 ${og} Eşdeğeri: ${os}\n⭐ Güven: %${c}${r?`\n⚡ Ortalama Tepki: ${r}ms`:''}\nhttps://rasne-dev.github.io/SensFinder/?game=${g==='Valorant'?'val':'cs2'}&dpi=${d}&sens=${s}`,},
   en:{noMouse:'⚠️ This test requires a physical mouse and does not work on touchscreens. Please open it on a computer.',
-    warnSens:(mn,mx,u)=>`Sensitivity must be between ${mn} and ${mx} (using: ${u})`,warnDpi:'DPI must be between 100 and 32000',warnFov:'FOV must be between 60 and 120',
+    warnSens:(mn,mx,u)=>`Sensitivity must be between ${mn} and ${mx} (using: ${u})`,warnDpi:'DPI must be between 100 and 32000',warnFov:'FOV must be between 60 and 120',warnCm:(u)=>`cm/360° value is outside sensitivity limits (using: ${u})`,
     cmLbl:'cm/360° → sens',
     sub:'Sensitivity Finder · CS2 & Valorant',game:'Game',dpi:'Mouse DPI',fov:'FOV',sens:'Current Sensitivity',
     calib:'Calibrate via 360° mousepad movement',start:'START TEST',
@@ -958,7 +979,17 @@ const L={
     xhLen:'Size',
     xhThick:'Thickness',
     xhGap:'Gap',
-    xhDot:'Center Dot',}
+    xhDot:'Center Dot',
+    gfxTi:'Graphics:',
+    gfxHigh:'High',
+    gfxPerf:'Performance (FPS+)',
+    adsSecTi:'Scoped / ADS Multipliers',
+    adsStdLbl:'Standard (Default)',
+    adsZeroLbl:'0% Monitor Match',
+    adsCsEqLbl:'CS2 0.8189 Equivalent',
+    adsApexLbl:'1x Optic ADS (Default)',
+    ftAdsCs2:(dg)=>`Scoped (CS2): zoom_sensitivity_ratio ${dg==='wrist'?'0.818933 (0% monitor match — wrist micro-aim)':'1.00 (default) or 0.818933 (0% monitor match)'}`,
+    ftAdsVal:(dg)=>`Scoped (Valorant): Scoped Multiplier ${dg==='wrist'?'0.819 (CS2 AWP feel) or 0.747 (Operator 0% match)':'1.00 (default) or 0.873 (Rifle 1.25x 0% match)'}`,}
 };
 let lang=LS.get('sf_lang')||(navigator.language.startsWith('tr')?'tr':'en');
 const $=id=>document.getElementById(id);
@@ -1061,6 +1092,9 @@ function applyI18n(){
   const _lXhThk=$('l-xh-thick');if(_lXhThk)_lXhThk.textContent=T('xhThick');
   const _lXhGap=$('l-xh-gap');if(_lXhGap)_lXhGap.textContent=T('xhGap');
   const _lXhDot=$('l-xh-dot');if(_lXhDot)_lXhDot.textContent=T('xhDot');
+  const _lGfxTi=$('l-gfx-ti');if(_lGfxTi)_lGfxTi.textContent=T('gfxTi');
+  const _lGfxHi=$('l-gfx-high');if(_lGfxHi)_lGfxHi.textContent=T('gfxHigh');
+  const _lGfxPf=$('l-gfx-perf');if(_lGfxPf)_lGfxPf.textContent=T('gfxPerf');
   $('rh-l').textContent=T('rhL');$('mb-l').textContent=T('perMode');$('ft-ti').textContent=T('ftTi');
   $('ft-ov').textContent=T('ftOv');$('ft-un').textContent=T('ftUn');
   const _cpHintEl=$('rr-cp-hint');if(_cpHintEl)_cpHintEl.textContent=T('cpHint');
@@ -1106,7 +1140,7 @@ function setGame(g, force=false){
   const prevGame=game;
   game=g;const c=GC[g];
   $('gCS2').classList.toggle('on',g==='cs2');$('gVAL').classList.toggle('on',g==='val');$('gCS2').setAttribute('aria-pressed',String(g==='cs2'));$('gVAL').setAttribute('aria-pressed',String(g==='val'));
-  document.body.className=g==='val'?'val':'';
+  document.body.classList.toggle('val',g==='val');
   const r=document.documentElement.style;
   r.setProperty('--a',c.a);r.setProperty('--a2',c.a2);r.setProperty('--ag',c.ag);
   $('if').value=LS.get('sf_fov_'+g)||LS.get('sf_fov')||c.fovD;
@@ -1159,6 +1193,12 @@ function applyGripOptSens(){
   }
   updPv();
 }
+function onFovInput(){
+  const rawF=parseInt($('if')?.value,10);
+  if(rawF>=60&&rawF<=120)LS.set('sf_fov_'+game,String(rawF));
+  updateCameraFov();
+  updPv();
+}
 function updPv(){
   const c=GC[game];const s=gS(),d=gD();
   const rawS=parseFloat($('is')?.value),rawD=parseInt($('id')?.value),rawF=parseInt($('if')?.value);
@@ -1170,8 +1210,17 @@ function updPv(){
   if(isNaN(rawS)||rawS<c.sensMin||rawS>c.sensMax)_wm.push(T('warnSens',c.sensMin,c.sensMax,s.toFixed(3)));
   if(isNaN(rawD)||rawD<100||rawD>32000)_wm.push(T('warnDpi'));
   if(isNaN(rawF)||rawF<60||rawF>120)_wm.push(T('warnFov'));
+  const cmInEl=$('cm-in');
+  const cmFocused=!!(cmInEl&&document.activeElement===cmInEl);
+  if(cmInEl&&cmFocused){
+    const rawCm=parseFloat(cmInEl.value);
+    const rawFromCm=rawCm>0?sensFromCm(rawCm,d):NaN;
+    const cmInvalid=isNaN(rawCm)||rawCm<1||rawCm>500||rawFromCm<c.sensMin||rawFromCm>c.sensMax;
+    cmInEl.classList.toggle('warn',cmInvalid);
+    if(cmInvalid)_wm.push(T('warnCm',s.toFixed(3)));
+  }
   const _we=$('inp-warn');if(_we){_we.textContent=_wm.join(' · ');_we.style.display=_wm.length?'block':'none';}
-  ['is','id','if'].forEach(i=>{const el=$(i);if(el)el.setAttribute('aria-invalid',el.classList.contains('warn')?'true':'false');});
+  ['is','id','if','cm-in'].forEach(i=>{const el=$(i);if(el)el.setAttribute('aria-invalid',el.classList.contains('warn')?'true':'false');});
   const cm=cm360(s,d);
   $('pv-e').textContent=Math.round(s*d);
   $('pv-c').textContent=cm.toFixed(1);
@@ -1206,10 +1255,10 @@ function updPv(){
       if(optBtn){optBtn.textContent=T('grOptBtn',optS);optBtn.style.display='inline-block';}
     }
   }
-  const cmInEl=$('cm-in');
-  if(cmInEl&&document.activeElement!==cmInEl){
+  if(cmInEl&&!cmFocused){
     cmInEl.value=cm.toFixed(1);
     cmInEl.classList.remove('warn');
+    cmInEl.setAttribute('aria-invalid','false');
   }
   if(_uiRestored)persistUI();
 }
@@ -1249,13 +1298,12 @@ function applyURLParams(){
 }
 // Hedef cm/360° girip hassasiyeti buradan hesapla (sens → cm/360° yönünün tersi)
 function applyCmInput(){
-  const el=$('cm-in');const cm=parseFloat(el.value);
-  if(!(cm>0))return;
+  const el=$('cm-in');const cm=parseFloat(el?.value);
+  if(!(cm>0)){updPv();return;}
   const c=GC[game];
   const raw=sensFromCm(cm,gD());
   const sv=Math.max(c.sensMin,Math.min(c.sensMax,raw));
   $('is').value=sv.toFixed(3);
-  el.classList.toggle('warn',sv!==raw); // aralık dışına çıktıysa kırpıldı
   updPv();
 }
 
@@ -1337,6 +1385,36 @@ function openConvModal(){
     </div>`;
   });
   $('conv-m-list').innerHTML=html;
+  const adsEl=$('conv-ads-list');
+  if(adsEl){
+    const adsItems=[
+      {name:'CS2 · zoom_sensitivity_ratio',desc:T('adsZeroLbl')+' (AWP / Scout)',val:'0.818933',icon:'🎯'},
+      {name:'CS2 · zoom_sensitivity_ratio',desc:T('adsStdLbl'),val:'1.00',icon:'🎮'},
+      {name:'Valorant · Scoped Multiplier',desc:T('adsCsEqLbl'),val:'0.819',icon:'⚡'},
+      {name:'Valorant · Operator (2.5x)',desc:T('adsZeroLbl'),val:'0.747',icon:'🔭'},
+      {name:'Valorant · Rifle ADS (1.25x)',desc:T('adsZeroLbl'),val:'0.873',icon:'🔫'},
+      {name:'Overwatch 2 · Widow / Ana',desc:T('adsZeroLbl'),val:'37.89%',icon:'🛡️'},
+      {name:'Apex Legends · 1x Optic ADS',desc:T('adsApexLbl'),val:'1.00',icon:'💥'}
+    ];
+    let adsHtml=`<div class="flbl" style="margin-bottom:4px;font-size:8px;">🔭 ${T('adsSecTi')}</div>`;
+    adsItems.forEach(item=>{
+      adsHtml+=`
+      <div style="display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.06);padding:7px 10px;gap:10px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:14px;">${item.icon}</span>
+          <div>
+            <div style="font-weight:700;color:var(--tb);font-size:10px;">${item.name}</div>
+            <div style="font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.4);margin-top:1px;">${item.desc}</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-family:var(--mono);font-size:13px;color:var(--a2);font-weight:700;">${item.val}</span>
+          <button type="button" class="sb-btn" style="padding:4px 8px;font-size:8px;" onclick="copyConvItem(this, '${item.val}')">📋 ${T('copyBtn')}</button>
+        </div>
+      </div>`;
+    });
+    adsEl.innerHTML=adsHtml;
+  }
   $('conv-modal').style.display='flex';
   setTimeout(()=>$('conv-modal')?.querySelector('button')?.focus(),50);
 }
@@ -1366,18 +1444,24 @@ const _warmupCfg={
   dur:parseInt(LS.get('sf_w_dur'),10)||0
 };
 function setWarmupSize(sz){
+  if(!['sm','md','lg'].includes(sz))sz='md';
   _warmupCfg.size=sz;LS.set('sf_w_sz',sz);
   ['sm','md','lg'].forEach(k=>{const b=$('btn-ws-'+k);if(b){b.classList.toggle('on',k===sz);b.setAttribute('aria-pressed',String(k===sz));}});
 }
 function setWarmupSpeed(spd){
+  if(!['slow','norm','fast'].includes(spd))spd='norm';
   _warmupCfg.speed=spd;LS.set('sf_w_spd',spd);
   ['slow','norm','fast'].forEach(k=>{const b=$('btn-wspd-'+k);if(b){b.classList.toggle('on',k===spd);b.setAttribute('aria-pressed',String(k===spd));}});
 }
 function setWarmupCount(cnt){
+  cnt=parseInt(cnt,10);
+  if(![1,3,5].includes(cnt))cnt=3;
   _warmupCfg.count=cnt;LS.set('sf_w_cnt',String(cnt));
   [1,3,5].forEach(k=>{const b=$('btn-wcnt-'+k);if(b){b.classList.toggle('on',k===cnt);b.setAttribute('aria-pressed',String(k===cnt));}});
 }
 function setWarmupDur(dur){
+  dur=parseInt(dur,10);
+  if(![30,60,0].includes(dur))dur=0;
   _warmupCfg.dur=dur;LS.set('sf_w_dur',String(dur));
   [30,60,0].forEach(k=>{const b=$('btn-wdur-'+k);if(b){b.classList.toggle('on',k===dur);b.setAttribute('aria-pressed',String(k===dur));}});
 }
@@ -1491,7 +1575,7 @@ function renderHistLog(){
 function exportDataJSON(){
   try{
     const data={
-      version:document.querySelector('meta[name="version"]')?.content||'1.2.6',
+      version:document.querySelector('meta[name="version"]')?.content||'1.2.8',
       exportedAt:new Date().toISOString(),
       history:loadHistLog(),
       ui:_readUI(),
@@ -1505,6 +1589,7 @@ function exportDataJSON(){
       xhDot:parseInt(LS.get('sf_xh_dot')||'3',10),
       targetColor:_targetColor,
       hitSound:_hitSoundPreset,
+      gfx:_gfxQuality,
       warmupCfg:_warmupCfg,
       fovCS2:LS.get('sf_fov_cs2')||null,
       fovVal:LS.get('sf_fov_val')||null,
@@ -1534,31 +1619,54 @@ function importDataJSON(e){
   reader.onload=function(evt){
     try{
       const data=JSON.parse(evt.target.result);
-      if(!data||typeof data!=='object')throw new Error('Invalid format');
+      if(!data||typeof data!=='object'||Array.isArray(data))throw new Error('Invalid format');
       if(Array.isArray(data.history)){
-        const validHistory=data.history.filter(h=>h&&typeof h==='object'&&isFinite(h.sens)&&Number(h.sens)>0).slice(-50);
+        const validHistory=data.history
+          .filter(h=>h&&typeof h==='object'&&Number.isFinite(Number(h.sens))&&Number(h.sens)>0)
+          .map(h=>({
+            date:Number.isFinite(Number(h.date))?Number(h.date):Date.now(),
+            game:h.game==='val'?'val':'cs2',
+            sens:Number(h.sens),
+            conf:(h.conf!==null&&h.conf!==''&&Number.isFinite(Number(h.conf)))?Math.max(0,Math.min(100,Math.round(Number(h.conf)))):null,
+            round:Math.max(1,parseInt(h.round,10)||1)
+          }))
+          .slice(-50);
         LS.set(HK,JSON.stringify(validHistory));
       }
-      if(data.ui&&typeof data.ui==='object')LS.set('sf_ui',JSON.stringify(data.ui));
+      if(data.ui&&typeof data.ui==='object'&&!Array.isArray(data.ui)){
+        const cleanUI={g:data.ui.g==='val'?'val':'cs2'};
+        const d=Number(data.ui.dpi);
+        if(Number.isFinite(d)&&d>=100&&d<=32000)cleanUI.dpi=Math.round(d);
+        if(data.ui.s&&typeof data.ui.s==='object'){
+          cleanUI.s={};
+          ['cs2','val'].forEach(gk=>{
+            const sv=Number(data.ui.s[gk]);
+            if(Number.isFinite(sv)&&sv>=GC[gk].sensMin&&sv<=GC[gk].sensMax)cleanUI.s[gk]=sv;
+          });
+        }
+        LS.set('sf_ui',JSON.stringify(cleanUI));
+      }
+      const _impInt=(v,mn,mx,d)=>{const n=parseInt(v,10);return isNaN(n)?d:Math.max(mn,Math.min(mx,n));};
       if(data.grip)setGripStyle(data.grip);
       if(data.speed)setTestSpeed(data.speed);
-      if(data.xhStyle)setXhStyle(data.xhStyle);
+      if(data.xhStyle)setXhStyle(data.xhStyle,false);
       if(data.xhColor)setXhColor(data.xhColor);
-      if(data.xhLen!==undefined)LS.set('sf_xh_len',String(data.xhLen));
-      if(data.xhThick!==undefined)LS.set('sf_xh_thick',String(data.xhThick));
-      if(data.xhGap!==undefined)LS.set('sf_xh_gap',String(data.xhGap));
-      if(data.xhDot!==undefined)LS.set('sf_xh_dot',String(data.xhDot));
+      if(data.xhLen!==undefined)LS.set('sf_xh_len',String(_impInt(data.xhLen,0,22,10)));
+      if(data.xhThick!==undefined)LS.set('sf_xh_thick',String(_impInt(data.xhThick,1,5,2)));
+      if(data.xhGap!==undefined)LS.set('sf_xh_gap',String(_impInt(data.xhGap,0,14,3)));
+      if(data.xhDot!==undefined)LS.set('sf_xh_dot',String(_impInt(data.xhDot,0,6,3)));
       if(typeof applyXhParams==='function')applyXhParams();
       if(data.targetColor)setTargetColor(data.targetColor);
-      if(data.hitSound)setHitSound(data.hitSound);
-      if(data.warmupCfg){
+      if(data.hitSound)setHitSound(data.hitSound,false);
+      if(data.gfx)setGfxQuality(data.gfx);
+      if(data.warmupCfg&&typeof data.warmupCfg==='object'){
         if(data.warmupCfg.size)setWarmupSize(data.warmupCfg.size);
         if(data.warmupCfg.speed)setWarmupSpeed(data.warmupCfg.speed);
-        if(data.warmupCfg.count)setWarmupCount(data.warmupCfg.count);
+        if(data.warmupCfg.count!==undefined)setWarmupCount(data.warmupCfg.count);
         if(data.warmupCfg.dur!==undefined)setWarmupDur(data.warmupCfg.dur);
       }
-      if(data.fovCS2)LS.set('sf_fov_cs2',String(data.fovCS2));
-      if(data.fovVal)LS.set('sf_fov_val',String(data.fovVal));
+      const fCS=parseInt(data.fovCS2,10);if(fCS>=60&&fCS<=120)LS.set('sf_fov_cs2',String(fCS));
+      const fVL=parseInt(data.fovVal,10);if(fVL>=60&&fVL<=120)LS.set('sf_fov_val',String(fVL));
       if(typeof data.vol==='number'&&isFinite(data.vol)){
         const v=Math.max(0,Math.min(1,data.vol));
         LS.set('sf_vol',String(v));
@@ -1572,6 +1680,9 @@ function importDataJSON(e){
       }
       if(data.lang&&['en','tr'].includes(data.lang)&&data.lang!==lang){setLang(data.lang);}
       restoreUI();
+      const _restoredFov=LS.get('sf_fov_'+game);
+      if(_restoredFov&&$('if'))$('if').value=_restoredFov;
+      if(camera)updateCameraFov();
       updPv();
       renderHistLog();
       showFB(T('impOk'),true,2800);
@@ -1600,7 +1711,8 @@ function resumeSession(){
   const s=load();if(!s)return;
   const _sv=Number(s.sens);if(!(_sv>0))return;
   const _g=GC[s.game]?s.game:'cs2';
-  setGame(_g);$('id').value=s.dpi||800;$('is').value=_sv.toFixed(3);
+  lastAnalysis=null;
+  setGame(_g,true);$('id').value=s.dpi||800;$('is').value=_sv.toFixed(3);
   if(s.grip)setGripStyle(s.grip);
   // FOV restore (localStorage'dan — setGame default'u ezmişse koru)
   const _rfov=LS.get('sf_fov_'+_g)||LS.get('sf_fov');if(_rfov)$('if').value=_rfov;
@@ -1627,10 +1739,26 @@ function resumeSession(){
 }
 
 // ─── THREE.JS ───
-let scene,camera,renderer,tM,tL,gridHelper;
+let scene,camera,renderer,tM,tL,fl,gridHelper;
 let tMs=[];
 let tVX=0,tVY=0,tX=0,tY=0,tZ=-8;
 let yaw=0,pitch=0,animF=null,active=false;
+let _gfxQuality=LS.get('sf_gfx')==='perf'?'perf':'high';
+
+function setGfxQuality(q){
+  q=q==='perf'?'perf':'high';
+  _gfxQuality=q;
+  try{LS.set('sf_gfx',q);}catch(e){}
+  document.body.classList.toggle('perf-mode',q==='perf');
+  ['high','perf'].forEach(k=>{
+    const b=$('btn-gfx-'+k);
+    if(b){b.classList.toggle('on',k===q);b.setAttribute('aria-pressed',String(k===q));}
+  });
+  if(renderer)renderer.setPixelRatio(q==='perf'?1:Math.min(window.devicePixelRatio||1,2));
+  if(scene)scene.fog=q==='perf'?null:new THREE.FogExp2(0x070708,.018);
+  if(tL)tL.visible=(q!=='perf');
+  if(fl)fl.visible=(q!=='perf');
+}
 
 function updateCameraFov(){
   if(!camera)return;
@@ -1649,11 +1777,11 @@ function initThree(){
   try{
     const c=GC[game];const W=window.innerWidth,H=window.innerHeight;
     scene=new THREE.Scene();scene.background=new THREE.Color(0x070708);
-    scene.fog=new THREE.FogExp2(0x070708,.018);
+    scene.fog=_gfxQuality==='perf'?null:new THREE.FogExp2(0x070708,.018);
     camera=new THREE.PerspectiveCamera(75,W/H,.1,200);
     updateCameraFov();
-    renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+    renderer=new THREE.WebGLRenderer({antialias:_gfxQuality!=='perf',powerPreference:'high-performance'});
+    renderer.setPixelRatio(_gfxQuality==='perf'?1:Math.min(window.devicePixelRatio||1,2));
     renderer.setSize(W,H);$('rc').appendChild(renderer.domElement);
     scene.add(new THREE.AmbientLight(0x222222,.8));
     const dl=new THREE.DirectionalLight(0xfff0ee,.6);dl.position.set(3,8,4);scene.add(dl);
@@ -1662,8 +1790,8 @@ function initThree(){
     const rm=new THREE.Mesh(new THREE.BoxGeometry(80,40,80),wm);rm.position.set(0,16.5,0);scene.add(rm);
     const refPole = new THREE.Mesh(new THREE.CylinderGeometry(.02,.02,6,12),new THREE.MeshBasicMaterial({color:0x22222e}));
     refPole.position.set(0,-0.5,-8);scene.add(refPole);
-    tL=new THREE.PointLight(_targetColorHex(),4,16);scene.add(tL);
-    const fl=new THREE.PointLight(0xff3344,2,18);fl.position.set(-4,2,-6);scene.add(fl);
+    tL=new THREE.PointLight(_targetColorHex(),4,16);tL.visible=(_gfxQuality!=='perf');scene.add(tL);
+    fl=new THREE.PointLight(0xff3344,2,18);fl.position.set(-4,2,-6);fl.visible=(_gfxQuality!=='perf');scene.add(fl);
     yaw=0;pitch=0;
     camera.quaternion.setFromEuler(new THREE.Euler(0,0,0,'YXZ'));
     renderer.domElement.addEventListener('webglcontextlost',(e)=>{
@@ -1677,7 +1805,7 @@ function initThree(){
     window.addEventListener('resize',()=>{
       if(!renderer)return;
       const W=window.innerWidth,H=window.innerHeight;
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+      renderer.setPixelRatio(_gfxQuality==='perf'?1:Math.min(window.devicePixelRatio||1,2));
       renderer.setSize(W,H);
       camera.aspect=W/H;
       updateCameraFov();
@@ -1690,10 +1818,14 @@ function initThree(){
 }
 
 let _targetColor=LS.get('sf_tcolor')||'#ff2020';
-function _targetColorHex(){return parseInt(_targetColor.replace('#',''),16)||0xff2020;}
+function _targetColorHex(){
+  const s=typeof _targetColor==='string'?_targetColor:'#ff2020';
+  return parseInt(s.replace('#',''),16)||0xff2020;
+}
 
 function mkSph(r=.3){
-  return new THREE.Mesh(new THREE.SphereGeometry(r,20,20),new THREE.MeshBasicMaterial({color:_targetColorHex()}));
+  const seg=_gfxQuality==='perf'?12:20;
+  return new THREE.Mesh(new THREE.SphereGeometry(r,seg,seg),new THREE.MeshBasicMaterial({color:_targetColorHex()}));
 }
 function updTC(){
   const tcHex=_targetColorHex();
@@ -1751,8 +1883,9 @@ function setupT(mode,label){
   if(mode==='grid'){
     GP=GP_BASE.map((_,idx)=>_jitterGridSlot(idx));
     const gR=_warmupRadius(0.26);
+    const seg=_gfxQuality==='perf'?12:20;
     GP.forEach(p=>{
-      const m=new THREE.Mesh(new THREE.SphereGeometry(gR,20,20),new THREE.MeshBasicMaterial({color:tColor}));
+      const m=new THREE.Mesh(new THREE.SphereGeometry(gR,seg,seg),new THREE.MeshBasicMaterial({color:tColor}));
       m.position.set(...p);m.visible=false;scene.add(m);tMs.push(m);
     });
     // Klasik Gridshot: Aynı anda 3 farklı hedef aktif olur (ısınmada özel sayı seçilebilir)
@@ -1996,21 +2129,23 @@ let _xhStyle=LS.get('sf_xh_style')||'cross';
 let _xhColor=LS.get('sf_xh_color')||'#ffffff';
 let isPractice=false;
 
-function setHitSound(preset){
+function setHitSound(preset,playPreview=true){
+  if(!['laser','pop','bell'].includes(preset))preset='laser';
   _hitSoundPreset=preset;
   try{LS.set('sf_hitsound',preset);}catch(e){}
   ['laser','pop','bell'].forEach(p=>{
     const btn=$('btn-snd-'+p);
     if(btn){btn.classList.toggle('on',p===preset);btn.setAttribute('aria-pressed',String(p===preset));}
   });
-  playHit();
+  if(playPreview)playHit();
 }
 
 function applyXhParams(){
-  const len=parseInt(LS.get('sf_xh_len')||'10',10);
-  const thick=parseInt(LS.get('sf_xh_thick')||'2',10);
-  const gap=parseInt(LS.get('sf_xh_gap')||'3',10);
-  const dot=parseInt(LS.get('sf_xh_dot')||'3',10);
+  const _c=(v,mn,mx,d)=>{const n=parseInt(v,10);return isNaN(n)?d:Math.max(mn,Math.min(mx,n));};
+  const len=_c(LS.get('sf_xh_len'),0,22,10);
+  const thick=_c(LS.get('sf_xh_thick'),1,5,2);
+  const gap=_c(LS.get('sf_xh_gap'),0,14,3);
+  const dot=_c(LS.get('sf_xh_dot'),0,6,3);
 
   document.documentElement.style.setProperty('--xh-len',len+'px');
   document.documentElement.style.setProperty('--xh-thick',thick+'px');
@@ -2037,7 +2172,8 @@ function applyXhParams(){
   if(sDot)sDot.value=dot;
 }
 
-function setXhStyle(style){
+function setXhStyle(style,openPanel=false){
+  if(!['cross','dot','compact','custom'].includes(style))style='cross';
   _xhStyle=style;
   try{LS.set('sf_xh_style',style);}catch(e){}
   ['cross','dot','compact','custom'].forEach(s=>{
@@ -2052,7 +2188,7 @@ function setXhStyle(style){
     LS.set('sf_xh_len','5');LS.set('sf_xh_thick','2');LS.set('sf_xh_gap','2');LS.set('sf_xh_dot','0');
   }
   const panel=$('xh-custom-panel');
-  if(panel&&style==='custom')panel.style.display='block';
+  if(panel&&style==='custom'&&openPanel)panel.style.display='block';
   applyXhParams();
 }
 
@@ -2081,6 +2217,8 @@ function toggleXhCustom(){
 }
 
 function setXhColor(col){
+  const valid=/^#[0-9a-fA-F]{6}$/.test(String(col||''));
+  col=valid?col:'#ffffff';
   _xhColor=col;
   try{LS.set('sf_xh_color',col);}catch(e){}
   document.documentElement.style.setProperty('--xh-c',col);
@@ -2092,6 +2230,8 @@ function setXhColor(col){
 }
 
 function setTargetColor(col){
+  const valid=/^#[0-9a-fA-F]{6}$/.test(String(col||''));
+  col=valid?col:'#ff2020';
   _targetColor=col;
   try{LS.set('sf_tcolor',col);}catch(e){}
   document.documentElement.style.setProperty('--tc-c',col);
@@ -2235,7 +2375,9 @@ document.addEventListener('mousemove',e=>{
     const absCal=Math.abs(calMov);
     const swipeCm=(absCal/gD())*2.54;
     const isReady=absCal>500;
-    const liveSens=absCal>50?(360/(GC[game].yaw*absCal)):0;
+    const cCal=GC[game];
+    const rawLiveSens=absCal>50?(360/(cCal.yaw*absCal)):0;
+    const liveSens=rawLiveSens>0?Math.max(cCal.sensMin,Math.min(cCal.sensMax,rawLiveSens)):0;
     const liveEl=$('cal-live');
     if(liveEl){
       const statusBadge=isReady
@@ -2287,7 +2429,7 @@ document.addEventListener('mousedown',e=>{
   if(e.button!==0)return;
   if(isCalib){
     if(document.pointerLockElement)document.exitPointerLock();
-    else finCalib();
+    else if(calMov!==0)finCalib();
     return;
   }
   if(!active||!renderer||document.pointerLockElement!==renderer.domElement)return;
@@ -2408,8 +2550,31 @@ window.addEventListener('keydown',e=>{
       return;
     }
   }
+  if(e.key==='Tab'){
+    const _modals=['res-modal','conv-modal','warmup-modal','wsummary-modal','ab-modal'];
+    let _trap=null;
+    for(const id of _modals){const el=$(id);if(el&&el.style.display==='flex'){_trap=el;break;}}
+    if(!_trap){
+      for(const id of ['pm','rr']){const el=$(id);if(el&&el.style.display==='block'){_trap=el;break;}}
+    }
+    if(_trap){
+      const _focusables=[..._trap.querySelectorAll('button:not([disabled]),input:not([disabled]),[tabindex]:not([tabindex="-1"])')]
+        .filter(el=>el.offsetParent!==null&&el.style.display!=='none');
+      if(_focusables.length>0){
+        const first=_focusables[0],last=_focusables[_focusables.length-1];
+        if(!_trap.contains(document.activeElement)){
+          e.preventDefault();(e.shiftKey?last:first).focus();
+        } else if(e.shiftKey&&document.activeElement===first){
+          e.preventDefault();last.focus();
+        } else if(!e.shiftKey&&document.activeElement===last){
+          e.preventDefault();first.focus();
+        }
+      }
+    }
+    return;
+  }
   if(e.key==='Escape'){
-    if(isCalib){if(!document.pointerLockElement)finCalib();return;}
+    if(isCalib){if(!document.pointerLockElement)finCalib(true);return;}
     if(isPractice){quitToMenu();return;}
     if(_isABTest){cancelABTest();return;}
     if($('res-modal')?.style.display==='flex'){closeResModal();return;}
@@ -2494,7 +2659,7 @@ function resumeGame(){
       if(document.pointerLockElement===renderer.domElement){
         _clearPendingLock();
         _lockAcquiredAt=performance.now();
-        gridLastHitTime=Date.now();_flickSpawnTime=performance.now();
+        gridLastHitTime=Date.now();_flickSpawnTime=performance.now();_aimReset();
         active=true;schedJ(cMode,curLabel);
         if(_pauseRes){_pauseRes();_pauseRes=null;}
       }
@@ -2507,7 +2672,7 @@ function resumeGame(){
       if(!active&&document.pointerLockElement===renderer?.domElement){
         _clearPendingLock();
         _lockAcquiredAt=performance.now();
-        gridLastHitTime=Date.now();_flickSpawnTime=performance.now();
+        gridLastHitTime=Date.now();_flickSpawnTime=performance.now();_aimReset();
         active=true;schedJ(cMode,curLabel);if(_pauseRes){_pauseRes();_pauseRes=null;}
       }
       if(!renderer||document.pointerLockElement!==renderer.domElement){
@@ -2535,6 +2700,7 @@ function quitToMenu(targetMenu='mm'){
   if(window._hudTimer){clearInterval(window._hudTimer);window._hudTimer=null;}
   if(_warmupInterval){clearInterval(_warmupInterval);_warmupInterval=null;}
   if(_abInterval){clearInterval(_abInterval);_abInterval=null;}
+  if(_abReject){const rej=_abReject;_abReject=null;rej(new Error('AB cancelled'));}
   if(_pauseRes){_pauseRes();_pauseRes=null;}
   if(_resT){_resT(0);_resT=null;}
   if(document.pointerLockElement)document.exitPointerLock();
@@ -2610,12 +2776,25 @@ function startPractice(mode){
   yaw=0;pitch=0;
   camera.quaternion.setFromEuler(new THREE.Euler(0,0,0,'YXZ'));
   setupT(mode,'FREE');
-  active=true;
-  schedJ(mode,'FREE');
-  if(document.pointerLockElement!==renderer.domElement){
+  const hasLock=document.pointerLockElement===renderer.domElement;
+  active=hasLock;
+  if(hasLock){
+    schedJ(mode,'FREE');
+  } else {
+    function onPracLock(){
+      if(document.pointerLockElement===renderer.domElement){
+        _clearPendingLock();
+        const lkOv=$('lock-ov');if(lkOv)lkOv.classList.remove('on');
+        _lockAcquiredAt=performance.now();
+        gridLastHitTime=Date.now();_flickSpawnTime=performance.now();_aimReset();
+        if(isPractice){active=true;schedJ(mode,'FREE');}
+      }
+    }
+    _pendingLockFn=onPracLock;
+    document.addEventListener('pointerlockchange',onPracLock);
     safeRequestPointerLock(renderer.domElement);
     setTimeout(()=>{
-      if(isPractice&&document.pointerLockElement!==renderer?.domElement){
+      if(isPractice&&!isPaused&&!_quitEarly&&document.pointerLockElement!==renderer?.domElement){
         const lkOv=$('lock-ov');if(lkOv)lkOv.classList.add('on');
       }
     },300);
@@ -2650,17 +2829,19 @@ function closeWarmupSummary(){
 // ─── A/B BLIND COMPARISON TEST ───
 let _abSensA=0,_abSensB=0,_abSwapped=false,_abFromMenu='rr';
 let _abResA={acc:0,hits:0,miss:0,score:0},_abResB={acc:0,hits:0,miss:0,score:0};
-let _abWinnerSens=null,_isABTest=false,_abInterval=null;
+let _abWinnerSens=null,_isABTest=false,_abInterval=null,_abReject=null;
 
 function cancelABTest(){
   _isABTest=false;
   if(_abInterval){clearInterval(_abInterval);_abInterval=null;}
+  if(_abReject){const rej=_abReject;_abReject=null;rej(new Error('AB cancelled'));}
   quitToMenu(_abFromMenu||'rr');
 }
 
 function openABModal(){
   _saveModalFocus();
   _abFromMenu=$('rr').style.display==='block'?'rr':'mm';
+  const c=GC[game];
   const sNew=_lastResult?.sens||gS();
   const histArr=loadHistLog();
   let sOld=0;
@@ -2672,8 +2853,9 @@ function openABModal(){
   const minDiff=game==='val'?0.015:0.05;
   if(!(sOld>0)||Math.abs(sOld-sNew)<minDiff){
     const mult=sNew>(game==='val'?0.45:1.5)?0.82:1.22;
-    sOld=Number((sNew*mult).toFixed(3));
+    sOld=sNew*mult;
   }
+  sOld=Math.max(c.sensMin,Math.min(c.sensMax,Number(sOld.toFixed(3))));
   _abSwapped=Math.random()<0.5;
   _abSensA=_abSwapped?sOld:sNew;
   _abSensB=_abSwapped?sNew:sOld;
@@ -2691,10 +2873,27 @@ function closeABModal(){
 
 function applyABWinner(){
   if(_abWinnerSens){
-    $('is').value=_abWinnerSens.toFixed(3);
+    const c=GC[game],dpi=gD();
+    const wSens=Math.max(c.sensMin,Math.min(c.sensMax,_abWinnerSens));
+    $('is').value=wSens.toFixed(3);
     updPv();
-    if($('rr').style.display==='block'&&$('rr-m')){
-      $('rr-m').textContent=_abWinnerSens.toFixed(3);
+    if(_lastResult){
+      _lastResult.sens=wSens;
+      _lastResult.cm=cm360(wSens,dpi);
+      _lastResult.oppSens=(wSens*c.convF).toFixed(3);
+      _lastResult.dpi=dpi;
+    }
+    if($('rr').style.display==='block'){
+      if($('rr-m'))$('rr-m').textContent=wSens.toFixed(3);
+      if($('rr-e'))$('rr-e').textContent=Math.round(wSens*dpi);
+      if($('rr-cm'))$('rr-cm').textContent=cm360(wSens,dpi).toFixed(2);
+      if($('rr-cv'))$('rr-cv').textContent=(wSens*c.convF).toFixed(3);
+    }
+    const saved=load();
+    if(saved){
+      saved.sens=wSens;
+      saved.dpi=dpi;
+      save(saved);
     }
     showFB(T('abApplied'),true,2000);
   }
@@ -2706,17 +2905,18 @@ function startABTest(){
   _isABTest=true;isPractice=false;_quitEarly=false;_endEarly=false;isPaused=false;
   const testSens=async(sens,label,phaseIdx)=>{
     return new Promise((resolve,reject)=>{
+      _abReject=reject;
       curLabel=label;
       cMode='grid';
       clrT();
       yaw=0;pitch=0;
       if(camera)camera.quaternion.setFromEuler(new THREE.Euler(0,0,0,'YXZ'));
       showSOv(sens,label,cMode,phaseIdx,2,{repeats:1,countdown:2},()=>{
-        if(!_isABTest){reject(new Error('AB cancelled'));return;}
+        if(!_isABTest){if(_abReject===reject)_abReject=null;reject(new Error('AB cancelled'));return;}
         curTS=sens;curScore=0;hits=0;miss=0;onT=false;phaseScoreActive=true;_streak=0;
         $('hv-s').textContent='???';$('hv-cm').textContent='—';$('hv-sc').textContent='0';
         $('bbar').textContent=`${label==='Sens A'?T('abPhaseA'):T('abPhaseB')} · ${T('escCancel')}`;
-        setupT('grid',label);schedJ('grid',label);
+        setupT('grid',label);if(active)schedJ('grid',label);
         const dur=15;
         let rem=dur;
         const timerEl=$('hud-timer');
@@ -2724,7 +2924,7 @@ function startABTest(){
         let lastTick=performance.now();
         if(_abInterval){clearInterval(_abInterval);_abInterval=null;}
         _abInterval=setInterval(()=>{
-          if(!_isABTest){clearInterval(_abInterval);_abInterval=null;reject(new Error('AB cancelled'));return;}
+          if(!_isABTest){clearInterval(_abInterval);_abInterval=null;if(_abReject===reject)_abReject=null;reject(new Error('AB cancelled'));return;}
           const now=performance.now();
           const dt=(now-lastTick)/1000;
           lastTick=now;
@@ -2738,6 +2938,7 @@ function startABTest(){
           }
           if(rem<=0){
             clearInterval(_abInterval);_abInterval=null;
+            if(_abReject===reject)_abReject=null;
             clrT();
             const tot=hits+miss;
             const acc=tot>0?Math.round(hits/tot*100):0;
@@ -2750,7 +2951,7 @@ function startABTest(){
 
   (async()=>{
     try{
-      if(!renderer&&!initThree())return;
+      if(!renderer&&!initThree()){_isABTest=false;return;}
       hideAll();
       $('hud').style.display='block';$('pi').style.display='none';$('bbar').style.display='block';
       $('pb').style.width='0%';
@@ -2772,18 +2973,21 @@ function startABTest(){
       $('ab-m-start').style.display='none';
       const labelSensA=_abSwapped?T('abOldSens'):T('abNewSens');
       const labelSensB=_abSwapped?T('abNewSens'):T('abOldSens');
-      $('ab-stat-a').innerHTML=`<strong>Sens A</strong> (${labelSensA}): <strong>%${_abResA.acc}</strong> (${_abResA.hits} hits)<br><small style="color:var(--a);font-weight:600;">${_abSensA.toFixed(3)}</small>`;
-      $('ab-stat-b').innerHTML=`<strong>Sens B</strong> (${labelSensB}): <strong>%${_abResB.acc}</strong> (${_abResB.hits} hits)<br><small style="color:var(--a);font-weight:600;">${_abSensB.toFixed(3)}</small>`;
+      const hitLbl=lang==='tr'?'vuruş':'hits';
+      const accStrA=lang==='tr'?`%${_abResA.acc}`:`${_abResA.acc}%`;
+      const accStrB=lang==='tr'?`%${_abResB.acc}`:`${_abResB.acc}%`;
+      $('ab-stat-a').innerHTML=`<strong>Sens A</strong> (${labelSensA}): <strong>${accStrA}</strong> (${_abResA.hits} ${hitLbl})<br><small style="color:var(--a);font-weight:600;">${_abSensA.toFixed(3)}</small>`;
+      $('ab-stat-b').innerHTML=`<strong>Sens B</strong> (${labelSensB}): <strong>${accStrB}</strong> (${_abResB.hits} ${hitLbl})<br><small style="color:var(--a);font-weight:600;">${_abSensB.toFixed(3)}</small>`;
       
       let winnerSens=_abSensA;
       if(Math.abs(_abResA.acc-_abResB.acc)<3){
         $('ab-verdict').textContent=T('abTie');
         winnerSens=_abResA.score>=_abResB.score?_abSensA:_abSensB;
       } else if(_abResA.acc>_abResB.acc){
-        $('ab-verdict').textContent=T('abWinnerA').replace('%s1',_abResA.acc).replace('%s2',_abResB.acc);
+        $('ab-verdict').textContent=T('abWinnerA').replace('%s1',accStrA).replace('%s2',accStrB);
         winnerSens=_abSensA;
       } else {
-        $('ab-verdict').textContent=T('abWinnerB').replace('%s1',_abResB.acc).replace('%s2',_abResA.acc);
+        $('ab-verdict').textContent=T('abWinnerB').replace('%s1',accStrB).replace('%s2',accStrA);
         winnerSens=_abSensB;
       }
       _abWinnerSens=winnerSens;
@@ -2814,7 +3018,7 @@ function startCalib(){
   hideAll();$('cov').classList.add('on');
   safeRequestPointerLock(renderer.domElement);
 }
-function finCalib(){
+function finCalib(cancelled=false){
   isCalib=false;$('cov').classList.remove('on');showMenu('mm');
   // calMov = toplam net piksel hareketi (raw mousemove.movementX yönlü toplamı)
   // 360 derece = mousepad_cm * DPI piksel
@@ -2830,7 +3034,7 @@ function finCalib(){
     }
     updPv();
     showFB(T('calibOk'),true,2200);
-  } else if(absCalMov>0){
+  } else if(!cancelled){
     showFB(T('calibFail'),false,2200);
   }
   calMov=0;
@@ -2910,7 +3114,8 @@ function currentAnalysis(finalS){
     const avgDiff=diffs.reduce((a,b)=>a+b,0)/diffs.length;
     stability=Math.max(0,Math.min(100,100-avgDiff*700));
   }
-  const confidence=Math.round(rangeConf*.60+stability*.25+agreement*.15);
+  const progressScale=Math.min(1,rangeConf/25);
+  const confidence=Math.round(rangeConf*.60+(stability*.25+agreement*.15)*progressScale);
   return {mids,confs,rangeConf,stability,agreement,confidence};
 }
 
@@ -2961,6 +3166,7 @@ function startNextRound(){
 
 function startRound(){
   if(!renderer&&!initThree())return;
+  lastAnalysis=null;
   hideAll();isPractice=false;_endEarly=false;_quitEarly=false;_hitTimes=[];_streak=0;
   _swipeLengthsCm=[];_swipeArcs=[];_curSwipeX=0;_curSwipeAbsY=0;_curSwipeDir=0;
   const cfg=roundConfig();
@@ -3202,11 +3408,15 @@ function shareResult(){
 
 function downloadResultCard(){
   if(!_lastResult)return;
+  const imgBtn=$('img-btn');
+  if(imgBtn)imgBtn.disabled=true;
+  const _unlockBtn=()=>{if(imgBtn)imgBtn.disabled=false;};
   try{
     const W=1200,H=630;
     const cv=document.createElement('canvas');
     cv.width=W;cv.height=H;
     const ctx=cv.getContext('2d');
+    if(!ctx)throw new Error('2D context unavailable');
     const isVal=game==='val';
     const accCol=isVal?'#c084fc':'#e8ff47';
     const accGlow=isVal?'rgba(192,132,252,0.18)':'rgba(232,255,71,0.18)';
@@ -3279,11 +3489,14 @@ function downloadResultCard(){
     ctx.fillText(String(_lastResult.oppSens),84,392);
 
     // 4 İstatistik Kutusu (Alt Sol/Orta)
+    const accTxt=$('rr-a')?.textContent||'';
+    const rfxTxt=_lastResult.reflex?(_lastResult.reflex+' ms'):'';
+    const fourthVal=(rfxTxt&&accTxt&&accTxt!=='—')?`${rfxTxt} · ${accTxt}`:(rfxTxt||accTxt||'—');
     const stats=[
       {l:'eDPI',v:String(Math.round(_lastResult.sens*_lastResult.dpi))},
       {l:'cm/360°',v:_lastResult.cm.toFixed(1)+' cm'},
       {l:'MOUSE DPI',v:String(_lastResult.dpi)},
-      {l:lang==='tr'?'TEPKİ / İSABET':'REFLEX / ACC',v:_lastResult.reflex?(_lastResult.reflex+' ms'):($('rr-a')?.textContent||'—')}
+      {l:lang==='tr'?'TEPKİ / İSABET':'REFLEX / ACC',v:fourthVal}
     ];
     stats.forEach((st,i)=>{
       const sx=64+i*272,sy=466,sw=256,sh=88;
@@ -3295,9 +3508,14 @@ function downloadResultCard(){
       ctx.font='500 12px "DM Mono", monospace';
       ctx.fillStyle='rgba(255,255,255,0.48)';
       ctx.fillText(st.l,sx+18,sy+18);
-      ctx.font='700 26px "DM Mono", monospace';
+      let fSz=26;
+      ctx.font=`700 ${fSz}px "DM Mono", monospace`;
+      while(fSz>13&&ctx.measureText(st.v).width>sw-32){
+        fSz-=2;
+        ctx.font=`700 ${fSz}px "DM Mono", monospace`;
+      }
       ctx.fillStyle='#eeeef8';
-      ctx.fillText(st.v,sx+18,sy+44);
+      ctx.fillText(st.v,sx+18,sy+44+(26-fSz)*0.4);
     });
 
     // Sağ Mod Bazlı Analiz Bloğu
@@ -3338,7 +3556,8 @@ function downloadResultCard(){
     ctx.fillText('rasne-dev.github.io/SensFinder',64,572);
 
     cv.toBlob(blob=>{
-      if(!blob)return;
+      _unlockBtn();
+      if(!blob){showFB(T('expErr'),false,2400);return;}
       if(navigator.clipboard&&window.ClipboardItem){
         try{navigator.clipboard.write([new ClipboardItem({'image/png':blob})]).catch(()=>{});}catch(_){}
       }
@@ -3357,7 +3576,7 @@ function downloadResultCard(){
         setTimeout(()=>{el.textContent=orig;},1800);
       }
     },'image/png');
-  }catch(e){}
+  }catch(e){_unlockBtn();showFB(T('expErr'),false,2400);}
 }
 
 function copyConsoleCmd(){
@@ -3391,7 +3610,7 @@ function runH(sens,label,mode,phIdx,totalPhases,cfg){
       // Her faz başında kamerayı merkeze hizala (önceki fazdan kalan açı sapmasını sıfırla)
       yaw=0;pitch=0;
       if(camera)camera.quaternion.setFromEuler(new THREE.Euler(0,0,0,'YXZ'));
-      cMode=mode;setupT(mode,label);schedJ(mode,label);
+      cMode=mode;setupT(mode,label);if(active)schedJ(mode,label);
       const modeIdx=['flick','grid','track'].indexOf(mode);
       $('hpill').textContent=T('tag'+['F','G','T'][modeIdx]);
       // Tracking modunda HUD'da farklı açıklama
@@ -3411,12 +3630,18 @@ function runH(sens,label,mode,phIdx,totalPhases,cfg){
 
       const _tick=()=>{
         if(_endEarly||_quitEarly){phaseScoreActive=false;_resT=null;resolve(Math.floor(curScore));return;}
-        if(isPaused){
+        if(isPaused||!active||!renderer||document.pointerLockElement!==renderer.domElement){
           if(!_pausedAt)_pausedAt=performance.now();
           requestAnimationFrame(_tick);
           return;
         }
-        if(_pausedAt){_totalPaused+=performance.now()-_pausedAt;_pausedAt=0;}
+        if(_pausedAt){
+          _totalPaused+=performance.now()-_pausedAt;
+          _pausedAt=0;
+          gridLastHitTime=Date.now();
+          _flickSpawnTime=performance.now();
+          _aimReset();
+        }
         
         const el=performance.now()-start-_totalPaused;
         const wasScored=phaseScoreActive;
@@ -3505,24 +3730,28 @@ function showSOv(sens,label,mode,phIdx,totalPhases,cfg,cb){
       $('sov').classList.remove('on');
       if(_quitEarly)return;
       playCountdown(0);
-      if(renderer&&document.pointerLockElement!==renderer.domElement){
+      const hasLock=!!(renderer&&document.pointerLockElement===renderer.domElement);
+      active=hasLock;
+      cb();
+      if(!hasLock&&renderer&&renderer.domElement){
         function _sovLock(){
           if(document.pointerLockElement===renderer.domElement){
             _clearPendingLock();
             const lkOv=$('lock-ov');if(lkOv)lkOv.classList.remove('on');
-            _lockAcquiredAt=performance.now();active=true;cb();
+            _lockAcquiredAt=performance.now();
+            gridLastHitTime=Date.now();_flickSpawnTime=performance.now();_aimReset();
+            active=true;
+            schedJ(cMode,curLabel);
           }
         }
         _pendingLockFn=_sovLock;
         document.addEventListener('pointerlockchange',_sovLock);
         safeRequestPointerLock(renderer.domElement);
         setTimeout(()=>{
-          if(document.pointerLockElement!==renderer.domElement&&!isPaused&&!_quitEarly&&!_endEarly){
+          if(renderer&&document.pointerLockElement!==renderer.domElement&&!isPaused&&!_quitEarly&&!_endEarly&&$('hud').style.display==='block'){
             const lkOv=$('lock-ov');if(lkOv)lkOv.classList.add('on');
           }
         },300);
-      } else {
-        active=true;cb();
       }
     }
   },1000);
@@ -3632,6 +3861,8 @@ function showRR(sens,h,miss_,conf,trkOn=0,trkTot=0){
     }
   }
   $('ft-ov').textContent=T('ftOv');$('ft-un').textContent=T('ftUn');
+  const ftAdsEl=$('ft-ads');
+  if(ftAdsEl)ftAdsEl.textContent=game==='cs2'?T('ftAdsCs2',detGrip):T('ftAdsVal',detGrip);
 
   // Hedefe yaklaşım analizi: önerilen sense en yakın olan doğrulama (MID) testleri öncelikli
   const ftAimEl=$('ft-aim');
@@ -3713,8 +3944,8 @@ const MENUS=['mm','pm','rr'];
 function hideAll(){MENUS.forEach(id=>$(id).style.display='none');}
 function showMenu(id){
   hideAll();const m=$(id);m.style.display='block';
-  // Klavye/ekran okuyucu: duraklat ve sonuç ekranlarında odağı menüye taşı
-  if(id==='pm'||id==='rr'){m.setAttribute('tabindex','-1');try{m.focus({preventScroll:true});}catch(e){}}
+  m.setAttribute('tabindex','-1');
+  try{m.focus({preventScroll:true});}catch(e){}
 }
 
 // ─── FULLSCREEN ───
@@ -3745,20 +3976,19 @@ applyI18n();setGame('cs2',true);
 // Kaydedilen FOV varsa yükle
 const _sfov=LS.get("sf_fov_cs2")||LS.get("sf_fov");if(_sfov){$('if').value=_sfov;}
 // Sfx butonunu ve tercihleri başlat
-setTimeout(()=>{
-  const _initVolIcon=_sfxOn?(parseFloat(LS.get('sf_vol')||'0.7')<0.5?"🔉":"🔊"):"🔇";
-  ['sfx-btn','pm-sfx'].forEach(id=>{const el=$(id);if(el)el.textContent=_initVolIcon;});
-  setXhStyle(_xhStyle);
-  setXhColor(_xhColor);
-  setTargetColor(_targetColor);
-  setGripStyle(gripStyle);
-  setTestSpeed(_testSpeed);
-  setWarmupSize(_warmupCfg.size);
-  setWarmupSpeed(_warmupCfg.speed);
-  setWarmupCount(_warmupCfg.count);
-  setWarmupDur(_warmupCfg.dur);
-  ['laser','pop','bell'].forEach(p=>{const b=$('btn-snd-'+p);if(b)b.classList.toggle('on',p===_hitSoundPreset);});
-},0);
+const _initVolIcon=_sfxOn?(parseFloat(LS.get('sf_vol')||'0.7')<0.5?"🔉":"🔊"):"🔇";
+['sfx-btn','pm-sfx'].forEach(id=>{const el=$(id);if(el)el.textContent=_initVolIcon;});
+setXhStyle(_xhStyle,false);
+setXhColor(_xhColor);
+setTargetColor(_targetColor);
+setGfxQuality(_gfxQuality);
+setGripStyle(gripStyle);
+setTestSpeed(_testSpeed);
+setWarmupSize(_warmupCfg.size);
+setWarmupSpeed(_warmupCfg.speed);
+setWarmupCount(_warmupCfg.count);
+setWarmupDur(_warmupCfg.dur);
+setHitSound(_hitSoundPreset,false);
 restoreUI();applyURLParams();_uiRestored=true;
 // Fare/pointer lock olmayan cihazlar için erken uyarı
 try{
