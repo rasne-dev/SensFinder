@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="version" content="1.2.8">
+<meta name="version" content="1.2.9">
 <title>SensFinder — CS2 & Valorant</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -516,7 +516,7 @@ body.perf-mode .menu,body.perf-mode #hud,body.perf-mode #pi,body.perf-mode #cov,
 
 <!-- RESOLUTION & ASPECT RATIO MODAL -->
 <div id="res-modal" role="dialog" aria-modal="true" aria-labelledby="res-m-ti" onclick="if(event.target===this)closeResModal()" style="display:none;position:fixed;inset:0;z-index:40;background:rgba(7,7,8,.88);backdrop-filter:blur(10px);align-items:center;justify-content:center;">
-  <div style="background:linear-gradient(135deg,rgba(10,10,14,.98),rgba(16,16,22,.98));border:1px solid rgba(255,255,255,.12);border-radius:2px;max-width:480px;width:92vw;padding:24px;box-shadow:0 24px 60px rgba(0,0,0,.8);">
+  <div style="background:linear-gradient(135deg,rgba(10,10,14,.98),rgba(16,16,22,.98));border:1px solid rgba(255,255,255,.12);border-radius:2px;max-width:480px;width:92vw;padding:24px;box-shadow:0 24px 60px rgba(0,0,0,.8);max-height:90vh;overflow-y:auto;scrollbar-width:thin;">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;border-bottom:1px solid rgba(255,255,255,.08);padding-bottom:12px;">
       <div>
         <div style="font-size:16px;font-weight:900;color:var(--tb);font-family:var(--sans);" id="res-m-ti">En-Boy Oranı &amp; Çözünürlük Rehberi</div>
@@ -562,7 +562,7 @@ body.perf-mode .menu,body.perf-mode #hud,body.perf-mode #pi,body.perf-mode #cov,
 
 <!-- CUSTOM WARMUP SETTINGS MODAL -->
 <div id="warmup-modal" role="dialog" aria-modal="true" aria-labelledby="warm-m-ti" onclick="if(event.target===this)closeWarmupModal()" style="display:none;position:fixed;inset:0;z-index:40;background:rgba(7,7,8,.88);backdrop-filter:blur(10px);align-items:center;justify-content:center;">
-  <div style="background:linear-gradient(135deg,rgba(10,10,14,.98),rgba(16,16,22,.98));border:1px solid rgba(255,255,255,.12);border-radius:2px;max-width:480px;width:92vw;padding:24px;box-shadow:0 24px 60px rgba(0,0,0,.8);">
+  <div style="background:linear-gradient(135deg,rgba(10,10,14,.98),rgba(16,16,22,.98));border:1px solid rgba(255,255,255,.12);border-radius:2px;max-width:480px;width:92vw;padding:24px;box-shadow:0 24px 60px rgba(0,0,0,.8);max-height:90vh;overflow-y:auto;scrollbar-width:thin;">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;border-bottom:1px solid rgba(255,255,255,.08);padding-bottom:12px;">
       <div>
         <div style="font-size:16px;font-weight:900;color:var(--tb);font-family:var(--sans);" id="warm-m-ti">Özel Isınma Ayarları</div>
@@ -613,7 +613,7 @@ body.perf-mode .menu,body.perf-mode #hud,body.perf-mode #pi,body.perf-mode #cov,
 
 <!-- WARMUP SUMMARY MODAL -->
 <div id="wsummary-modal" role="dialog" aria-modal="true" aria-labelledby="wsum-m-ti" onclick="if(event.target===this)closeWarmupSummary()" style="display:none;position:fixed;inset:0;z-index:45;background:rgba(7,7,8,.88);backdrop-filter:blur(10px);align-items:center;justify-content:center;">
-  <div style="background:linear-gradient(135deg,rgba(10,10,14,.98),rgba(16,16,22,.98));border:1px solid rgba(255,255,255,.12);border-radius:2px;max-width:440px;width:92vw;padding:24px;box-shadow:0 24px 60px rgba(0,0,0,.8);">
+  <div style="background:linear-gradient(135deg,rgba(10,10,14,.98),rgba(16,16,22,.98));border:1px solid rgba(255,255,255,.12);border-radius:2px;max-width:440px;width:92vw;padding:24px;box-shadow:0 24px 60px rgba(0,0,0,.8);max-height:90vh;overflow-y:auto;scrollbar-width:thin;">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;border-bottom:1px solid rgba(255,255,255,.08);padding-bottom:12px;">
       <div>
         <div style="font-size:16px;font-weight:900;color:var(--tb);font-family:var(--sans);" id="wsum-m-ti">Isınma Özeti</div>
@@ -640,7 +640,7 @@ body.perf-mode .menu,body.perf-mode #hud,body.perf-mode #pi,body.perf-mode #cov,
 
 <!-- AB BLIND TEST MODAL -->
 <div id="ab-modal" role="dialog" aria-modal="true" aria-labelledby="ab-m-ti" onclick="if(event.target===this)closeABModal()" style="display:none;position:fixed;inset:0;z-index:45;background:rgba(7,7,8,.88);backdrop-filter:blur(10px);align-items:center;justify-content:center;">
-  <div style="background:linear-gradient(135deg,rgba(10,10,14,.98),rgba(16,16,22,.98));border:1px solid rgba(255,255,255,.12);border-radius:2px;max-width:460px;width:92vw;padding:24px;box-shadow:0 24px 60px rgba(0,0,0,.8);">
+  <div style="background:linear-gradient(135deg,rgba(10,10,14,.98),rgba(16,16,22,.98));border:1px solid rgba(255,255,255,.12);border-radius:2px;max-width:460px;width:92vw;padding:24px;box-shadow:0 24px 60px rgba(0,0,0,.8);max-height:90vh;overflow-y:auto;scrollbar-width:thin;">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;border-bottom:1px solid rgba(255,255,255,.08);padding-bottom:12px;">
       <div>
         <div style="font-size:16px;font-weight:900;color:var(--tb);font-family:var(--sans);" id="ab-m-ti">A/B Kör Karşılaştırma</div>
@@ -684,7 +684,7 @@ const L={
     sub:'Hassasiyet Bulucusu · CS2 & Valorant',game:'Oyun',dpi:'Mouse DPI',fov:'FOV',sens:'Mevcut Hassasiyet',
     calib:'360° mousepad hareketi ile kalibre et',start:'TESTİ BAŞLAT',
     rLbl:'Tur',phLbl:'Aşama',scLbl:'Puan',piLbl:'İlerleme',
-    calTi:'KALİBRASYON',calDe:'Farenizi mousepad\'in bir kenarından diğerine (tam 360° dönmek istediğiniz mesafe kadar) yatayda kaydırın.<br>Bitirmek için <strong>Sol Tık</strong> veya <strong>ESC</strong> tuşuna basın.',
+    calTi:'KALİBRASYON',calDe:'Farenizi mousepad\'in bir kenarından diğerine (tam 360° dönmek istediğiniz mesafe kadar) yatayda kaydırın.<br>Uygulamak için <strong>Sol Tık</strong>, iptal etmek için <strong>ESC</strong> tuşuna basın.',
     eyLow:'Test: DÜŞÜK',eyHigh:'Test: YÜKSEK',eyMid:'Doğrulama',
     tagF:'Flick',tagG:'Gridshot',tagT:'Takip',
     rrEy:(r)=>`Tur ${r} Sonucu`,rrU:(g)=>`${g} HASSASİYETİ`,rrCl:(g)=>`${g} Eşdeğeri`,
@@ -840,7 +840,7 @@ const L={
     sub:'Sensitivity Finder · CS2 & Valorant',game:'Game',dpi:'Mouse DPI',fov:'FOV',sens:'Current Sensitivity',
     calib:'Calibrate via 360° mousepad movement',start:'START TEST',
     rLbl:'Round',phLbl:'Phase',scLbl:'Score',piLbl:'Progress',
-    calTi:'CALIBRATION',calDe:'Slide your mouse horizontally from one edge of your pad to the other (the distance you want for a full 360° turn).<br>Press <strong>Left Click</strong> or <strong>ESC</strong> to finish.',
+    calTi:'CALIBRATION',calDe:'Slide your mouse horizontally from one edge of your pad to the other (the distance you want for a full 360° turn).<br>Press <strong>Left Click</strong> to apply, or <strong>ESC</strong> to cancel.',
     eyLow:'Testing: LOW',eyHigh:'Testing: HIGH',eyMid:'Verification',
     tagF:'Flick',tagG:'Gridshot',tagT:'Tracking',
     rrEy:(r)=>`Round ${r} Result`,rrU:(g)=>`${g} SENSITIVITY`,rrCl:(g)=>`${g} Equivalent`,
@@ -1425,12 +1425,11 @@ function closeConvModal(){
 function copyConvItem(btn,val){
   const cleanVal=String(val).replace('%','');
   copyToClipboard(cleanVal).then(()=>{
-    const orig=btn.textContent;
     btn.textContent='✓ '+T('copiedBtn');
     btn.style.borderColor='var(--a2)';
     btn.style.color='var(--a2)';
     setTimeout(()=>{
-      btn.textContent=orig;
+      btn.textContent='📋 '+T('copyBtn');
       btn.style.borderColor='';
       btn.style.color='';
     },1200);
@@ -1575,7 +1574,7 @@ function renderHistLog(){
 function exportDataJSON(){
   try{
     const data={
-      version:document.querySelector('meta[name="version"]')?.content||'1.2.8',
+      version:document.querySelector('meta[name="version"]')?.content||'1.2.9',
       exportedAt:new Date().toISOString(),
       history:loadHistLog(),
       ui:_readUI(),
@@ -1616,6 +1615,10 @@ function importDataJSON(e){
   const file=e?.target?.files?.[0];
   if(!file)return;
   const reader=new FileReader();
+  reader.onerror=function(){
+    showFB(T('impErr'),false,3000);
+    if(e?.target)e.target.value='';
+  };
   reader.onload=function(evt){
     try{
       const data=JSON.parse(evt.target.result);
@@ -1623,13 +1626,18 @@ function importDataJSON(e){
       if(Array.isArray(data.history)){
         const validHistory=data.history
           .filter(h=>h&&typeof h==='object'&&Number.isFinite(Number(h.sens))&&Number(h.sens)>0)
-          .map(h=>({
-            date:Number.isFinite(Number(h.date))?Number(h.date):Date.now(),
-            game:h.game==='val'?'val':'cs2',
-            sens:Number(h.sens),
-            conf:(h.conf!==null&&h.conf!==''&&Number.isFinite(Number(h.conf)))?Math.max(0,Math.min(100,Math.round(Number(h.conf)))):null,
-            round:Math.max(1,parseInt(h.round,10)||1)
-          }))
+          .map(h=>{
+            const parsedDate=typeof h.date==='number'&&Number.isFinite(h.date)
+              ?h.date
+              :(h.date?new Date(h.date).getTime():NaN);
+            return {
+              date:Number.isFinite(parsedDate)?parsedDate:Date.now(),
+              game:h.game==='val'?'val':'cs2',
+              sens:Number(h.sens),
+              conf:(h.conf!==null&&h.conf!==''&&Number.isFinite(Number(h.conf)))?Math.max(0,Math.min(100,Math.round(Number(h.conf)))):null,
+              round:Math.max(1,parseInt(h.round,10)||1)
+            };
+          })
           .slice(-50);
         LS.set(HK,JSON.stringify(validHistory));
       }
@@ -2346,6 +2354,7 @@ function safeRequestPointerLock(el){
 }
 
 let _lockAcquiredAt=0;
+let _calibCancelled=false;
 const MAX_DELTA=1000;        // sadece anormal tarayıcı sıçramalarını keser
 
 document.addEventListener('pointerlockchange',()=>{
@@ -2355,7 +2364,7 @@ document.addEventListener('pointerlockchange',()=>{
     return;
   }
   // Lock kayboldu
-  if(isCalib){finCalib();return;}
+  if(isCalib){finCalib(_calibCancelled);_calibCancelled=false;return;}
   if(isPractice){quitToMenu();return;}
   if(_isABTest){cancelABTest();return;}
   if(!isCalib&&active&&!isPaused){
@@ -2574,7 +2583,7 @@ window.addEventListener('keydown',e=>{
     return;
   }
   if(e.key==='Escape'){
-    if(isCalib){if(!document.pointerLockElement)finCalib(true);return;}
+    if(isCalib){_calibCancelled=true;if(document.pointerLockElement)document.exitPointerLock();else finCalib(true);return;}
     if(isPractice){quitToMenu();return;}
     if(_isABTest){cancelABTest();return;}
     if($('res-modal')?.style.display==='flex'){closeResModal();return;}
@@ -2745,6 +2754,7 @@ function startPractice(mode){
   const timerEl=$('hud-timer');
   if(_warmupInterval){clearInterval(_warmupInterval);_warmupInterval=null;}
   const dur=_warmupCfg.dur||0;
+  currentPhaseActiveDur=dur>0?dur:12;
   if(dur>0){
     let rem=dur;
     if(timerEl){timerEl.textContent=rem.toFixed(1)+'s';timerEl.style.color='var(--tb)';}
@@ -2895,6 +2905,12 @@ function applyABWinner(){
       saved.dpi=dpi;
       save(saved);
     }
+    const histArr=loadHistLog();
+    if(histArr.length>0&&histArr[histArr.length-1].game===game){
+      histArr[histArr.length-1].sens=wSens;
+      try{LS.set(HK,JSON.stringify(histArr));}catch(e){}
+      renderHistLog();
+    }
     showFB(T('abApplied'),true,2000);
   }
   closeABModal();
@@ -3011,7 +3027,7 @@ function testResultInPractice(){
 // ─── CALIBRATION ───
 function startCalib(){
   if(!renderer&&!initThree())return;
-  isCalib=true;calMov=0;
+  isCalib=true;_calibCancelled=false;calMov=0;
   yaw=0;pitch=0;
   if(camera)camera.quaternion.setFromEuler(new THREE.Euler(0,0,0,'YXZ'));
   const liveEl=$('cal-live');if(liveEl)liveEl.textContent='...';
@@ -3019,11 +3035,11 @@ function startCalib(){
   safeRequestPointerLock(renderer.domElement);
 }
 function finCalib(cancelled=false){
-  isCalib=false;$('cov').classList.remove('on');showMenu('mm');
+  isCalib=false;_calibCancelled=false;$('cov').classList.remove('on');showMenu('mm');
   // calMov = toplam net piksel hareketi (raw mousemove.movementX yönlü toplamı)
   // 360 derece = mousepad_cm * DPI piksel
   const absCalMov=Math.abs(calMov);
-  if(absCalMov>500){
+  if(absCalMov>500 && !cancelled){
     const rawSens=360/(GC[game].yaw*absCalMov);
     const clampedSens=Math.min(Math.max(rawSens,GC[game].sensMin),GC[game].sensMax);
     const isEl=$('is');
@@ -3387,10 +3403,9 @@ function copyMainSens(){
     const orig=el.style.color;el.style.color='var(--a2)';el.style.textShadow='0 0 20px var(--a2)';
     const hint=$('rr-cp-hint');
     if(hint){
-      const origHint=hint.textContent;
       hint.textContent=T('shared');
       hint.style.color='var(--a2)';
-      setTimeout(()=>{hint.textContent=origHint;hint.style.color='';},1000);
+      setTimeout(()=>{hint.textContent=T('cpHint');hint.style.color='';},1000);
     }
     setTimeout(()=>{el.style.color=orig;el.style.textShadow='';},500);
   }).catch(()=>{});
@@ -3401,8 +3416,8 @@ function shareResult(){
   const txt=T('shareTxt',_lastResult.game,_lastResult.sens.toFixed(3),_lastResult.cm.toFixed(1),Math.round(_lastResult.conf),_lastResult.oppGame,_lastResult.oppSens,_lastResult.dpi,_lastResult.reflex);
   copyToClipboard(txt).then(()=>{
     const el=$('lsh');if(!el)return;
-    const orig=el.textContent;el.textContent=T('shared');
-    setTimeout(()=>{el.textContent=orig;},1500);
+    el.textContent=T('shared');
+    setTimeout(()=>{el.textContent=T('shareBtn');},1500);
   }).catch(()=>{});
 }
 
@@ -3505,6 +3520,10 @@ function downloadResultCard(){
       ctx.strokeStyle='rgba(255,255,255,0.1)';
       ctx.lineWidth=1;
       ctx.strokeRect(sx,sy,sw,sh);
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(sx+4,sy+4,sw-8,sh-8);
+      ctx.clip();
       ctx.font='500 12px "DM Mono", monospace';
       ctx.fillStyle='rgba(255,255,255,0.48)';
       ctx.fillText(st.l,sx+18,sy+18);
@@ -3516,6 +3535,7 @@ function downloadResultCard(){
       }
       ctx.fillStyle='#eeeef8';
       ctx.fillText(st.v,sx+18,sy+44+(26-fSz)*0.4);
+      ctx.restore();
     });
 
     // Sağ Mod Bazlı Analiz Bloğu
@@ -3571,9 +3591,8 @@ function downloadResultCard(){
       URL.revokeObjectURL(url);
       const el=$('limg');
       if(el){
-        const orig=el.textContent;
         el.textContent=T('imgSaved');
-        setTimeout(()=>{el.textContent=orig;},1800);
+        setTimeout(()=>{el.textContent=T('imgBtn');},1800);
       }
     },'image/png');
   }catch(e){_unlockBtn();showFB(T('expErr'),false,2400);}
@@ -3584,8 +3603,8 @@ function copyConsoleCmd(){
   const cmd=game==='cs2'?`sensitivity ${_lastResult.sens.toFixed(3)}`:_lastResult.sens.toFixed(3);
   copyToClipboard(cmd).then(()=>{
     const el=$('lcmd');if(!el)return;
-    const orig=el.textContent;el.textContent=`✓ ${cmd}`;
-    setTimeout(()=>{el.textContent=orig;},1500);
+    el.textContent=`✓ ${cmd}`;
+    setTimeout(()=>{el.textContent=game==='cs2'?T('cmdBtn'):`📋 ${T('copyVal')}`;},1500);
   }).catch(()=>{});
 }
 
