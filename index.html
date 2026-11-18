@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="version" content="1.2.9">
+<meta name="version" content="1.3.0">
 <title>SensFinder — CS2 & Valorant</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -197,6 +197,7 @@ button:active{transform:scale(0.98);}
   .mt{font-size:32px;}
   .rr-main{font-size:48px;}
   .rr-stats{grid-template-columns:repeat(2,1fr)!important;}
+  .g2{grid-template-columns:1fr;}
   #hud{top:8px;left:8px;padding:8px 10px;min-width:140px;}
   #pi{top:8px;right:8px;padding:8px 10px;}
   .lbtn{padding:6px 10px;}
@@ -260,7 +261,7 @@ body.perf-mode .menu,body.perf-mode #hud,body.perf-mode #pi,body.perf-mode #cov,
   <div id="nomouse" role="status" style="display:none;background:rgba(255,200,0,.1);border:1px solid #ffc800;color:#ffe08a;font-family:var(--mono);font-size:10px;padding:8px 10px;margin-bottom:12px;line-height:1.5;"></div>
   <div id="webgl-err" role="alert" style="display:none;background:rgba(255,68,85,.12);border:1px solid #ff4455;color:#ff8899;font-family:var(--mono);font-size:9px;padding:8px 10px;margin-bottom:12px;line-height:1.5;"></div>
   <div class="menu-header-wrap">
-    <div class="menu-logo-row">
+    <div class="menu-logo-row" style="flex-wrap:wrap;gap:8px;">
       <div class="menu-logo">
         <div class="mt">SENS<em>FINDER</em></div>
         <div class="mt-sub" id="ms">CS2 &amp; VALORANT</div>
@@ -274,7 +275,7 @@ body.perf-mode .menu,body.perf-mode #hud,body.perf-mode #pi,body.perf-mode #cov,
   <div class="t2"><button class="tab on" id="gCS2" onclick="setGame('cs2')">CS2</button><button class="tab" id="gVAL" onclick="setGame('val')">VALORANT</button></div>
   <div class="g2">
     <div class="fg"><label class="flbl" id="ld" for="id">Mouse DPI</label><input class="fi" type="number" id="id" value="800" min="100" max="32000" step="50" oninput="updPv()" onfocus="this.select()">
-      <div style="display:flex;gap:4px;margin-top:5px;">
+      <div style="display:flex;gap:4px;margin-top:5px;flex-wrap:wrap;">
         <button type="button" class="lbtn" data-dpi="400" style="flex:1;padding:4px 1px;" onclick="$('id').value=400;updPv();">400</button>
         <button type="button" class="lbtn on" data-dpi="800" style="flex:1;padding:4px 1px;" onclick="$('id').value=800;updPv();">800</button>
         <button type="button" class="lbtn" data-dpi="1200" style="flex:1;padding:4px 1px;" onclick="$('id').value=1200;updPv();">1200</button>
@@ -295,11 +296,11 @@ body.perf-mode .menu,body.perf-mode #hud,body.perf-mode #pi,body.perf-mode #cov,
       <label class="flbl" id="l-gr-ti" style="margin-bottom:0;">Aiming Style</label>
       <span id="gr-w-lbl" style="font-family:var(--mono);font-size:7px;color:rgba(255,255,255,.32);letter-spacing:.06em;">F:35% · G:35% · T:30%</span>
     </div>
-    <div style="display:flex;gap:4px;margin-bottom:10px;">
-      <button type="button" class="lbtn" style="flex:1;padding:6px 2px;" id="btn-gr-wrist" onclick="setGripStyle('wrist',true)" title="Wrist Aim (14–31 cm/360°)">🖐️ Bilek</button>
-      <button type="button" class="lbtn" style="flex:1;padding:6px 2px;" id="btn-gr-arm" onclick="setGripStyle('arm',true)" title="Arm Aim (38–72 cm/360°)">💪 Kol</button>
-      <button type="button" class="lbtn on" style="flex:1;padding:6px 2px;" id="btn-gr-hybrid" onclick="setGripStyle('hybrid',true)" title="Hybrid: Arm + Wrist (25–46 cm/360°)">🤝 Hibrit</button>
-      <button type="button" class="lbtn" style="flex:1;padding:6px 2px;" id="btn-gr-unknown" onclick="setGripStyle('unknown',true)">❓ Bilmiyorum</button>
+    <div style="display:flex;gap:4px;margin-bottom:10px;flex-wrap:wrap;">
+      <button type="button" class="lbtn" style="flex:1 1 70px;padding:6px 4px;" id="btn-gr-wrist" onclick="setGripStyle('wrist',true)" title="Wrist Aim (14–31 cm/360°)">🖐️ Bilek</button>
+      <button type="button" class="lbtn" style="flex:1 1 70px;padding:6px 4px;" id="btn-gr-arm" onclick="setGripStyle('arm',true)" title="Arm Aim (38–72 cm/360°)">💪 Kol</button>
+      <button type="button" class="lbtn on" style="flex:1 1 70px;padding:6px 4px;" id="btn-gr-hybrid" onclick="setGripStyle('hybrid',true)" title="Hybrid: Arm + Wrist (25–46 cm/360°)">🤝 Hibrit</button>
+      <button type="button" class="lbtn" style="flex:1 1 70px;padding:6px 4px;" id="btn-gr-unknown" onclick="setGripStyle('unknown',true)">❓ Bilmiyorum</button>
     </div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
       <label class="flbl" id="ls" for="is" style="margin-bottom:0;">Current Sensitivity</label>
@@ -414,11 +415,11 @@ body.perf-mode .menu,body.perf-mode #hud,body.perf-mode #pi,body.perf-mode #cov,
     <button type="button" class="lbtn" style="flex:1;padding:5px 4px;" id="btn-dur-fast" onclick="setTestSpeed('fast')">⚡ Hızlı Mod (8s/faz)</button>
   </div>
   <button class="sbtn" onclick="startFresh()">▶ &nbsp;<span id="lst">START TEST</span></button>
-  <div style="display:flex;gap:5px;margin-top:6px;">
-    <button type="button" class="sb-btn" style="flex:1;padding:6px 4px;" onclick="startPractice('flick')" id="btn-prac-f">🎯 Flick</button>
-    <button type="button" class="sb-btn" style="flex:1;padding:6px 4px;" onclick="startPractice('grid')" id="btn-prac-g">⚡ Gridshot</button>
-    <button type="button" class="sb-btn" style="flex:1;padding:6px 4px;" onclick="startPractice('track')" id="btn-prac-t">🔄 Track</button>
-    <button type="button" class="sb-btn" style="padding:6px 9px;" onclick="openWarmupModal()" id="btn-prac-cfg" title="Özel Isınma Ayarları (Hedef Boyutu, Hız, Süre)">⚙️</button>
+  <div style="display:flex;gap:5px;margin-top:6px;flex-wrap:wrap;">
+    <button type="button" class="sb-btn" style="flex:1 1 90px;padding:6px 4px;" onclick="startPractice('flick')" id="btn-prac-f">🎯 Flick</button>
+    <button type="button" class="sb-btn" style="flex:1 1 90px;padding:6px 4px;" onclick="startPractice('grid')" id="btn-prac-g">⚡ Gridshot</button>
+    <button type="button" class="sb-btn" style="flex:1 1 90px;padding:6px 4px;" onclick="startPractice('track')" id="btn-prac-t">🔄 Track</button>
+    <button type="button" class="sb-btn" style="flex:0 0 auto;padding:6px 9px;" onclick="openWarmupModal()" id="btn-prac-cfg" title="Özel Isınma Ayarları (Hedef Boyutu, Hız, Süre)">⚙️</button>
   </div>
   <div id="est-dur" style="text-align:center;font-family:var(--mono);font-size:8px;letter-spacing:.1em;color:rgba(255,255,255,.22);margin-top:7px;">~2.3 dk</div>
   <div style="text-align:center;font-family:var(--mono);font-size:7px;letter-spacing:.08em;color:rgba(255,255,255,.15);margin-top:8px;" id="kb-hint">⌨ Boşluk başlat · M ses · F tam ekran · ESC duraklat</div>
@@ -1157,7 +1158,7 @@ function setGame(g, force=false){
   applyI18n();updPv();if(camera)updateCameraFov();if(renderer)updTC();
 }
 function gS(){const v=parseFloat($('is').value)||GC[game].sensD;const c=GC[game];return Math.max(c.sensMin,Math.min(c.sensMax,v));}
-function gD(){return Math.max(100,parseInt($('id').value)||800);}
+function gD(){return Math.max(100,Math.min(32000,parseInt($('id').value,10)||800));}
 function cm360(s,dpi){return(360/(GC[game].yaw*s))/dpi*2.54;}
 function sensFromCm(cm,dpi){return(360/((cm/2.54)*dpi))/GC[game].yaw;}
 function gripLabel(g){
@@ -1433,7 +1434,7 @@ function copyConvItem(btn,val){
       btn.style.borderColor='';
       btn.style.color='';
     },1200);
-  });
+  }).catch(()=>{});
 }
 
 const _warmupCfg={
@@ -1574,7 +1575,7 @@ function renderHistLog(){
 function exportDataJSON(){
   try{
     const data={
-      version:document.querySelector('meta[name="version"]')?.content||'1.2.9',
+      version:document.querySelector('meta[name="version"]')?.content||'1.3.0',
       exportedAt:new Date().toISOString(),
       history:loadHistLog(),
       ui:_readUI(),
@@ -1728,7 +1729,7 @@ function resumeSession(){
   $('sb').style.display='none';
   hist=Array.isArray(s.hist)?s.hist:[];curRound=parseInt(s.round,10)||1;
   // Per-mod state restore (yeni format) ya da eski format'tan reconstruct
-  if(s.modLo&&s.modHi&&MODES.every(m=>isFinite(s.modLo[m])&&isFinite(s.modHi[m]))){
+  if(s.modLo&&s.modHi&&MODES.every(m=>isFinite(s.modLo[m])&&isFinite(s.modHi[m])&&s.modLo[m]>0&&s.modHi[m]>s.modLo[m])){
     modLo=s.modLo;modHi=s.modHi;
     if(s.modInitRange){
       modInitRange=s.modInitRange;
